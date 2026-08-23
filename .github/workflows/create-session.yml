@@ -1,0 +1,51 @@
+name: Create Telegram Session
+
+on:
+  workflow_dispatch:
+    inputs:
+      phone_code:
+        description: 'Код подтверждения из Telegram'
+        required: false
+        type: string
+
+jobs:
+  create-session:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Install dependencies
+        run: |
+          pip install telethon
+          
+      - name: Create session
+        env:
+          API_ID: ${{ secrets.API_ID }}
+          API_HASH: ${{ secrets.API_HASH }}
+          PHONE: ${{ secrets.PHONE_NUMBER }}
+          CODE: ${{ github.event.inputs.phone_code }}
+        run: |
+          python create_session_github.py
+          
+      - name: Upload session file
+        uses: actions/upload-artifact@v4
+        with:
+          name: session-file
+          path: session.session
+          
+      - name: Commit session file
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add session.session
+          git diff --staged --quiet || git commit -m "Add session file [skip ci]"
+          git push
