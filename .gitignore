@@ -5,3 +5,5 @@ temp_*.jpg
 .DS_Store
 *.log
 .env
+*.session
+*.session-journal
