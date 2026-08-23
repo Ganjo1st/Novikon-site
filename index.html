@@ -5,26 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Novikon - Новости</title>
     <style>
+        :root {
+            --bg: #f5f5f5;
+            --text: #333;
+            --card-bg: white;
+            --header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow: 0 4px 15px rgba(0,0,0,0.08);
+            --border: #e0e0e0;
+        }
+        [data-theme="dark"] {
+            --bg: #1a1a2e;
+            --text: #e0e0e0;
+            --card-bg: #16213e;
+            --header-bg: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            --shadow: 0 4px 15px rgba(0,0,0,0.3);
+            --border: #2a2a4a;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-            background: #f5f5f5;
-            color: #333;
+            background: var(--bg);
+            color: var(--text);
             line-height: 1.6;
+            transition: background 0.3s, color 0.3s;
         }
         header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--header-bg);
             color: white;
             padding: 30px 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: background 0.3s;
         }
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
         }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
         header h1 { font-size: 32px; font-weight: 700; }
         header .subtitle { color: rgba(255,255,255,0.9); font-size: 16px; margin-top: 5px; }
+        
+        .theme-toggle {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+        
         .news-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -32,15 +72,16 @@
             padding: 30px 0;
         }
         .news-card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s;
+            cursor: pointer;
         }
         .news-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
         .news-card img {
             width: 100%;
@@ -55,10 +96,12 @@
             font-weight: 600;
             margin-bottom: 12px;
             line-height: 1.4;
+            color: var(--text);
         }
         .news-text {
-            color: #555;
+            color: var(--text);
             font-size: 15px;
+            opacity: 0.8;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
@@ -66,7 +109,7 @@
         }
         .no-image {
             height: 220px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--header-bg);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -78,23 +121,16 @@
             padding: 30px 0;
             color: #888;
             font-size: 14px;
-            border-top: 1px solid #e0e0e0;
+            border-top: 1px solid var(--border);
             margin-top: 20px;
+            transition: border-color 0.3s;
         }
-        .update-time {
-            background: #e8e8e8;
-            padding: 10px 20px;
-            border-radius: 8px;
+        .read-more {
             display: inline-block;
-            margin: 10px 0;
-            font-size: 14px;
-            color: #555;
-        }
-        .stats {
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-            margin: 10px 0;
+            margin-top: 12px;
+            color: #667eea;
+            font-weight: 600;
+            text-decoration: none;
         }
         @media (max-width: 768px) {
             .news-grid {
@@ -102,24 +138,30 @@
                 padding: 15px 0;
             }
             header h1 { font-size: 24px; }
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
         }
     </style>
 </head>
 <body>
     <header>
         <div class="container">
-            <h1>📰 Novikon</h1>
-            <div class="subtitle">Актуальные новости и события</div>
+            <div class="header-content">
+                <div>
+                    <h1>📰 Novikon</h1>
+                    <div class="subtitle">Актуальные новости и события</div>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()">🌙 Тёмная тема</button>
+            </div>
         </div>
     </header>
     <div class="container">
-        <div style="text-align: center; margin: 15px 0;">
-            <span class="update-time">🔄 Обновлено: 23.08.2026 12:17</span>
-            <div class="stats">📊 Всего постов: 40</div>
-        </div>
         <div class="news-grid">
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1362.html'">
                 <img src="assets/post_1362.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">22.08.2026 09:52</div>
@@ -127,10 +169,11 @@
                     <div class="news-text">**«Курдский вопрос» не решен: как политика США помогла создать новую ближневосточную проблему**
 
 Повстанческое движение РПК не следует путать с решени...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1361.html'">
                 <img src="assets/post_1361.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">22.08.2026 00:01</div>
@@ -142,10 +185,11 @@
 Драго Боснич, независимый геополитический и военный аналитик.
 
 В течение многих лет основная...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1360.html'">
                 <img src="assets/post_1360.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">21.08.2026 15:45</div>
@@ -153,10 +197,11 @@
                     <div class="news-text">**Железнодорожные перевозки Китай-Европа через Россию резко выросли на фоне глубоководных потрясений**
 
 По данным Минтранса России, железнодорожные гр...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1359.html'">
                 <img src="assets/post_1359.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">21.08.2026 15:06</div>
@@ -166,10 +211,11 @@
                     <div class="news-text">**Климатическая миграция: на пути к новой политической парадигме**
 
 Ярослав Лисоволик Поскольку изменение климата становится одним из ключевых факторо...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1358.html'">
                 <img src="assets/post_1358.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">21.08.2026 14:31</div>
@@ -177,10 +223,11 @@
                     <div class="news-text">**Россия рассматривает железнодорожный маршрут для обеспечения поставок нефти в Индию**
 
 Ахмед Адель, исследователь геополитики и политической экономи...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1357.html'">
                 <img src="assets/post_1357.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">21.08.2026 13:58</div>
@@ -188,10 +235,11 @@
                     <div class="news-text">**BRICS CCI WE опубликовала документ о продвижении женщин в сфере инноваций, науки и предпринимательства в странах БРИКС+**
 
 Вертикаль расширения прав...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1356.html'">
                 <img src="assets/post_1356.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">21.08.2026 08:00</div>
@@ -201,10 +249,11 @@
                     <div class="news-text">**ЕС на пороге серьезного продовольственного кризиса**
 
 Лукас Лейроз, член Ассоциации журналистов БРИКС, научный сотрудник Центра геостратегических ис...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1355.html'">
                 <img src="assets/post_1355.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">21.08.2026 05:04</div>
@@ -214,10 +263,11 @@
                     <div class="news-text">**Экс-министр обороны Украины стал фигурой оппозиции**
 
 Внутренняя ситуация в Украине возникла в результате серьезного кризиса легитимности правительс...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1354.html'">
                 <img src="assets/post_1354.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">21.08.2026 04:21</div>
@@ -227,19 +277,21 @@ O livr...</div>
                     <div class="news-text">**Русское искусство войны: как Запад ведет Украину в дерроту**
 
 O livro mais newe do Coronel Jacques Baud, L’art de la guerre russe: Comment l’occiden...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1353.html'">
                 <img src="assets/post_1353.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">21.08.2026 03:34</div>
                     <div class="news-title">**Медицинские эксперты: Трамп «психически недееспособен», срочное «отс...</div>
                     <div class="news-text">**Медицинские эксперты: Трамп «психически недееспособен», срочное «отстранение от должности». Белый дом подумывает о ядерной войне. «Сделаем ядерное о...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1352.html'">
                 <div class="no-image">📄</div>
                 <div class="news-content">
                     <div class="news-date">21.08.2026 02:37</div>
@@ -251,21 +303,23 @@ Fontes:https://arquivos.rtp.pt/e...</div>
 Fontes:https://arquivos.rtp.pt/ehttps://www.brasildefato.com.br/
 
 Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1351.html'">
                 <img src="assets/post_1351.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">21.08.2026 01:10</div>
-                    <div class="news-title">**Джим О&****#x27****;Нил меняет свой взгляд на будущее финансов БРИКС...</div>
-                    <div class="news-text">**Джим О&****#x27****;Нил меняет свой взгляд на будущее финансов БРИКС**
+                    <div class="news-title">**Джим О&amp;****#x27****;Нил меняет свой взгляд на будущее финансов БРИКС...</div>
+                    <div class="news-text">**Джим О&amp;****#x27****;Нил меняет свой взгляд на будущее финансов БРИКС**
 
 Проект валютной системы, способной конкурировать с долларом, долгое время сч...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1350.html'">
                 <img src="assets/post_1350.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">20.08.2026 15:40</div>
@@ -275,10 +329,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
 Драго Боснич, независимый геополитический и военный аналитик.
 
 ...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1349.html'">
                 <img src="assets/post_1349.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">20.08.2026 14:59</div>
@@ -288,10 +343,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**БРИКС играет ключевую роль в условиях напряженности**
 
 Автор: Ндумисо Млило Механизм БРИКС более актуален в нынешней геополитической среде как платф...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1348.html'">
                 <img src="assets/post_1348.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">20.08.2026 14:18</div>
@@ -301,10 +357,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Бывший министр обороны Украины стал оппозиционером**
 
 Лукас Лейроз, член Ассоциации журналистов БРИКС, научный сотрудник Центра геостратегических ис...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1347.html'">
                 <img src="assets/post_1347.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">20.08.2026 13:33</div>
@@ -312,10 +369,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Пентагон расширяет контроль над университетами и угрожает академической свободе в США**
 
 Ахмед Адель, исследователь геополитики и политической эконо...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1346.html'">
                 <img src="assets/post_1346.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">20.08.2026 12:39</div>
@@ -323,10 +381,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Российские университеты активизируют работу с Индией, поскольку абитуриенты MBBS изучают зарубежные возможности**
 
 Российские университеты активизир...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1345.html'">
                 <img src="assets/post_1345.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">20.08.2026 00:24</div>
@@ -334,10 +393,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**EUA planejam использует ядерное оружие против Ирана - бывший американский конгрессмен**
 
 Очевидно, что EUA усилит военные действия в отсутствие конф...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1344.html'">
                 <img src="assets/post_1344.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">19.08.2026 13:32</div>
@@ -347,10 +407,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Сейчас обсуждается риск «захвата» США президента Бразилии**
 
 Уриэль Араухо, доктор философии по антропологии, — социолог, специализирующийся на этни...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1343.html'">
                 <img src="assets/post_1343.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">19.08.2026 12:42</div>
@@ -360,10 +421,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**ВМС США столкнулись с серьезными логистическими проблемами**
 
 Лукас Лейроз, член Ассоциации журналистов БРИКС, научный сотрудник Центра геостратегич...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1342.html'">
                 <img src="assets/post_1342.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">19.08.2026 11:56</div>
@@ -372,10 +434,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
 
 Драго Боснич, независимый геополитический и военный аналитик.
 ...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1341.html'">
                 <img src="assets/post_1341.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">19.08.2026 10:59</div>
@@ -383,10 +446,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Израильские чиновники шокированы возвращением Ираном ракет, поскольку Тегеран подтверждает планы возмездия**
 
 Ахмед Адель, исследователь геополитики...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1340.html'">
                 <img src="assets/post_1340.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">19.08.2026 08:03</div>
@@ -394,10 +458,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**БРИКС+: Индонезия и Саудовская Аравия берут более широкий курс на транспортные связи**
 
 Доктор Икбал Сурве и Хлоя Малулек В Джакарте состоялась встр...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1339.html'">
                 <img src="assets/post_1339.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">19.08.2026 02:45</div>
@@ -405,10 +470,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Chega de defesas aéreas finlandesas para a Ucrânia – министр обороны**
 
 Расположение европейских стран в условиях киевского режима уменьшилось кажды...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1338.html'">
                 <img src="assets/post_1338.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">19.08.2026 01:49</div>
@@ -418,10 +484,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Трамп пересмотрел слова членов ОТАНА**
 
 Военный альянс в Атлантике был фрагментирован каждый раз. Поскольку расхождения между EUA и Европой больше н...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1337.html'">
                 <img src="assets/post_1337.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">19.08.2026 00:01</div>
@@ -431,10 +498,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Украина провоцирует Болгарию из-за инцидента с участием дрона**
 
 Наши случаи вмешательства в Украину продолжаются и продолжаются. Киевский режим уси...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1336.html'">
                 <img src="assets/post_1336.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">18.08.2026 15:42</div>
@@ -442,10 +510,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Великобритания открыто хвастается своими беспилотниками, наносящими глубокие удары по России**
 
 Драго Боснич, независимый геополитический и военный ...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1335.html'">
                 <img src="assets/post_1335.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">18.08.2026 15:03</div>
@@ -453,10 +522,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**США планируют применить ядерное оружие против Ирана – экс-конгрессмен США**
 
 Лукас Лейроз, член Ассоциации журналистов БРИКС, научный сотрудник Цент...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1334.html'">
                 <img src="assets/post_1334.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">18.08.2026 13:04</div>
@@ -464,10 +534,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Немецкие инвестиции в США резко упали на фоне неопределенности тарифов Трампа**
 
 Ахмед Адель, исследователь геополитики и политической экономии из К...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1333.html'">
                 <img src="assets/post_1333.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">18.08.2026 12:03</div>
@@ -477,10 +548,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Китайско-российское сотрудничество в новую эпоху**
 
 Цзян Цзайдун и Альберт ХоревДоговор о добрососедстве и дружественном сотрудничестве между Китаем...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1332.html'">
                 <img src="assets/post_1332.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">18.08.2026 11:44</div>
@@ -488,10 +560,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Африканский кодекс: как континентальное искусство становится силой БРИКС**
 
 Каролина Коваль – специально для инфоБРИКС – «Африканское искусство» в з...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1331.html'">
                 <img src="assets/post_1331.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">18.08.2026 02:16</div>
@@ -501,10 +574,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
 Впервые опубликовано 17 января 2026 г.
 
 В дека...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1330.html'">
                 <img src="assets/post_1330.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">17.08.2026 15:31</div>
@@ -512,10 +586,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Трамп сокращает учения в Южной Корее и кивает Северной Корее, поскольку внимание США смещается на Иран**
 
 Уриэль Араухо, доктор философии по антропо...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1329.html'">
                 <img src="assets/post_1329.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">17.08.2026 14:59</div>
@@ -523,10 +598,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Трансмашхолдинг поставит локомотивы стандартной колеи для маршрута Россия – Китай**
 
 Брянский машиностроительный завод (БМЗ), входящий в Трансмашхол...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1328.html'">
                 <img src="assets/post_1328.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">17.08.2026 14:38</div>
@@ -536,10 +612,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Трамп пересмотрит партнерство с членами НАТО**
 
 Лукас Лейроз, член Ассоциации журналистов БРИКС, научный сотрудник Центра геостратегических исследов...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1327.html'">
                 <img src="assets/post_1327.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">17.08.2026 14:00</div>
@@ -547,10 +624,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Война в Иране приводит к росту инфляции в Великобритании и угрожает новым шоком стоимости жизни – СМИ**
 
 Ахмед Адель, исследователь геополитики и по...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1326.html'">
                 <img src="assets/post_1326.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">17.08.2026 13:24</div>
@@ -558,10 +636,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Индия и Россия начинают дедолларизацию, чтобы достичь целевого показателя торгового оборота в 100 миллиардов долларов**
 
 Винод Дсуза Россия и Индия ...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1325.html'">
                 <img src="assets/post_1325.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">16.08.2026 15:17</div>
@@ -569,10 +648,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Искусственный интеллект в поддержку израильской разведки. Планирование геноцида. «Как будет выглядеть Газа в будущем»**
 
 С использованием искусствен...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1324.html'">
                 <img src="assets/post_1324.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">16.08.2026 04:18</div>
@@ -580,10 +660,11 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Глобальная война: «Мы собираемся уничтожить 7 стран за 5 лет: Ирак, Сирию, Ливан, Ливию, Сомали, Судан и Иран».**
 
 Первоначально опубликовано в март...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_1323.html'">
                 <img src="assets/post_1323.jpg" alt="News image" loading="lazy">
                 <div class="news-content">
                     <div class="news-date">15.08.2026 15:16</div>
@@ -591,6 +672,7 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
                     <div class="news-text">**Война в Ираке, 23 года назад: думая о немыслимом: «Была ли Маргарет Хассан принесена в жертву» правительством Тони Блэра?**
 
 Четырнадцать лет назад ...</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 
@@ -602,5 +684,19 @@ Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
             <p style="font-size: 12px; margin-top: 5px;">Обновляется каждые 30 минут</p>
         </div>
     </div>
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            document.querySelector('.theme-toggle').textContent = newTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+        }
+        
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+    </script>
 </body>
 </html>
