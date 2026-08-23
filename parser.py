@@ -1,10 +1,9 @@
 import os
 import json
-import asyncio
+import requests
 from datetime import datetime
-from telethon import TelegramClient
-from telethon.tl.types import MessageMediaPhoto, MessageMediaDocument
-import shutil
+import re
+import base64
 
 # Получение данных из секретов
 BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
@@ -14,87 +13,192 @@ if not BOT_TOKEN or not CHANNEL_ID:
     print("❌ Ошибка: TELEGRAM_BOT_TOKEN или TELEGRAM_CHANNEL_ID не установлены")
     exit(1)
 
-# Для ботов используем специальный метод с api_id=0 и api_hash=''
-# Это работает для ботов в Telethon
-client = TelegramClient('session', 0, '')
+# URL для API Telegram
+API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
-async def parse_channel():
+def get_channel_posts():
+    """Получение последних постов из канала через Bot API"""
+    posts = []
+    
+    # Определяем chat_id
+    chat_id = CHANNEL_ID
+    if CHANNEL_ID.startswith('@'):
+        chat_id = CHANNEL_ID
+    else:
+        try:
+            # Если это числовой ID, используем как есть
+            int(CHANNEL_ID)
+        except ValueError:
+            # Если не число, возможно это username без @
+            chat_id = f"@{CHANNEL_ID}" if not CHANNEL_ID.startswith('@') else CHANNEL_ID
+    
+    print(f"📡 Подключение к каналу: {chat_id}")
+    
     try:
-        # Вход с токеном бота
-        await client.start(bot_token=BOT_TOKEN)
-        print("✅ Бот успешно запущен")
+        # Получаем обновления из канала
+        url = f"{API_URL}/getUpdates"
+        params = {
+            'chat_id': chat_id,
+            'limit': 40
+        }
         
-        # Определяем канал
-        if CHANNEL_ID.startswith('@'):
-            entity = await client.get_entity(CHANNEL_ID)
-        else:
-            try:
-                entity = await client.get_entity(int(CHANNEL_ID))
-            except ValueError:
-                # Если не удается получить по ID, пробуем как username
-                entity = await client.get_entity(CHANNEL_ID)
+        response = requests.get(url, params=params, timeout=30)
+        data = response.json()
         
-        print(f"📡 Подключен к каналу: {entity.title if hasattr(entity, 'title') else CHANNEL_ID}")
+        if not data.get('ok'):
+            print(f"❌ Ошибка API: {data.get('description', 'Unknown error')}")
+            return []
         
-        posts = []
-        limit = 40
-        count = 0
+        updates = data.get('result', [])
+        print(f"📊 Получено {len(updates)} обновлений")
         
-        # Создаем папку для изображений
-        os.makedirs('assets', exist_ok=True)
+        # Если обновлений нет, пробуем другой метод
+        if not updates:
+            print("⚠️ Нет обновлений, пробуем прямой запрос к каналу...")
+            return get_channel_messages_direct()
         
-        # Получаем последние 40 сообщений
-        async for message in client.iter_messages(entity, limit=limit):
-            # Пропускаем служебные сообщения
-            if message.text and message.text.startswith('/'):
+        # Обрабатываем обновления
+        for update in updates:
+            message = update.get('message')
+            if not message:
                 continue
             
-            # Пропускаем пустые сообщения (без текста и без медиа)
-            if not message.text and not message.media:
+            # Пропускаем служебные сообщения
+            text = message.get('text', '')
+            if text and text.startswith('/'):
                 continue
-                
+            
             post = {
-                'id': message.id,
-                'date': message.date.isoformat(),
-                'text': message.text or '',
+                'id': message.get('message_id'),
+                'date': datetime.fromtimestamp(message.get('date')).isoformat(),
+                'text': text,
                 'image_url': None
             }
             
-            # Обработка медиа
-            if message.media:
+            # Проверяем наличие фото
+            if 'photo' in message:
                 try:
-                    # Скачиваем медиа
-                    path = await client.download_media(message.media, file=f'temp_{message.id}.jpg')
-                    if path:
-                        new_path = f'assets/post_{message.id}.jpg'
-                        shutil.move(path, new_path)
-                        post['image_url'] = new_path
-                        print(f"📸 Загружено медиа: {new_path}")
+                    # Берем самое большое фото
+                    photo = message['photo'][-1]
+                    file_id = photo.get('file_id')
+                    if file_id:
+                        # Получаем ссылку на файл
+                        file_url = f"{API_URL}/getFile"
+                        file_response = requests.get(file_url, params={'file_id': file_id})
+                        file_data = file_response.json()
+                        if file_data.get('ok'):
+                            file_path = file_data['result'].get('file_path')
+                            if file_path:
+                                # Скачиваем фото
+                                download_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+                                img_response = requests.get(download_url)
+                                if img_response.status_code == 200:
+                                    # Сохраняем в assets
+                                    os.makedirs('assets', exist_ok=True)
+                                    filename = f"assets/post_{post['id']}.jpg"
+                                    with open(filename, 'wb') as f:
+                                        f.write(img_response.content)
+                                    post['image_url'] = filename
+                                    print(f"📸 Загружено фото: {filename}")
                 except Exception as e:
-                    print(f"⚠️ Ошибка загрузки медиа для {message.id}: {e}")
+                    print(f"⚠️ Ошибка загрузки фото: {e}")
             
             posts.append(post)
-            count += 1
-            print(f"✅ Обработан пост #{count} (ID: {message.id})")
+            print(f"✅ Обработан пост #{len(posts)} (ID: {post['id']})")
         
-        print(f"📊 Всего обработано {len(posts)} постов")
-        
-        # Сохраняем в JSON
-        with open('posts.json', 'w', encoding='utf-8') as f:
-            json.dump(posts, f, ensure_ascii=False, indent=2)
-        print("💾 Сохранен posts.json")
-        
-        # Генерируем HTML
-        generate_html(posts)
-        
-        await client.disconnect()
-        print("✅ Парсинг завершен успешно!")
+        return posts
         
     except Exception as e:
-        print(f"❌ Критическая ошибка: {e}")
+        print(f"❌ Ошибка: {e}")
         import traceback
         traceback.print_exc()
-        await client.disconnect()
+        return []
+
+def get_channel_messages_direct():
+    """Альтернативный метод - прямой запрос к каналу"""
+    posts = []
+    
+    # Используем метод forwardMessage для получения сообщений
+    url = f"{API_URL}/getChat"
+    params = {'chat_id': CHANNEL_ID}
+    
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+        if data.get('ok'):
+            print(f"✅ Канал найден: {data['result'].get('title', 'Unknown')}")
+    except:
+        pass
+    
+    # Пробуем получить сообщения через метод getUpdates с offset
+    url = f"{API_URL}/getUpdates"
+    params = {
+        'limit': 40,
+        'allowed_updates': ['message']
+    }
+    
+    response = requests.get(url, params=params)
+    data = response.json()
+    
+    if not data.get('ok'):
+        print(f"❌ Ошибка: {data.get('description')}")
+        return []
+    
+    updates = data.get('result', [])
+    
+    for update in updates:
+        message = update.get('message')
+        if not message:
+            continue
+        
+        # Проверяем, что сообщение из нужного канала
+        chat = message.get('chat', {})
+        chat_id_str = str(chat.get('id', ''))
+        channel_id_str = str(CHANNEL_ID).replace('-100', '').replace('@', '')
+        
+        # Если ID не совпадают, пропускаем
+        if channel_id_str not in chat_id_str and CHANNEL_ID not in str(chat.get('username', '')):
+            continue
+        
+        text = message.get('text', '')
+        if text and text.startswith('/'):
+            continue
+        
+        post = {
+            'id': message.get('message_id'),
+            'date': datetime.fromtimestamp(message.get('date')).isoformat(),
+            'text': text,
+            'image_url': None
+        }
+        
+        # Проверяем наличие фото
+        if 'photo' in message:
+            try:
+                photo = message['photo'][-1]
+                file_id = photo.get('file_id')
+                if file_id:
+                    file_url = f"{API_URL}/getFile"
+                    file_response = requests.get(file_url, params={'file_id': file_id})
+                    file_data = file_response.json()
+                    if file_data.get('ok'):
+                        file_path = file_data['result'].get('file_path')
+                        if file_path:
+                            download_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+                            img_response = requests.get(download_url)
+                            if img_response.status_code == 200:
+                                os.makedirs('assets', exist_ok=True)
+                                filename = f"assets/post_{post['id']}.jpg"
+                                with open(filename, 'wb') as f:
+                                    f.write(img_response.content)
+                                post['image_url'] = filename
+                                print(f"📸 Загружено фото: {filename}")
+            except Exception as e:
+                print(f"⚠️ Ошибка загрузки фото: {e}")
+        
+        posts.append(post)
+        print(f"✅ Обработан пост #{len(posts)} (ID: {post['id']})")
+    
+    return posts
 
 def generate_html(posts):
     current_time = datetime.now().strftime('%d.%m.%Y %H:%M')
@@ -225,8 +329,11 @@ def generate_html(posts):
         title = post['text'][:70] + '...' if len(post['text']) > 70 else post['text']
         text_preview = post['text'][:150] + '...' if len(post['text']) > 150 else post['text']
         
-        date_obj = datetime.fromisoformat(post['date'])
-        date_str = date_obj.strftime('%d.%m.%Y %H:%M')
+        try:
+            date_obj = datetime.fromisoformat(post['date'])
+            date_str = date_obj.strftime('%d.%m.%Y %H:%M')
+        except:
+            date_str = post['date']
         
         if post.get('image_url'):
             img_html = f'<img src="{post["image_url"]}" alt="News image" loading="lazy">'
@@ -266,4 +373,30 @@ def generate_html(posts):
     print("🌐 Сгенерирован index.html")
 
 if __name__ == '__main__':
-    asyncio.run(parse_channel())
+    print("🚀 Запуск парсера...")
+    posts = get_channel_posts()
+    
+    if posts:
+        print(f"✅ Получено {len(posts)} постов")
+        # Сохраняем в JSON
+        with open('posts.json', 'w', encoding='utf-8') as f:
+            json.dump(posts, f, ensure_ascii=False, indent=2)
+        print("💾 Сохранен posts.json")
+        
+        generate_html(posts)
+        print("✅ Парсинг завершен успешно!")
+    else:
+        print("❌ Не удалось получить посты")
+        
+        # Создаем тестовый HTML
+        with open('index.html', 'w', encoding='utf-8') as f:
+            f.write('''<!DOCTYPE html>
+<html>
+<head><title>Novikon</title></head>
+<body>
+<h1>📰 Novikon</h1>
+<p>Сайт настраивается. Первые новости появятся в ближайшее время.</p>
+<p>Проверьте настройки бота и канала.</p>
+</body>
+</html>''')
+        print("🌐 Создан тестовый index.html")
