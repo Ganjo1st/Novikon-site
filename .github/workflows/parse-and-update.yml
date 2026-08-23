@@ -26,12 +26,14 @@ jobs:
           
       - name: Install dependencies
         run: |
-          pip install requests beautifulsoup4 lxml
+          pip install telethon requests beautifulsoup4 lxml
           
       - name: Run parser
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          API_ID: ${{ secrets.API_ID }}
+          API_HASH: ${{ secrets.API_HASH }}
         run: |
           python parser.py
           
@@ -39,7 +41,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add index.html posts.json assets/
+          git add -A
           git diff --staged --quiet || git commit -m "Auto-update news [skip ci]"
           git push
           
