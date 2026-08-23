@@ -74,6 +74,7 @@ async def parse_channel():
         limit = 40
         count = 0
         
+        # СОЗДАЕМ ПАПКИ ПЕРЕД ГЕНЕРАЦИЕЙ
         os.makedirs('assets', exist_ok=True)
         os.makedirs('posts', exist_ok=True)
         
@@ -114,8 +115,13 @@ async def parse_channel():
         print("💾 Сохранен posts.json")
         
         # Генерируем все страницы
+        print("📝 Генерация HTML страниц...")
         generate_html(posts)
         generate_post_pages(posts)
+        
+        # Проверяем, что файлы созданы
+        posts_files = os.listdir('posts')
+        print(f"📁 В папке posts создано {len(posts_files)} файлов")
         
         await client.disconnect()
         print("✅ Парсинг завершен успешно!")
