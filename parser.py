@@ -7,28 +7,28 @@ from telethon.tl.types import MessageMediaPhoto, MessageMediaDocument
 import shutil
 
 # Получение данных из секретов
-BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-CHANNEL_ID = os.getenv('TELEGRAM_CHANNEL_ID')
 API_ID = int(os.getenv('API_ID', 0))
 API_HASH = os.getenv('API_HASH', '')
-
-if not BOT_TOKEN or not CHANNEL_ID:
-    print("❌ Ошибка: TELEGRAM_BOT_TOKEN или TELEGRAM_CHANNEL_ID не установлены")
-    exit(1)
+CHANNEL_ID = os.getenv('TELEGRAM_CHANNEL_ID', '')
+PHONE_NUMBER = os.getenv('PHONE_NUMBER', '')  # Ваш номер телефона
 
 if not API_ID or not API_HASH:
     print("❌ Ошибка: API_ID или API_HASH не установлены")
     print("📌 Получите их на https://my.telegram.org/auth")
     exit(1)
 
-# Создаем клиент с API ID и Hash
+if not CHANNEL_ID:
+    print("❌ Ошибка: TELEGRAM_CHANNEL_ID не установлен")
+    exit(1)
+
+# Создаем клиент с API ID и Hash (для пользователя)
 client = TelegramClient('session', API_ID, API_HASH)
 
 async def parse_channel():
     try:
-        # Вход с токеном бота
-        await client.start(bot_token=BOT_TOKEN)
-        print("✅ Бот успешно запущен")
+        # Вход как пользователь (не бот!)
+        await client.start(phone=PHONE_NUMBER)
+        print("✅ Пользователь успешно авторизован")
         
         # Определяем канал
         if CHANNEL_ID.startswith('@'):
