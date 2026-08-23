@@ -24,25 +24,18 @@ if not CHANNEL_ID:
 client = TelegramClient('session', API_ID, API_HASH)
 
 def clean_title(title):
-    """Очищает заголовок от маркеров разметки"""
     if not title:
         return ''
-    # Удаляем ** в начале и конце
     title = re.sub(r'^\*\*\s*', '', title)
     title = re.sub(r'\s*\*\*$', '', title)
-    # Удаляем все оставшиеся **
     title = re.sub(r'\*\*', '', title)
-    # Удаляем лишние пробелы
     title = ' '.join(title.split())
     return title
 
 def clean_text(text):
-    """Очищает текст от маркеров разметки"""
     if not text:
         return ''
-    # Удаляем ** 
     text = re.sub(r'\*\*', '', text)
-    # Удаляем лишние пробелы и переносы
     text = ' '.join(text.split())
     return text
 
@@ -74,7 +67,6 @@ async def parse_channel():
         limit = 40
         count = 0
         
-        # СОЗДАЕМ ПАПКИ ПЕРЕД ГЕНЕРАЦИЕЙ
         os.makedirs('assets', exist_ok=True)
         os.makedirs('posts', exist_ok=True)
         
@@ -114,12 +106,10 @@ async def parse_channel():
             json.dump(posts, f, ensure_ascii=False, indent=2)
         print("💾 Сохранен posts.json")
         
-        # Генерируем все страницы
         print("📝 Генерация HTML страниц...")
         generate_html(posts)
         generate_post_pages(posts)
         
-        # Проверяем, что файлы созданы
         posts_files = os.listdir('posts')
         print(f"📁 В папке posts создано {len(posts_files)} файлов")
         
@@ -335,14 +325,10 @@ def generate_html(posts):
 '''
 
     for post in posts:
-        # Разбиваем текст на строки
         text_lines = post['text'].split('\n')
-        
-        # Заголовок - первая строка (очищаем от **)
         raw_title = text_lines[0] if text_lines else ''
         title = clean_title(raw_title)
         
-        # Краткое описание - берем все строки кроме первой, очищаем от **
         preview_text = ''
         for line in text_lines[1:]:
             clean_line = clean_text(line)
@@ -354,15 +340,12 @@ def generate_html(posts):
                 if len(preview_text) > 200:
                     break
         
-        # Если текст слишком короткий, берем из первой строки после заголовка
         if len(preview_text) < 20 and len(text_lines) > 1:
             preview_text = clean_text(text_lines[1])[:200]
         
-        # Если все еще пусто, берем из всего текста
         if not preview_text:
             preview_text = clean_text(post['text'])[:200]
         
-        # Обрезаем до 200 символов
         if len(preview_text) > 200:
             preview_text = preview_text[:200] + '...'
         
@@ -421,24 +404,19 @@ def generate_html(posts):
     print("🌐 Сгенерирован index.html")
 
 def generate_post_pages(posts):
-    """Генерация отдельных страниц для каждого поста"""
     os.makedirs('posts', exist_ok=True)
     
     print(f"📝 Генерация {len(posts)} страниц постов...")
     
     for i, post in enumerate(posts):
         try:
-            # Разбиваем текст на строки
             text_lines = post['text'].split('\n')
-            
-            # Заголовок - первая строка (очищаем от **)
             raw_title = text_lines[0] if text_lines else ''
             title = clean_title(raw_title)
             
             date_obj = datetime.fromisoformat(post['date'])
             date_str = date_obj.strftime('%d.%m.%Y %H:%M')
             
-            # Полный текст - все строки кроме первой, очищаем от **
             full_text_lines = []
             for line in text_lines[1:]:
                 clean_line = clean_text(line)
@@ -447,11 +425,9 @@ def generate_post_pages(posts):
             
             full_text = '<br>'.join(full_text_lines) if full_text_lines else clean_text(post['text'])
             
-            # Если текст пустой, берем заголовок как текст
             if not full_text:
                 full_text = title
             
-            # Изображение
             if post.get('image_url'):
                 img_html = f'<img src="../{post["image_url"]}" alt="News image" style="max-width: 100%; border-radius: 12px; margin: 20px 0;">'
             else:
