@@ -26,7 +26,7 @@ jobs:
           
       - name: Install dependencies
         run: |
-          pip install telethon python-telegram-bot requests beautifulsoup4 lxml
+          pip install requests beautifulsoup4 lxml
           
       - name: Run parser
         env:
