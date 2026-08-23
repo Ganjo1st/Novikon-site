@@ -5,7 +5,7 @@ from datetime import datetime
 from telethon import TelegramClient
 from telethon.tl.types import MessageMediaPhoto, MessageMediaDocument
 import shutil
-import html as html_module  # Исправленный импорт
+import html as html_module
 
 # Получение данных из секретов
 API_ID = int(os.getenv('API_ID', 0))
@@ -14,7 +14,6 @@ CHANNEL_ID = os.getenv('TELEGRAM_CHANNEL_ID', '')
 
 if not API_ID or not API_HASH:
     print("❌ Ошибка: API_ID или API_HASH не установлены")
-    print("📌 Получите их на https://my.telegram.org/apps")
     exit(1)
 
 if not CHANNEL_ID:
@@ -108,6 +107,7 @@ def generate_html(posts):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Novikon - Новости</title>
+    <link rel="icon" href="logo%20Novikon.png" type="image/png">
     <style>
         :root {
             --bg: #f5f5f5;
@@ -136,7 +136,7 @@ def generate_html(posts):
         header {
             background: var(--header-bg);
             color: white;
-            padding: 30px 0;
+            padding: 20px 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             transition: background 0.3s;
         }
@@ -150,10 +150,28 @@ def generate_html(posts):
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
+            gap: 15px;
         }
-        header h1 { font-size: 32px; font-weight: 700; }
-        header .subtitle { color: rgba(255,255,255,0.9); font-size: 16px; margin-top: 5px; }
-        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logo-container img {
+            height: 50px;
+            width: auto;
+            border-radius: 8px;
+        }
+        .site-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+        }
+        .site-subtitle {
+            color: rgba(255,255,255,0.9);
+            font-size: 14px;
+        }
         .theme-toggle {
             background: rgba(255,255,255,0.2);
             border: 2px solid rgba(255,255,255,0.3);
@@ -163,6 +181,7 @@ def generate_html(posts):
             cursor: pointer;
             font-size: 16px;
             transition: all 0.3s;
+            white-space: nowrap;
         }
         .theme-toggle:hover {
             background: rgba(255,255,255,0.3);
@@ -182,6 +201,9 @@ def generate_html(posts):
             box-shadow: var(--shadow);
             transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s;
             cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
         }
         .news-card:hover {
             transform: translateY(-5px);
@@ -241,11 +263,20 @@ def generate_html(posts):
                 grid-template-columns: 1fr;
                 padding: 15px 0;
             }
-            header h1 { font-size: 24px; }
+            .logo-container img {
+                height: 40px;
+            }
+            .site-title {
+                font-size: 22px;
+            }
             .header-content {
                 flex-direction: column;
-                gap: 15px;
+                gap: 10px;
                 text-align: center;
+            }
+            .theme-toggle {
+                font-size: 14px;
+                padding: 8px 16px;
             }
         }
     </style>
@@ -254,9 +285,14 @@ def generate_html(posts):
     <header>
         <div class="container">
             <div class="header-content">
-                <div>
-                    <h1>📰 Novikon</h1>
-                    <div class="subtitle">Актуальные новости и события</div>
+                <div class="logo-container">
+                    <a href="/Novikon-site/" style="text-decoration: none; display: flex; align-items: center; gap: 15px;">
+                        <img src="logo%20Novikon.png" alt="Novikon Logo">
+                        <div>
+                            <div class="site-title">Novikon</div>
+                            <div class="site-subtitle">Актуальные новости и события</div>
+                        </div>
+                    </a>
                 </div>
                 <button class="theme-toggle" onclick="toggleTheme()">🌙 Тёмная тема</button>
             </div>
@@ -267,8 +303,24 @@ def generate_html(posts):
 '''
 
     for post in posts:
-        title = post['text'][:70] + '...' if len(post['text']) > 70 else post['text']
-        text_preview = post['text'][:150] + '...' if len(post['text']) > 150 else post['text']
+        # Заголовок - первая строка текста
+        text_lines = post['text'].split('\n')
+        title = text_lines[0] if text_lines else ''
+        
+        # Краткое описание - следующие 2-3 строки после заголовка
+        preview_lines = []
+        char_count = 0
+        for line in text_lines[1:]:
+            if char_count + len(line) < 200:
+                preview_lines.append(line)
+                char_count += len(line)
+            else:
+                break
+        text_preview = ' '.join(preview_lines)[:200] + '...' if preview_lines else ''
+        
+        # Если нет текста после заголовка, берем первые 150 символов
+        if not text_preview and len(post['text']) > 100:
+            text_preview = post['text'][:200] + '...'
         
         date_obj = datetime.fromisoformat(post['date'])
         date_str = date_obj.strftime('%d.%m.%Y %H:%M')
@@ -278,12 +330,11 @@ def generate_html(posts):
         else:
             img_html = '<div class="no-image">📄</div>'
         
-        # Используем html_module.escape вместо html.escape
         title_escaped = html_module.escape(title)
         text_escaped = html_module.escape(text_preview)
         
         html_output += f'''
-            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_{post["id"]}.html'">
+            <a href="/Novikon-site/posts/post_{post["id"]}.html" class="news-card">
                 {img_html}
                 <div class="news-content">
                     <div class="news-date">{date_str}</div>
@@ -291,7 +342,7 @@ def generate_html(posts):
                     <div class="news-text">{text_escaped}</div>
                     <span class="read-more">Читать далее →</span>
                 </div>
-            </div>
+            </a>
 '''
 
     html_output += '''
@@ -330,13 +381,15 @@ def generate_post_pages(posts):
     os.makedirs('posts', exist_ok=True)
     
     for post in posts:
-        title = post['text'][:70] + '...' if len(post['text']) > 70 else post['text']
+        # Заголовок - первая строка
+        text_lines = post['text'].split('\n')
+        title = text_lines[0] if text_lines else ''
         
         date_obj = datetime.fromisoformat(post['date'])
         date_str = date_obj.strftime('%d.%m.%Y %H:%M')
         
-        # Полный текст с заменой переносов
-        full_text = post['text'].replace('\n', '<br>')
+        # Полный текст (все строки после заголовка)
+        full_text = '<br>'.join(text_lines[1:]) if len(text_lines) > 1 else post['text'].replace('\n', '<br>')
         
         # Изображение
         if post.get('image_url'):
@@ -352,6 +405,7 @@ def generate_post_pages(posts):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title_escaped} - Novikon</title>
+    <link rel="icon" href="../logo%20Novikon.png" type="image/png">
     <style>
         :root {{
             --bg: #f5f5f5;
@@ -394,11 +448,23 @@ def generate_post_pages(posts):
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
+            gap: 10px;
         }}
-        header a {{
+        .logo-link {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
             color: white;
             text-decoration: none;
-            font-size: 18px;
+        }}
+        .logo-link img {{
+            height: 40px;
+            width: auto;
+            border-radius: 6px;
+        }}
+        .logo-link .site-title {{
+            font-size: 22px;
+            font-weight: 700;
         }}
         .theme-toggle {{
             background: rgba(255,255,255,0.2);
@@ -472,6 +538,12 @@ def generate_post_pages(posts):
                 gap: 10px;
                 text-align: center;
             }}
+            .logo-link img {{
+                height: 32px;
+            }}
+            .logo-link .site-title {{
+                font-size: 18px;
+            }}
         }}
     </style>
 </head>
@@ -479,7 +551,10 @@ def generate_post_pages(posts):
     <header>
         <div class="container">
             <div class="header-content">
-                <a href="/Novikon-site/">← На главную</a>
+                <a href="/Novikon-site/" class="logo-link">
+                    <img src="../logo%20Novikon.png" alt="Novikon">
+                    <span class="site-title">Novikon</span>
+                </a>
                 <button class="theme-toggle" onclick="toggleTheme()">🌙 Тёмная тема</button>
             </div>
         </div>
