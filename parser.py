@@ -360,7 +360,6 @@ def generate_html(posts):
         title_escaped = html_module.escape(title)
         text_escaped = html_module.escape(preview_text)
         
-        # ИСПРАВЛЕННЫЙ ПУТЬ: /Novikon-site/posts/post_XXX.html
         html_output += f'''
             <a href="/Novikon-site/posts/post_{post["id"]}.html" class="news-card">
                 {img_html}
