@@ -10,34 +10,44 @@ import shutil
 API_ID = int(os.getenv('API_ID', 0))
 API_HASH = os.getenv('API_HASH', '')
 CHANNEL_ID = os.getenv('TELEGRAM_CHANNEL_ID', '')
-PHONE_NUMBER = os.getenv('PHONE_NUMBER', '')  # Ваш номер телефона
 
 if not API_ID or not API_HASH:
     print("❌ Ошибка: API_ID или API_HASH не установлены")
-    print("📌 Получите их на https://my.telegram.org/auth")
+    print("📌 Получите их на https://my.telegram.org/apps")
     exit(1)
 
 if not CHANNEL_ID:
     print("❌ Ошибка: TELEGRAM_CHANNEL_ID не установлен")
     exit(1)
 
-# Создаем клиент с API ID и Hash (для пользователя)
+# Создаем клиент с API ID и Hash (сессия уже создана локально)
 client = TelegramClient('session', API_ID, API_HASH)
 
 async def parse_channel():
     try:
-        # Вход как пользователь (не бот!)
-        await client.start(phone=PHONE_NUMBER)
-        print("✅ Пользователь успешно авторизован")
+        # Подключаемся с существующей сессией (не требует ввода кода)
+        await client.connect()
+        
+        # Проверяем авторизацию
+        if not await client.is_user_authorized():
+            print("❌ Сессия не авторизована! Нужно создать session.session локально.")
+            print("📌 Запустите на компьютере: python create_session.py")
+            return
+        
+        print("✅ Пользователь авторизован")
         
         # Определяем канал
-        if CHANNEL_ID.startswith('@'):
-            entity = await client.get_entity(CHANNEL_ID)
-        else:
-            try:
-                entity = await client.get_entity(int(CHANNEL_ID))
-            except ValueError:
+        try:
+            if CHANNEL_ID.startswith('@'):
                 entity = await client.get_entity(CHANNEL_ID)
+            else:
+                try:
+                    entity = await client.get_entity(int(CHANNEL_ID))
+                except ValueError:
+                    entity = await client.get_entity(CHANNEL_ID)
+        except Exception as e:
+            print(f"❌ Не удалось найти канал: {e}")
+            return
         
         print(f"📡 Подключен к каналу: {entity.title if hasattr(entity, 'title') else CHANNEL_ID}")
         
@@ -49,6 +59,7 @@ async def parse_channel():
         os.makedirs('assets', exist_ok=True)
         
         # Получаем последние 40 сообщений (история!)
+        print("📥 Получение истории сообщений...")
         async for message in client.iter_messages(entity, limit=limit):
             # Пропускаем служебные сообщения
             if message.text and message.text.startswith('/'):
