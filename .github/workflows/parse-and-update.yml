@@ -35,6 +35,14 @@ jobs:
         run: |
           python parser.py
           
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add index.html posts.json assets/
+          git diff --staged --quiet || git commit -m "Auto-update news [skip ci]"
+          git push
+          
       - name: Setup Pages
         uses: actions/configure-pages@v4
           
