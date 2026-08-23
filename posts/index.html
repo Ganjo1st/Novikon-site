@@ -1,11 +1,24 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0; url=/Novikon-site/">
-    <title>Перенаправление...</title>
-</head>
+<head><title>Посты Novikon</title></head>
 <body>
-    <p>Перенаправление на <a href="/Novikon-site/">главную страницу</a>...</p>
+    <h1>Все посты</h1>
+    <ul id="posts-list"></ul>
+    <script>
+        fetch('/Novikon-site/posts.json')
+            .then(r => r.json())
+            .then(posts => {
+                const list = document.getElementById('posts-list');
+                posts.forEach(post => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = `/Novikon-site/posts/post_${post.id}.html`;
+                    a.textContent = post.text.split('\n')[0] || 'Пост';
+                    li.appendChild(a);
+                    list.appendChild(li);
+                });
+            });
+    </script>
+    <p><a href="/Novikon-site/">На главную</a></p>
 </body>
 </html>
