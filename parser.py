@@ -25,14 +25,26 @@ client = TelegramClient('session', API_ID, API_HASH)
 
 def clean_title(title):
     """Очищает заголовок от маркеров разметки"""
+    if not title:
+        return ''
     # Удаляем ** в начале и конце
     title = re.sub(r'^\*\*\s*', '', title)
     title = re.sub(r'\s*\*\*$', '', title)
-    # Удаляем множественные **
+    # Удаляем все оставшиеся **
     title = re.sub(r'\*\*', '', title)
     # Удаляем лишние пробелы
     title = ' '.join(title.split())
     return title
+
+def clean_text(text):
+    """Очищает текст от маркеров разметки"""
+    if not text:
+        return ''
+    # Удаляем ** 
+    text = re.sub(r'\*\*', '', text)
+    # Удаляем лишние пробелы и переносы
+    text = ' '.join(text.split())
+    return text
 
 async def parse_channel():
     try:
@@ -101,6 +113,7 @@ async def parse_channel():
             json.dump(posts, f, ensure_ascii=False, indent=2)
         print("💾 Сохранен posts.json")
         
+        # Генерируем все страницы
         generate_html(posts)
         generate_post_pages(posts)
         
@@ -316,28 +329,36 @@ def generate_html(posts):
 '''
 
     for post in posts:
-        # Заголовок - первая строка текста с очисткой от **
+        # Разбиваем текст на строки
         text_lines = post['text'].split('\n')
+        
+        # Заголовок - первая строка (очищаем от **)
         raw_title = text_lines[0] if text_lines else ''
         title = clean_title(raw_title)
         
-        # Краткое описание - следующие строки после заголовка
-        preview_lines = []
-        char_count = 0
+        # Краткое описание - берем все строки кроме первой, очищаем от **
+        preview_text = ''
         for line in text_lines[1:]:
-            clean_line = line.strip()
-            if clean_line and char_count + len(clean_line) < 200:
-                preview_lines.append(clean_line)
-                char_count += len(clean_line)
-            elif char_count > 100:
-                break
-        text_preview = ' '.join(preview_lines)[:200]
-        if len(text_preview) == 200:
-            text_preview += '...'
+            clean_line = clean_text(line)
+            if clean_line:
+                if preview_text:
+                    preview_text += ' ' + clean_line
+                else:
+                    preview_text = clean_line
+                if len(preview_text) > 200:
+                    break
         
-        # Если нет текста после заголовка
-        if not text_preview and len(post['text']) > 100:
-            text_preview = post['text'][:200] + '...'
+        # Если текст слишком короткий, берем из первой строки после заголовка
+        if len(preview_text) < 20 and len(text_lines) > 1:
+            preview_text = clean_text(text_lines[1])[:200]
+        
+        # Если все еще пусто, берем из всего текста
+        if not preview_text:
+            preview_text = clean_text(post['text'])[:200]
+        
+        # Обрезаем до 200 символов
+        if len(preview_text) > 200:
+            preview_text = preview_text[:200] + '...'
         
         date_obj = datetime.fromisoformat(post['date'])
         date_str = date_obj.strftime('%d.%m.%Y %H:%M')
@@ -348,7 +369,7 @@ def generate_html(posts):
             img_html = '<div class="no-image">📄</div>'
         
         title_escaped = html_module.escape(title)
-        text_escaped = html_module.escape(text_preview)
+        text_escaped = html_module.escape(preview_text)
         
         html_output += f'''
             <a href="posts/post_{post["id"]}.html" class="news-card">
@@ -397,32 +418,42 @@ def generate_post_pages(posts):
     """Генерация отдельных страниц для каждого поста"""
     os.makedirs('posts', exist_ok=True)
     
-    for post in posts:
-        # Заголовок - первая строка с очисткой от **
-        text_lines = post['text'].split('\n')
-        raw_title = text_lines[0] if text_lines else ''
-        title = clean_title(raw_title)
-        
-        date_obj = datetime.fromisoformat(post['date'])
-        date_str = date_obj.strftime('%d.%m.%Y %H:%M')
-        
-        # Полный текст (все строки после заголовка)
-        full_text_lines = []
-        for line in text_lines[1:]:
-            clean_line = line.strip()
-            if clean_line:
-                full_text_lines.append(clean_line)
-        full_text = '<br>'.join(full_text_lines) if full_text_lines else post['text'].replace('\n', '<br>')
-        
-        # Изображение
-        if post.get('image_url'):
-            img_html = f'<img src="../{post["image_url"]}" alt="News image" style="max-width: 100%; border-radius: 12px; margin: 20px 0;">'
-        else:
-            img_html = ''
-        
-        title_escaped = html_module.escape(title)
-        
-        html_output = f'''<!DOCTYPE html>
+    print(f"📝 Генерация {len(posts)} страниц постов...")
+    
+    for i, post in enumerate(posts):
+        try:
+            # Разбиваем текст на строки
+            text_lines = post['text'].split('\n')
+            
+            # Заголовок - первая строка (очищаем от **)
+            raw_title = text_lines[0] if text_lines else ''
+            title = clean_title(raw_title)
+            
+            date_obj = datetime.fromisoformat(post['date'])
+            date_str = date_obj.strftime('%d.%m.%Y %H:%M')
+            
+            # Полный текст - все строки кроме первой, очищаем от **
+            full_text_lines = []
+            for line in text_lines[1:]:
+                clean_line = clean_text(line)
+                if clean_line:
+                    full_text_lines.append(clean_line)
+            
+            full_text = '<br>'.join(full_text_lines) if full_text_lines else clean_text(post['text'])
+            
+            # Если текст пустой, берем заголовок как текст
+            if not full_text:
+                full_text = title
+            
+            # Изображение
+            if post.get('image_url'):
+                img_html = f'<img src="../{post["image_url"]}" alt="News image" style="max-width: 100%; border-radius: 12px; margin: 20px 0;">'
+            else:
+                img_html = ''
+            
+            title_escaped = html_module.escape(title)
+            
+            html_output = f'''<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -613,11 +644,18 @@ def generate_post_pages(posts):
 </body>
 </html>
 '''
-        
-        with open(f'posts/post_{post["id"]}.html', 'w', encoding='utf-8') as f:
-            f.write(html_output)
+            
+            with open(f'posts/post_{post["id"]}.html', 'w', encoding='utf-8') as f:
+                f.write(html_output)
+            
+            if (i + 1) % 10 == 0:
+                print(f"📄 Сгенерировано {i + 1} из {len(posts)} страниц")
+                
+        except Exception as e:
+            print(f"❌ Ошибка при генерации страницы для поста {post['id']}: {e}")
+            continue
     
-    print(f"📄 Сгенерировано {len(posts)} отдельных страниц")
+    print(f"✅ Сгенерировано {len(posts)} отдельных страниц")
 
 if __name__ == '__main__':
     asyncio.run(parse_channel())
