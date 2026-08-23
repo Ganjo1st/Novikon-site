@@ -377,8 +377,7 @@ def generate_html(posts):
     </div>
     <div class="footer">
         <div class="container">
-            <p>© 2026 Novikon | Автоматический парсинг новостей</p>
-            <p style="font-size: 12px; margin-top: 5px;">Обновляется каждые 30 минут</p>
+            <p>© 2026 Novikon</p>
         </div>
     </div>
     <script>
@@ -429,7 +428,7 @@ def generate_post_pages(posts):
                 full_text = title
             
             if post.get('image_url'):
-                img_html = f'<img src="../{post["image_url"]}" alt="News image" style="max-width: 100%; border-radius: 12px; margin: 20px 0;">'
+                img_html = f'<img src="../{post["image_url"]}" alt="News image" style="display: block; max-width: 100%; border-radius: 12px; margin: 20px auto;">'
             else:
                 img_html = ''
             
@@ -543,6 +542,12 @@ def generate_post_pages(posts):
             color: #667eea;
             text-decoration: none;
         }}
+        .post-text img {{
+            display: block;
+            max-width: 100%;
+            border-radius: 12px;
+            margin: 20px auto;
+        }}
         .back-button {{
             display: inline-block;
             margin-top: 30px;
@@ -606,7 +611,7 @@ def generate_post_pages(posts):
     </div>
     <div class="footer">
         <div class="container">
-            <p>© 2026 Novikon | Автоматический парсинг новостей</p>
+            <p>© 2026 Novikon</p>
         </div>
     </div>
     <script>
