@@ -2,160 +2,174 @@ import os
 import json
 import asyncio
 from datetime import datetime
-from telethon import TelegramClient, events
+from telethon import TelegramClient
 from telethon.tl.types import MessageMediaPhoto, MessageMediaDocument
-import re
+import shutil
 
 # Получение данных из секретов
 BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-CHANNEL_ID = int(os.getenv('TELEGRAM_CHANNEL_ID'))
+CHANNEL_ID = os.getenv('TELEGRAM_CHANNEL_ID')
 
-# Создание клиента
-client = TelegramClient('session', api_id=0, api_hash='')  # Бот не требует api_id
+if not BOT_TOKEN or not CHANNEL_ID:
+    print("❌ Ошибка: TELEGRAM_BOT_TOKEN или TELEGRAM_CHANNEL_ID не установлены")
+    exit(1)
+
+# Для ботов не нужен api_id
+client = TelegramClient('session', 0, '')
 
 async def parse_channel():
-    await client.start(bot_token=BOT_TOKEN)
-    
-    posts = []
-    limit = 40
-    
-    async for message in client.iter_messages(CHANNEL_ID, limit=limit):
-        # Пропускаем служебные сообщения
-        if message.text and message.text.startswith('/'):
-            continue
-            
-        post = {
-            'id': message.id,
-            'date': message.date.isoformat(),
-            'text': message.text or '',
-            'image_url': None
-        }
+    try:
+        await client.start(bot_token=BOT_TOKEN)
+        print("✅ Бот успешно запущен")
         
-        # Обработка медиа
-        if message.media:
-            try:
-                if isinstance(message.media, MessageMediaPhoto):
-                    # Скачиваем фото
-                    path = await client.download_media(message.media, file=f'temp_{message.id}.jpg')
-                    if path:
-                        # Сохраняем в assets
-                        import shutil
-                        os.makedirs('assets', exist_ok=True)
-                        new_path = f'assets/post_{message.id}.jpg'
-                        shutil.move(path, new_path)
-                        post['image_url'] = new_path
-                        
-                elif isinstance(message.media, MessageMediaDocument):
-                    # Проверяем, что это изображение
-                    if message.media.document and message.media.document.mime_type and message.media.document.mime_type.startswith('image/'):
+        # Если CHANNEL_ID начинается с @, используем как username
+        if CHANNEL_ID.startswith('@'):
+            entity = await client.get_entity(CHANNEL_ID)
+        else:
+            entity = await client.get_entity(int(CHANNEL_ID))
+        
+        print(f"📡 Подключен к каналу: {entity.title if hasattr(entity, 'title') else CHANNEL_ID}")
+        
+        posts = []
+        limit = 40
+        count = 0
+        
+        # Создаем папку для изображений
+        os.makedirs('assets', exist_ok=True)
+        
+        async for message in client.iter_messages(entity, limit=limit):
+            # Пропускаем служебные сообщения
+            if message.text and message.text.startswith('/'):
+                continue
+            
+            # Пропускаем пустые сообщения
+            if not message.text and not message.media:
+                continue
+                
+            post = {
+                'id': message.id,
+                'date': message.date.isoformat(),
+                'text': message.text or '',
+                'image_url': None
+            }
+            
+            # Обработка медиа
+            if message.media:
+                try:
+                    # Проверяем тип медиа
+                    if isinstance(message.media, MessageMediaPhoto):
                         path = await client.download_media(message.media, file=f'temp_{message.id}.jpg')
                         if path:
-                            os.makedirs('assets', exist_ok=True)
                             new_path = f'assets/post_{message.id}.jpg'
                             shutil.move(path, new_path)
                             post['image_url'] = new_path
-            except Exception as e:
-                print(f"Ошибка загрузки медиа: {e}")
-                
-        posts.append(post)
-    
-    # Сохраняем в JSON
-    with open('posts.json', 'w', encoding='utf-8') as f:
-        json.dump(posts, f, ensure_ascii=False, indent=2)
-    
-    # Генерируем HTML
-    generate_html(posts)
-    
-    await client.disconnect()
+                            print(f"📸 Загружено фото: {new_path}")
+                            
+                    elif isinstance(message.media, MessageMediaDocument):
+                        if hasattr(message.media, 'document') and message.media.document:
+                            mime_type = message.media.document.mime_type or ''
+                            if mime_type.startswith('image/'):
+                                path = await client.download_media(message.media, file=f'temp_{message.id}.jpg')
+                                if path:
+                                    new_path = f'assets/post_{message.id}.jpg'
+                                    shutil.move(path, new_path)
+                                    post['image_url'] = new_path
+                                    print(f"📸 Загружено изображение: {new_path}")
+                except Exception as e:
+                    print(f"⚠️ Ошибка загрузки медиа для {message.id}: {e}")
+            
+            posts.append(post)
+            count += 1
+            print(f"✅ Обработан пост #{count} (ID: {message.id})")
+        
+        print(f"📊 Всего обработано {len(posts)} постов")
+        
+        # Сохраняем в JSON
+        with open('posts.json', 'w', encoding='utf-8') as f:
+            json.dump(posts, f, ensure_ascii=False, indent=2)
+        print("💾 Сохранен posts.json")
+        
+        # Генерируем HTML
+        generate_html(posts)
+        
+        await client.disconnect()
+        print("✅ Готово!")
+        
+    except Exception as e:
+        print(f"❌ Критическая ошибка: {e}")
+        import traceback
+        traceback.print_exc()
 
 def generate_html(posts):
-    html = '''<!DOCTYPE html>
+    current_time = datetime.now().strftime('%d.%m.%Y %H:%M')
+    
+    html = f'''<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Novikon - Новости</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
             background: #f5f5f5;
             color: #333;
             line-height: 1.6;
-        }
-        header {
-            background: #1a1a2e;
+        }}
+        header {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px 0;
+            padding: 30px 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .container {
+        }}
+        .container {{
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
-        }
-        header h1 {
-            font-size: 28px;
-            font-weight: 700;
-        }
-        header .subtitle {
-            color: #a8a8b3;
-            font-size: 14px;
-        }
-        .news-grid {
+        }}
+        header h1 {{ font-size: 32px; font-weight: 700; }}
+        header .subtitle {{ color: rgba(255,255,255,0.9); font-size: 16px; margin-top: 5px; }}
+        .news-grid {{
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 25px;
             padding: 30px 0;
-        }
-        .news-card {
+        }}
+        .news-card {{
             background: white;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .news-card:hover {
+        }}
+        .news-card:hover {{
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-        }
-        .news-card img {
+        }}
+        .news-card img {{
             width: 100%;
             height: 220px;
             object-fit: cover;
             background: #e0e0e0;
-        }
-        .news-content {
-            padding: 20px;
-        }
-        .news-date {
-            color: #888;
-            font-size: 13px;
-            margin-bottom: 10px;
-        }
-        .news-title {
+        }}
+        .news-content {{ padding: 20px; }}
+        .news-date {{ color: #888; font-size: 13px; margin-bottom: 10px; }}
+        .news-title {{
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 12px;
             line-height: 1.4;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .news-text {
+        }}
+        .news-text {{
             color: #555;
             font-size: 15px;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
-        }
-        .no-image {
+        }}
+        .no-image {{
             height: 220px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
@@ -163,16 +177,16 @@ def generate_html(posts):
             justify-content: center;
             color: white;
             font-size: 48px;
-        }
-        .footer {
+        }}
+        .footer {{
             text-align: center;
             padding: 30px 0;
             color: #888;
             font-size: 14px;
             border-top: 1px solid #e0e0e0;
             margin-top: 20px;
-        }
-        .update-time {
+        }}
+        .update-time {{
             background: #e8e8e8;
             padding: 10px 20px;
             border-radius: 8px;
@@ -180,16 +194,20 @@ def generate_html(posts):
             margin: 10px 0;
             font-size: 14px;
             color: #555;
-        }
-        @media (max-width: 768px) {
-            .news-grid {
+        }}
+        .stats {{
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin: 10px 0;
+        }}
+        @media (max-width: 768px) {{
+            .news-grid {{
                 grid-template-columns: 1fr;
                 padding: 15px 0;
-            }
-            header h1 {
-                font-size: 22px;
-            }
-        }
+            }}
+            header h1 {{ font-size: 24px; }}
+        }}
     </style>
 </head>
 <body>
@@ -201,26 +219,27 @@ def generate_html(posts):
     </header>
     <div class="container">
         <div style="text-align: center; margin: 15px 0;">
-            <span class="update-time">🔄 Обновлено: ''' + datetime.now().strftime('%d.%m.%Y %H:%M') + '''</span>
+            <span class="update-time">🔄 Обновлено: {current_time}</span>
+            <div class="stats">📊 Всего постов: {len(posts)}</div>
         </div>
         <div class="news-grid">
 '''
 
     for post in posts:
-        # Обрезка текста для заголовка (первые 70 символов)
         title = post['text'][:70] + '...' if len(post['text']) > 70 else post['text']
-        # Обрезка текста для карточки (первые 150 символов)
         text_preview = post['text'][:150] + '...' if len(post['text']) > 150 else post['text']
         
-        # Форматирование даты
         date_obj = datetime.fromisoformat(post['date'])
         date_str = date_obj.strftime('%d.%m.%Y %H:%M')
         
-        # Изображение
         if post.get('image_url'):
             img_html = f'<img src="{post["image_url"]}" alt="News image" loading="lazy">'
         else:
             img_html = '<div class="no-image">📄</div>'
+        
+        # Экранируем опасные символы
+        title = title.replace('"', '&quot;').replace("'", '&#39;')
+        text_preview = text_preview.replace('"', '&quot;').replace("'", '&#39;')
         
         html += f'''
             <div class="news-card">
@@ -248,6 +267,7 @@ def generate_html(posts):
     
     with open('index.html', 'w', encoding='utf-8') as f:
         f.write(html)
+    print("🌐 Сгенерирован index.html")
 
 if __name__ == '__main__':
     asyncio.run(parse_channel())
