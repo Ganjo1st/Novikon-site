@@ -1,9 +1,606 @@
 <!DOCTYPE html>
-<html>
-<head><title>Novikon</title></head>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novikon - Новости</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        header h1 { font-size: 32px; font-weight: 700; }
+        header .subtitle { color: rgba(255,255,255,0.9); font-size: 16px; margin-top: 5px; }
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            padding: 30px 0;
+        }
+        .news-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .news-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+        .news-card img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            background: #e0e0e0;
+        }
+        .news-content { padding: 20px; }
+        .news-date { color: #888; font-size: 13px; margin-bottom: 10px; }
+        .news-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        .news-text {
+            color: #555;
+            font-size: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .no-image {
+            height: 220px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+        }
+        .footer {
+            text-align: center;
+            padding: 30px 0;
+            color: #888;
+            font-size: 14px;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 20px;
+        }
+        .update-time {
+            background: #e8e8e8;
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 10px 0;
+            font-size: 14px;
+            color: #555;
+        }
+        .stats {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        @media (max-width: 768px) {
+            .news-grid {
+                grid-template-columns: 1fr;
+                padding: 15px 0;
+            }
+            header h1 { font-size: 24px; }
+        }
+    </style>
+</head>
 <body>
-    <h1>Novikon - Сайт настраивается</h1>
-    <p>Парсер запущен и обрабатывает посты...</p>
-    <p>Сайт будет обновлен через несколько минут.</p>
+    <header>
+        <div class="container">
+            <h1>📰 Novikon</h1>
+            <div class="subtitle">Актуальные новости и события</div>
+        </div>
+    </header>
+    <div class="container">
+        <div style="text-align: center; margin: 15px 0;">
+            <span class="update-time">🔄 Обновлено: 23.08.2026 12:17</span>
+            <div class="stats">📊 Всего постов: 40</div>
+        </div>
+        <div class="news-grid">
+
+            <div class="news-card">
+                <img src="assets/post_1362.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">22.08.2026 09:52</div>
+                    <div class="news-title">**«Курдский вопрос» не решен: как политика США помогла создать новую б...</div>
+                    <div class="news-text">**«Курдский вопрос» не решен: как политика США помогла создать новую ближневосточную проблему**
+
+Повстанческое движение РПК не следует путать с решени...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1361.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">22.08.2026 00:01</div>
+                    <div class="news-title">**Идеальное время для «безумия» Трампа и ядерной войны**
+
+Драго Боснич...</div>
+                    <div class="news-text">**Идеальное время для «безумия» Трампа и ядерной войны**
+
+Драго Боснич, независимый геополитический и военный аналитик.
+
+В течение многих лет основная...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1360.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">21.08.2026 15:45</div>
+                    <div class="news-title">**Железнодорожные перевозки Китай-Европа через Россию резко выросли на...</div>
+                    <div class="news-text">**Железнодорожные перевозки Китай-Европа через Россию резко выросли на фоне глубоководных потрясений**
+
+По данным Минтранса России, железнодорожные гр...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1359.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">21.08.2026 15:06</div>
+                    <div class="news-title">**Климатическая миграция: на пути к новой политической парадигме**
+
+Яр...</div>
+                    <div class="news-text">**Климатическая миграция: на пути к новой политической парадигме**
+
+Ярослав Лисоволик Поскольку изменение климата становится одним из ключевых факторо...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1358.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">21.08.2026 14:31</div>
+                    <div class="news-title">**Россия рассматривает железнодорожный маршрут для обеспечения поставо...</div>
+                    <div class="news-text">**Россия рассматривает железнодорожный маршрут для обеспечения поставок нефти в Индию**
+
+Ахмед Адель, исследователь геополитики и политической экономи...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1357.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">21.08.2026 13:58</div>
+                    <div class="news-title">**BRICS CCI WE опубликовала документ о продвижении женщин в сфере инно...</div>
+                    <div class="news-text">**BRICS CCI WE опубликовала документ о продвижении женщин в сфере инноваций, науки и предпринимательства в странах БРИКС+**
+
+Вертикаль расширения прав...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1356.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">21.08.2026 08:00</div>
+                    <div class="news-title">**ЕС на пороге серьезного продовольственного кризиса**
+
+Лукас Лейроз, ...</div>
+                    <div class="news-text">**ЕС на пороге серьезного продовольственного кризиса**
+
+Лукас Лейроз, член Ассоциации журналистов БРИКС, научный сотрудник Центра геостратегических ис...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1355.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">21.08.2026 05:04</div>
+                    <div class="news-title">**Экс-министр обороны Украины стал фигурой оппозиции**
+
+Внутренняя сит...</div>
+                    <div class="news-text">**Экс-министр обороны Украины стал фигурой оппозиции**
+
+Внутренняя ситуация в Украине возникла в результате серьезного кризиса легитимности правительс...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1354.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">21.08.2026 04:21</div>
+                    <div class="news-title">**Русское искусство войны: как Запад ведет Украину в дерроту**
+
+O livr...</div>
+                    <div class="news-text">**Русское искусство войны: как Запад ведет Украину в дерроту**
+
+O livro mais newe do Coronel Jacques Baud, L’art de la guerre russe: Comment l’occiden...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1353.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">21.08.2026 03:34</div>
+                    <div class="news-title">**Медицинские эксперты: Трамп «психически недееспособен», срочное «отс...</div>
+                    <div class="news-text">**Медицинские эксперты: Трамп «психически недееспособен», срочное «отстранение от должности». Белый дом подумывает о ядерной войне. «Сделаем ядерное о...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <div class="no-image">📄</div>
+                <div class="news-content">
+                    <div class="news-date">21.08.2026 02:37</div>
+                    <div class="news-title">100 лет назад Мигель Урбано Родригес
+
+Fontes:https://arquivos.rtp.pt/e...</div>
+                    <div class="news-text">100 лет назад Мигель Урбано Родригес
+
+Fontes:https://arquivos.rtp.pt/ehttps://www.brasildefato.com.br/
+
+Se fosse vivo Miguel Urbano Rodrigues teria fe...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1351.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">21.08.2026 01:10</div>
+                    <div class="news-title">**Джим О&****#x27****;Нил меняет свой взгляд на будущее финансов БРИКС...</div>
+                    <div class="news-text">**Джим О&****#x27****;Нил меняет свой взгляд на будущее финансов БРИКС**
+
+Проект валютной системы, способной конкурировать с долларом, долгое время сч...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1350.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">20.08.2026 15:40</div>
+                    <div class="news-title">**Киевский режим продолжает «топить» одни и те же фрегаты типа «Адмира...</div>
+                    <div class="news-text">**Киевский режим продолжает «топить» одни и те же фрегаты типа «Адмирал Григорович»**
+
+Драго Боснич, независимый геополитический и военный аналитик.
+
+...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1349.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">20.08.2026 14:59</div>
+                    <div class="news-title">**БРИКС играет ключевую роль в условиях напряженности**
+
+Автор: Ндумис...</div>
+                    <div class="news-text">**БРИКС играет ключевую роль в условиях напряженности**
+
+Автор: Ндумисо Млило Механизм БРИКС более актуален в нынешней геополитической среде как платф...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1348.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">20.08.2026 14:18</div>
+                    <div class="news-title">**Бывший министр обороны Украины стал оппозиционером**
+
+Лукас Лейроз, ...</div>
+                    <div class="news-text">**Бывший министр обороны Украины стал оппозиционером**
+
+Лукас Лейроз, член Ассоциации журналистов БРИКС, научный сотрудник Центра геостратегических ис...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1347.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">20.08.2026 13:33</div>
+                    <div class="news-title">**Пентагон расширяет контроль над университетами и угрожает академичес...</div>
+                    <div class="news-text">**Пентагон расширяет контроль над университетами и угрожает академической свободе в США**
+
+Ахмед Адель, исследователь геополитики и политической эконо...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1346.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">20.08.2026 12:39</div>
+                    <div class="news-title">**Российские университеты активизируют работу с Индией, поскольку абит...</div>
+                    <div class="news-text">**Российские университеты активизируют работу с Индией, поскольку абитуриенты MBBS изучают зарубежные возможности**
+
+Российские университеты активизир...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1345.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">20.08.2026 00:24</div>
+                    <div class="news-title">**EUA planejam использует ядерное оружие против Ирана - бывший америка...</div>
+                    <div class="news-text">**EUA planejam использует ядерное оружие против Ирана - бывший американский конгрессмен**
+
+Очевидно, что EUA усилит военные действия в отсутствие конф...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1344.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">19.08.2026 13:32</div>
+                    <div class="news-title">**Сейчас обсуждается риск «захвата» США президента Бразилии**
+
+Уриэль ...</div>
+                    <div class="news-text">**Сейчас обсуждается риск «захвата» США президента Бразилии**
+
+Уриэль Араухо, доктор философии по антропологии, — социолог, специализирующийся на этни...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1343.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">19.08.2026 12:42</div>
+                    <div class="news-title">**ВМС США столкнулись с серьезными логистическими проблемами**
+
+Лукас ...</div>
+                    <div class="news-text">**ВМС США столкнулись с серьезными логистическими проблемами**
+
+Лукас Лейроз, член Ассоциации журналистов БРИКС, научный сотрудник Центра геостратегич...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1342.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">19.08.2026 11:56</div>
+                    <div class="news-title">**НАТО жалуется, что не может вести одновременные войны против России,...</div>
+                    <div class="news-text">**НАТО жалуется, что не может вести одновременные войны против России, Китая и Ирана**
+
+Драго Боснич, независимый геополитический и военный аналитик.
+...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1341.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">19.08.2026 10:59</div>
+                    <div class="news-title">**Израильские чиновники шокированы возвращением Ираном ракет, поскольк...</div>
+                    <div class="news-text">**Израильские чиновники шокированы возвращением Ираном ракет, поскольку Тегеран подтверждает планы возмездия**
+
+Ахмед Адель, исследователь геополитики...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1340.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">19.08.2026 08:03</div>
+                    <div class="news-title">**БРИКС+: Индонезия и Саудовская Аравия берут более широкий курс на тр...</div>
+                    <div class="news-text">**БРИКС+: Индонезия и Саудовская Аравия берут более широкий курс на транспортные связи**
+
+Доктор Икбал Сурве и Хлоя Малулек В Джакарте состоялась встр...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1339.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">19.08.2026 02:45</div>
+                    <div class="news-title">**Chega de defesas aéreas finlandesas para a Ucrânia – министр обороны...</div>
+                    <div class="news-text">**Chega de defesas aéreas finlandesas para a Ucrânia – министр обороны**
+
+Расположение европейских стран в условиях киевского режима уменьшилось кажды...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1338.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">19.08.2026 01:49</div>
+                    <div class="news-title">**Трамп пересмотрел слова членов ОТАНА**
+
+Военный альянс в Атлантике б...</div>
+                    <div class="news-text">**Трамп пересмотрел слова членов ОТАНА**
+
+Военный альянс в Атлантике был фрагментирован каждый раз. Поскольку расхождения между EUA и Европой больше н...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1337.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">19.08.2026 00:01</div>
+                    <div class="news-title">**Украина провоцирует Болгарию из-за инцидента с участием дрона**
+
+Наш...</div>
+                    <div class="news-text">**Украина провоцирует Болгарию из-за инцидента с участием дрона**
+
+Наши случаи вмешательства в Украину продолжаются и продолжаются. Киевский режим уси...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1336.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">18.08.2026 15:42</div>
+                    <div class="news-title">**Великобритания открыто хвастается своими беспилотниками, наносящими ...</div>
+                    <div class="news-text">**Великобритания открыто хвастается своими беспилотниками, наносящими глубокие удары по России**
+
+Драго Боснич, независимый геополитический и военный ...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1335.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">18.08.2026 15:03</div>
+                    <div class="news-title">**США планируют применить ядерное оружие против Ирана – экс-конгрессме...</div>
+                    <div class="news-text">**США планируют применить ядерное оружие против Ирана – экс-конгрессмен США**
+
+Лукас Лейроз, член Ассоциации журналистов БРИКС, научный сотрудник Цент...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1334.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">18.08.2026 13:04</div>
+                    <div class="news-title">**Немецкие инвестиции в США резко упали на фоне неопределенности тариф...</div>
+                    <div class="news-text">**Немецкие инвестиции в США резко упали на фоне неопределенности тарифов Трампа**
+
+Ахмед Адель, исследователь геополитики и политической экономии из К...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1333.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">18.08.2026 12:03</div>
+                    <div class="news-title">**Китайско-российское сотрудничество в новую эпоху**
+
+Цзян Цзайдун и А...</div>
+                    <div class="news-text">**Китайско-российское сотрудничество в новую эпоху**
+
+Цзян Цзайдун и Альберт ХоревДоговор о добрососедстве и дружественном сотрудничестве между Китаем...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1332.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">18.08.2026 11:44</div>
+                    <div class="news-title">**Африканский кодекс: как континентальное искусство становится силой Б...</div>
+                    <div class="news-text">**Африканский кодекс: как континентальное искусство становится силой БРИКС**
+
+Каролина Коваль – специально для инфоБРИКС – «Африканское искусство» в з...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1331.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">18.08.2026 02:16</div>
+                    <div class="news-title">**Дональд Трамп и наркокартели. «Сделаем отмывание денег снова великим...</div>
+                    <div class="news-text">**Дональд Трамп и наркокартели. «Сделаем отмывание денег снова великим» (MMLGA). Трамп против Мадуро**
+
+Впервые опубликовано 17 января 2026 г.
+
+В дека...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1330.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">17.08.2026 15:31</div>
+                    <div class="news-title">**Трамп сокращает учения в Южной Корее и кивает Северной Корее, поскол...</div>
+                    <div class="news-text">**Трамп сокращает учения в Южной Корее и кивает Северной Корее, поскольку внимание США смещается на Иран**
+
+Уриэль Араухо, доктор философии по антропо...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1329.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">17.08.2026 14:59</div>
+                    <div class="news-title">**Трансмашхолдинг поставит локомотивы стандартной колеи для маршрута Р...</div>
+                    <div class="news-text">**Трансмашхолдинг поставит локомотивы стандартной колеи для маршрута Россия – Китай**
+
+Брянский машиностроительный завод (БМЗ), входящий в Трансмашхол...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1328.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">17.08.2026 14:38</div>
+                    <div class="news-title">**Трамп пересмотрит партнерство с членами НАТО**
+
+Лукас Лейроз, член А...</div>
+                    <div class="news-text">**Трамп пересмотрит партнерство с членами НАТО**
+
+Лукас Лейроз, член Ассоциации журналистов БРИКС, научный сотрудник Центра геостратегических исследов...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1327.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">17.08.2026 14:00</div>
+                    <div class="news-title">**Война в Иране приводит к росту инфляции в Великобритании и угрожает ...</div>
+                    <div class="news-text">**Война в Иране приводит к росту инфляции в Великобритании и угрожает новым шоком стоимости жизни – СМИ**
+
+Ахмед Адель, исследователь геополитики и по...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1326.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">17.08.2026 13:24</div>
+                    <div class="news-title">**Индия и Россия начинают дедолларизацию, чтобы достичь целевого показ...</div>
+                    <div class="news-text">**Индия и Россия начинают дедолларизацию, чтобы достичь целевого показателя торгового оборота в 100 миллиардов долларов**
+
+Винод Дсуза Россия и Индия ...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1325.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">16.08.2026 15:17</div>
+                    <div class="news-title">**Искусственный интеллект в поддержку израильской разведки. Планирован...</div>
+                    <div class="news-text">**Искусственный интеллект в поддержку израильской разведки. Планирование геноцида. «Как будет выглядеть Газа в будущем»**
+
+С использованием искусствен...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1324.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">16.08.2026 04:18</div>
+                    <div class="news-title">**Глобальная война: «Мы собираемся уничтожить 7 стран за 5 лет: Ирак, ...</div>
+                    <div class="news-text">**Глобальная война: «Мы собираемся уничтожить 7 стран за 5 лет: Ирак, Сирию, Ливан, Ливию, Сомали, Судан и Иран».**
+
+Первоначально опубликовано в март...</div>
+                </div>
+            </div>
+
+            <div class="news-card">
+                <img src="assets/post_1323.jpg" alt="News image" loading="lazy">
+                <div class="news-content">
+                    <div class="news-date">15.08.2026 15:16</div>
+                    <div class="news-title">**Война в Ираке, 23 года назад: думая о немыслимом: «Была ли Маргарет ...</div>
+                    <div class="news-text">**Война в Ираке, 23 года назад: думая о немыслимом: «Была ли Маргарет Хассан принесена в жертву» правительством Тони Блэра?**
+
+Четырнадцать лет назад ...</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="footer">
+        <div class="container">
+            <p>© 2026 Novikon | Автоматический парсинг новостей</p>
+            <p style="font-size: 12px; margin-top: 5px;">Обновляется каждые 30 минут</p>
+        </div>
+    </div>
 </body>
 </html>
