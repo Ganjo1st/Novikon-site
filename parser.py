@@ -5,6 +5,7 @@ from datetime import datetime
 from telethon import TelegramClient
 from telethon.tl.types import MessageMediaPhoto, MessageMediaDocument
 import shutil
+import html
 
 # Получение данных из секретов
 API_ID = int(os.getenv('API_ID', 0))
@@ -20,23 +21,18 @@ if not CHANNEL_ID:
     print("❌ Ошибка: TELEGRAM_CHANNEL_ID не установлен")
     exit(1)
 
-# Создаем клиент с API ID и Hash (сессия уже создана локально)
 client = TelegramClient('session', API_ID, API_HASH)
 
 async def parse_channel():
     try:
-        # Подключаемся с существующей сессией (не требует ввода кода)
         await client.connect()
         
-        # Проверяем авторизацию
         if not await client.is_user_authorized():
-            print("❌ Сессия не авторизована! Нужно создать session.session локально.")
-            print("📌 Запустите на компьютере: python create_session.py")
+            print("❌ Сессия не авторизована!")
             return
         
         print("✅ Пользователь авторизован")
         
-        # Определяем канал
         try:
             if CHANNEL_ID.startswith('@'):
                 entity = await client.get_entity(CHANNEL_ID)
@@ -55,17 +51,13 @@ async def parse_channel():
         limit = 40
         count = 0
         
-        # Создаем папку для изображений
         os.makedirs('assets', exist_ok=True)
         
-        # Получаем последние 40 сообщений (история!)
         print("📥 Получение истории сообщений...")
         async for message in client.iter_messages(entity, limit=limit):
-            # Пропускаем служебные сообщения
             if message.text and message.text.startswith('/'):
                 continue
             
-            # Пропускаем пустые сообщения
             if not message.text and not message.media:
                 continue
                 
@@ -76,7 +68,6 @@ async def parse_channel():
                 'image_url': None
             }
             
-            # Обработка медиа
             if message.media:
                 try:
                     path = await client.download_media(message.media, file=f'temp_{message.id}.jpg')
@@ -94,13 +85,12 @@ async def parse_channel():
         
         print(f"📊 Всего обработано {len(posts)} постов")
         
-        # Сохраняем в JSON
         with open('posts.json', 'w', encoding='utf-8') as f:
             json.dump(posts, f, ensure_ascii=False, indent=2)
         print("💾 Сохранен posts.json")
         
-        # Генерируем HTML
         generate_html(posts)
+        generate_post_pages(posts)
         
         await client.disconnect()
         print("✅ Парсинг завершен успешно!")
@@ -121,26 +111,66 @@ def generate_html(posts):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Novikon - Новости</title>
     <style>
+        :root {{
+            --bg: #f5f5f5;
+            --text: #333;
+            --card-bg: white;
+            --header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow: 0 4px 15px rgba(0,0,0,0.08);
+            --border: #e0e0e0;
+        }}
+        [data-theme="dark"] {{
+            --bg: #1a1a2e;
+            --text: #e0e0e0;
+            --card-bg: #16213e;
+            --header-bg: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            --shadow: 0 4px 15px rgba(0,0,0,0.3);
+            --border: #2a2a4a;
+        }}
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-            background: #f5f5f5;
-            color: #333;
+            background: var(--bg);
+            color: var(--text);
             line-height: 1.6;
+            transition: background 0.3s, color 0.3s;
         }}
         header {{
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--header-bg);
             color: white;
             padding: 30px 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: background 0.3s;
         }}
         .container {{
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
         }}
+        .header-content {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }}
         header h1 {{ font-size: 32px; font-weight: 700; }}
         header .subtitle {{ color: rgba(255,255,255,0.9); font-size: 16px; margin-top: 5px; }}
+        
+        .theme-toggle {{
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }}
+        .theme-toggle:hover {{
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }}
+        
         .news-grid {{
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -148,15 +178,16 @@ def generate_html(posts):
             padding: 30px 0;
         }}
         .news-card {{
-            background: white;
+            background: var(--card-bg);
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s;
+            cursor: pointer;
         }}
         .news-card:hover {{
             transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }}
         .news-card img {{
             width: 100%;
@@ -171,10 +202,12 @@ def generate_html(posts):
             font-weight: 600;
             margin-bottom: 12px;
             line-height: 1.4;
+            color: var(--text);
         }}
         .news-text {{
-            color: #555;
+            color: var(--text);
             font-size: 15px;
+            opacity: 0.8;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
@@ -182,7 +215,7 @@ def generate_html(posts):
         }}
         .no-image {{
             height: 220px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--header-bg);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -194,23 +227,16 @@ def generate_html(posts):
             padding: 30px 0;
             color: #888;
             font-size: 14px;
-            border-top: 1px solid #e0e0e0;
+            border-top: 1px solid var(--border);
             margin-top: 20px;
+            transition: border-color 0.3s;
         }}
-        .update-time {{
-            background: #e8e8e8;
-            padding: 10px 20px;
-            border-radius: 8px;
+        .read-more {{
             display: inline-block;
-            margin: 10px 0;
-            font-size: 14px;
-            color: #555;
-        }}
-        .stats {{
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-            margin: 10px 0;
+            margin-top: 12px;
+            color: #667eea;
+            font-weight: 600;
+            text-decoration: none;
         }}
         @media (max-width: 768px) {{
             .news-grid {{
@@ -218,21 +244,27 @@ def generate_html(posts):
                 padding: 15px 0;
             }}
             header h1 {{ font-size: 24px; }}
+            .header-content {{
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }}
         }}
     </style>
 </head>
 <body>
     <header>
         <div class="container">
-            <h1>📰 Novikon</h1>
-            <div class="subtitle">Актуальные новости и события</div>
+            <div class="header-content">
+                <div>
+                    <h1>📰 Novikon</h1>
+                    <div class="subtitle">Актуальные новости и события</div>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()">🌙 Тёмная тема</button>
+            </div>
         </div>
     </header>
     <div class="container">
-        <div style="text-align: center; margin: 15px 0;">
-            <span class="update-time">🔄 Обновлено: {current_time}</span>
-            <div class="stats">📊 Всего постов: {len(posts)}</div>
-        </div>
         <div class="news-grid">
 '''
 
@@ -248,21 +280,22 @@ def generate_html(posts):
         else:
             img_html = '<div class="no-image">📄</div>'
         
-        title = title.replace('"', '&quot;').replace("'", '&#39;').replace('<', '&lt;').replace('>', '&gt;')
-        text_preview = text_preview.replace('"', '&quot;').replace("'", '&#39;').replace('<', '&lt;').replace('>', '&gt;')
+        title_escaped = html.escape(title)
+        text_escaped = html.escape(text_preview)
         
         html += f'''
-            <div class="news-card">
+            <div class="news-card" onclick="window.location.href='/Novikon-site/post_{post["id"]}.html'">
                 {img_html}
                 <div class="news-content">
                     <div class="news-date">{date_str}</div>
-                    <div class="news-title">{title}</div>
-                    <div class="news-text">{text_preview}</div>
+                    <div class="news-title">{title_escaped}</div>
+                    <div class="news-text">{text_escaped}</div>
+                    <span class="read-more">Читать далее →</span>
                 </div>
             </div>
 '''
 
-    html += '''
+    html += f'''
         </div>
     </div>
     <div class="footer">
@@ -271,6 +304,21 @@ def generate_html(posts):
             <p style="font-size: 12px; margin-top: 5px;">Обновляется каждые 30 минут</p>
         </div>
     </div>
+    <script>
+        function toggleTheme() {{
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            document.querySelector('.theme-toggle').textContent = newTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+        }}
+        
+        // Загрузка сохраненной темы
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+    </script>
 </body>
 </html>
 '''
@@ -278,6 +326,200 @@ def generate_html(posts):
     with open('index.html', 'w', encoding='utf-8') as f:
         f.write(html)
     print("🌐 Сгенерирован index.html")
+
+def generate_post_pages(posts):
+    """Генерация отдельных страниц для каждого поста"""
+    os.makedirs('posts', exist_ok=True)
+    
+    for post in posts:
+        title = post['text'][:70] + '...' if len(post['text']) > 70 else post['text']
+        
+        date_obj = datetime.fromisoformat(post['date'])
+        date_str = date_obj.strftime('%d.%m.%Y %H:%M')
+        
+        # Полный текст
+        full_text = post['text'].replace('\n', '<br>')
+        
+        # Изображение
+        if post.get('image_url'):
+            img_html = f'<img src="../{post["image_url"]}" alt="News image" style="max-width: 100%; border-radius: 12px; margin: 20px 0;">'
+        else:
+            img_html = ''
+        
+        html = f'''<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{html.escape(title)} - Novikon</title>
+    <style>
+        :root {{
+            --bg: #f5f5f5;
+            --text: #333;
+            --card-bg: white;
+            --header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow: 0 4px 15px rgba(0,0,0,0.08);
+            --border: #e0e0e0;
+        }}
+        [data-theme="dark"] {{
+            --bg: #1a1a2e;
+            --text: #e0e0e0;
+            --card-bg: #16213e;
+            --header-bg: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            --shadow: 0 4px 15px rgba(0,0,0,0.3);
+            --border: #2a2a4a;
+        }}
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            transition: background 0.3s, color 0.3s;
+        }}
+        header {{
+            background: var(--header-bg);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: background 0.3s;
+        }}
+        .container {{
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }}
+        .header-content {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }}
+        header a {{
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+        }}
+        .theme-toggle {{
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }}
+        .theme-toggle:hover {{
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }}
+        .post-content {{
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 40px;
+            margin: 30px 0;
+            box-shadow: var(--shadow);
+            transition: background 0.3s;
+        }}
+        .post-date {{
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }}
+        .post-title {{
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }}
+        .post-text {{
+            font-size: 17px;
+            line-height: 1.8;
+        }}
+        .post-text a {{
+            color: #667eea;
+            text-decoration: none;
+        }}
+        .back-button {{
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 24px;
+            background: var(--header-bg);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.3s;
+        }}
+        .back-button:hover {{
+            transform: scale(1.05);
+        }}
+        .footer {{
+            text-align: center;
+            padding: 30px 0;
+            color: #888;
+            font-size: 14px;
+            border-top: 1px solid var(--border);
+            margin-top: 20px;
+            transition: border-color 0.3s;
+        }}
+        @media (max-width: 768px) {{
+            .post-content {{ padding: 20px; }}
+            .post-title {{ font-size: 22px; }}
+            .header-content {{
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="/Novikon-site/">← На главную</a>
+                <button class="theme-toggle" onclick="toggleTheme()">🌙 Тёмная тема</button>
+            </div>
+        </div>
+    </header>
+    <div class="container">
+        <div class="post-content">
+            <div class="post-date">📅 {date_str}</div>
+            <h1 class="post-title">{html.escape(title)}</h1>
+            {img_html}
+            <div class="post-text">{full_text}</div>
+            <a href="/Novikon-site/" class="back-button">← На главную</a>
+        </div>
+    </div>
+    <div class="footer">
+        <div class="container">
+            <p>© 2026 Novikon | Автоматический парсинг новостей</p>
+        </div>
+    </div>
+    <script>
+        function toggleTheme() {{
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            document.querySelector('.theme-toggle').textContent = newTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+        }}
+        
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+    </script>
+</body>
+</html>
+'''
+        
+        with open(f'posts/post_{post["id"]}.html', 'w', encoding='utf-8') as f:
+            f.write(html)
+    
+    print(f"📄 Сгенерировано {len(posts)} отдельных страниц")
 
 if __name__ == '__main__':
     asyncio.run(parse_channel())
