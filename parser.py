@@ -6,6 +6,7 @@ from telethon import TelegramClient
 from telethon.tl.types import MessageMediaPhoto, MessageMediaDocument
 import shutil
 import html as html_module
+import re
 
 # Получение данных из секретов
 API_ID = int(os.getenv('API_ID', 0))
@@ -21,6 +22,17 @@ if not CHANNEL_ID:
     exit(1)
 
 client = TelegramClient('session', API_ID, API_HASH)
+
+def clean_title(title):
+    """Очищает заголовок от маркеров разметки"""
+    # Удаляем ** в начале и конце
+    title = re.sub(r'^\*\*\s*', '', title)
+    title = re.sub(r'\s*\*\*$', '', title)
+    # Удаляем множественные **
+    title = re.sub(r'\*\*', '', title)
+    # Удаляем лишние пробелы
+    title = ' '.join(title.split())
+    return title
 
 async def parse_channel():
     try:
@@ -51,7 +63,7 @@ async def parse_channel():
         count = 0
         
         os.makedirs('assets', exist_ok=True)
-        os.makedirs('posts', exist_ok=True)  # Создаем папку posts
+        os.makedirs('posts', exist_ok=True)
         
         print("📥 Получение истории сообщений...")
         async for message in client.iter_messages(entity, limit=limit):
@@ -304,22 +316,26 @@ def generate_html(posts):
 '''
 
     for post in posts:
-        # Заголовок - первая строка текста
+        # Заголовок - первая строка текста с очисткой от **
         text_lines = post['text'].split('\n')
-        title = text_lines[0] if text_lines else ''
+        raw_title = text_lines[0] if text_lines else ''
+        title = clean_title(raw_title)
         
-        # Краткое описание - следующие 2-3 строки после заголовка
+        # Краткое описание - следующие строки после заголовка
         preview_lines = []
         char_count = 0
         for line in text_lines[1:]:
-            if char_count + len(line) < 200:
-                preview_lines.append(line)
-                char_count += len(line)
-            else:
+            clean_line = line.strip()
+            if clean_line and char_count + len(clean_line) < 200:
+                preview_lines.append(clean_line)
+                char_count += len(clean_line)
+            elif char_count > 100:
                 break
-        text_preview = ' '.join(preview_lines)[:200] + '...' if preview_lines else ''
+        text_preview = ' '.join(preview_lines)[:200]
+        if len(text_preview) == 200:
+            text_preview += '...'
         
-        # Если нет текста после заголовка, берем первые 150 символов
+        # Если нет текста после заголовка
         if not text_preview and len(post['text']) > 100:
             text_preview = post['text'][:200] + '...'
         
@@ -382,15 +398,21 @@ def generate_post_pages(posts):
     os.makedirs('posts', exist_ok=True)
     
     for post in posts:
-        # Заголовок - первая строка
+        # Заголовок - первая строка с очисткой от **
         text_lines = post['text'].split('\n')
-        title = text_lines[0] if text_lines else ''
+        raw_title = text_lines[0] if text_lines else ''
+        title = clean_title(raw_title)
         
         date_obj = datetime.fromisoformat(post['date'])
         date_str = date_obj.strftime('%d.%m.%Y %H:%M')
         
         # Полный текст (все строки после заголовка)
-        full_text = '<br>'.join(text_lines[1:]) if len(text_lines) > 1 else post['text'].replace('\n', '<br>')
+        full_text_lines = []
+        for line in text_lines[1:]:
+            clean_line = line.strip()
+            if clean_line:
+                full_text_lines.append(clean_line)
+        full_text = '<br>'.join(full_text_lines) if full_text_lines else post['text'].replace('\n', '<br>')
         
         # Изображение
         if post.get('image_url'):
