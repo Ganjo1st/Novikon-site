@@ -6,4 +6,5 @@ temp_*.jpg
 .env
 *.session
 *.session-journal
-posts/
+# НЕ игнорируем posts!
+# posts/  <- удалите эту строку если она есть
