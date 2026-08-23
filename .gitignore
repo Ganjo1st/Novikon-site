@@ -1,4 +1,3 @@
-session.session
 __pycache__/
 *.pyc
 temp_*.jpg
@@ -7,3 +6,4 @@ temp_*.jpg
 .env
 *.session
 *.session-journal
+posts/
