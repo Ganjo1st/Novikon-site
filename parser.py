@@ -14,19 +14,25 @@ if not BOT_TOKEN or not CHANNEL_ID:
     print("❌ Ошибка: TELEGRAM_BOT_TOKEN или TELEGRAM_CHANNEL_ID не установлены")
     exit(1)
 
-# Для ботов не нужен api_id
+# Для ботов используем специальный метод с api_id=0 и api_hash=''
+# Это работает для ботов в Telethon
 client = TelegramClient('session', 0, '')
 
 async def parse_channel():
     try:
+        # Вход с токеном бота
         await client.start(bot_token=BOT_TOKEN)
         print("✅ Бот успешно запущен")
         
-        # Если CHANNEL_ID начинается с @, используем как username
+        # Определяем канал
         if CHANNEL_ID.startswith('@'):
             entity = await client.get_entity(CHANNEL_ID)
         else:
-            entity = await client.get_entity(int(CHANNEL_ID))
+            try:
+                entity = await client.get_entity(int(CHANNEL_ID))
+            except ValueError:
+                # Если не удается получить по ID, пробуем как username
+                entity = await client.get_entity(CHANNEL_ID)
         
         print(f"📡 Подключен к каналу: {entity.title if hasattr(entity, 'title') else CHANNEL_ID}")
         
@@ -37,12 +43,13 @@ async def parse_channel():
         # Создаем папку для изображений
         os.makedirs('assets', exist_ok=True)
         
+        # Получаем последние 40 сообщений
         async for message in client.iter_messages(entity, limit=limit):
             # Пропускаем служебные сообщения
             if message.text and message.text.startswith('/'):
                 continue
             
-            # Пропускаем пустые сообщения
+            # Пропускаем пустые сообщения (без текста и без медиа)
             if not message.text and not message.media:
                 continue
                 
@@ -56,25 +63,13 @@ async def parse_channel():
             # Обработка медиа
             if message.media:
                 try:
-                    # Проверяем тип медиа
-                    if isinstance(message.media, MessageMediaPhoto):
-                        path = await client.download_media(message.media, file=f'temp_{message.id}.jpg')
-                        if path:
-                            new_path = f'assets/post_{message.id}.jpg'
-                            shutil.move(path, new_path)
-                            post['image_url'] = new_path
-                            print(f"📸 Загружено фото: {new_path}")
-                            
-                    elif isinstance(message.media, MessageMediaDocument):
-                        if hasattr(message.media, 'document') and message.media.document:
-                            mime_type = message.media.document.mime_type or ''
-                            if mime_type.startswith('image/'):
-                                path = await client.download_media(message.media, file=f'temp_{message.id}.jpg')
-                                if path:
-                                    new_path = f'assets/post_{message.id}.jpg'
-                                    shutil.move(path, new_path)
-                                    post['image_url'] = new_path
-                                    print(f"📸 Загружено изображение: {new_path}")
+                    # Скачиваем медиа
+                    path = await client.download_media(message.media, file=f'temp_{message.id}.jpg')
+                    if path:
+                        new_path = f'assets/post_{message.id}.jpg'
+                        shutil.move(path, new_path)
+                        post['image_url'] = new_path
+                        print(f"📸 Загружено медиа: {new_path}")
                 except Exception as e:
                     print(f"⚠️ Ошибка загрузки медиа для {message.id}: {e}")
             
@@ -93,12 +88,13 @@ async def parse_channel():
         generate_html(posts)
         
         await client.disconnect()
-        print("✅ Готово!")
+        print("✅ Парсинг завершен успешно!")
         
     except Exception as e:
         print(f"❌ Критическая ошибка: {e}")
         import traceback
         traceback.print_exc()
+        await client.disconnect()
 
 def generate_html(posts):
     current_time = datetime.now().strftime('%d.%m.%Y %H:%M')
@@ -238,8 +234,8 @@ def generate_html(posts):
             img_html = '<div class="no-image">📄</div>'
         
         # Экранируем опасные символы
-        title = title.replace('"', '&quot;').replace("'", '&#39;')
-        text_preview = text_preview.replace('"', '&quot;').replace("'", '&#39;')
+        title = title.replace('"', '&quot;').replace("'", '&#39;').replace('<', '&lt;').replace('>', '&gt;')
+        text_preview = text_preview.replace('"', '&quot;').replace("'", '&#39;').replace('<', '&lt;').replace('>', '&gt;')
         
         html += f'''
             <div class="news-card">
