@@ -51,6 +51,7 @@ async def parse_channel():
         count = 0
         
         os.makedirs('assets', exist_ok=True)
+        os.makedirs('posts', exist_ok=True)  # Создаем папку posts
         
         print("📥 Получение истории сообщений...")
         async for message in client.iter_messages(entity, limit=limit):
@@ -334,7 +335,7 @@ def generate_html(posts):
         text_escaped = html_module.escape(text_preview)
         
         html_output += f'''
-            <a href="/Novikon-site/posts/post_{post["id"]}.html" class="news-card">
+            <a href="posts/post_{post["id"]}.html" class="news-card">
                 {img_html}
                 <div class="news-content">
                     <div class="news-date">{date_str}</div>
