@@ -1,0 +1,7 @@
+session.session
+__pycache__/
+*.pyc
+temp_*.jpg
+.DS_Store
+*.log
+.env
