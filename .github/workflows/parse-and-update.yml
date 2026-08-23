@@ -39,11 +39,20 @@ jobs:
         run: |
           python parser.py
           
+      - name: List generated files
+        run: |
+          echo "📁 Файлы в корне:"
+          ls -la
+          echo "📁 Файлы в posts:"
+          ls -la posts/ || echo "Папка posts пуста или не существует"
+          
       - name: Commit and push changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add -A
+          # Принудительно добавляем все файлы, включая папку posts
+          git add -f index.html posts.json assets/ posts/
+          git status
           git diff --staged --quiet || git commit -m "Auto-update news [skip ci]"
           git push
           
