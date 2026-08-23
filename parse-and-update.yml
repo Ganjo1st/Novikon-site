@@ -2,12 +2,16 @@ name: Parse Telegram & Update Site
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # каждые 30 минут
-  workflow_dispatch:  # ручной запуск
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
 
 jobs:
   parse-and-update:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
     
     steps:
       - name: Checkout repository
@@ -29,10 +33,13 @@ jobs:
         run: |
           python parser.py
           
-      - name: Commit and push changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add index.html posts.json
-          git diff --staged --quiet || git commit -m "Auto-update news [skip ci]"
-          git push
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+          
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+          
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
