@@ -5,7 +5,7 @@ from datetime import datetime
 from telethon import TelegramClient
 from telethon.tl.types import MessageMediaPhoto, MessageMediaDocument
 import shutil
-import html
+import html as html_module  # Исправленный импорт
 
 # Получение данных из секретов
 API_ID = int(os.getenv('API_ID', 0))
@@ -102,61 +102,59 @@ async def parse_channel():
         await client.disconnect()
 
 def generate_html(posts):
-    current_time = datetime.now().strftime('%d.%m.%Y %H:%M')
-    
-    html = f'''<!DOCTYPE html>
+    html_output = '''<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Novikon - Новости</title>
     <style>
-        :root {{
+        :root {
             --bg: #f5f5f5;
             --text: #333;
             --card-bg: white;
             --header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --shadow: 0 4px 15px rgba(0,0,0,0.08);
             --border: #e0e0e0;
-        }}
-        [data-theme="dark"] {{
+        }
+        [data-theme="dark"] {
             --bg: #1a1a2e;
             --text: #e0e0e0;
             --card-bg: #16213e;
             --header-bg: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
             --shadow: 0 4px 15px rgba(0,0,0,0.3);
             --border: #2a2a4a;
-        }}
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
             transition: background 0.3s, color 0.3s;
-        }}
-        header {{
+        }
+        header {
             background: var(--header-bg);
             color: white;
             padding: 30px 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             transition: background 0.3s;
-        }}
-        .container {{
+        }
+        .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
-        }}
-        .header-content {{
+        }
+        .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-        }}
-        header h1 {{ font-size: 32px; font-weight: 700; }}
-        header .subtitle {{ color: rgba(255,255,255,0.9); font-size: 16px; margin-top: 5px; }}
+        }
+        header h1 { font-size: 32px; font-weight: 700; }
+        header .subtitle { color: rgba(255,255,255,0.9); font-size: 16px; margin-top: 5px; }
         
-        .theme-toggle {{
+        .theme-toggle {
             background: rgba(255,255,255,0.2);
             border: 2px solid rgba(255,255,255,0.3);
             color: white;
@@ -165,46 +163,46 @@ def generate_html(posts):
             cursor: pointer;
             font-size: 16px;
             transition: all 0.3s;
-        }}
-        .theme-toggle:hover {{
+        }
+        .theme-toggle:hover {
             background: rgba(255,255,255,0.3);
             transform: scale(1.05);
-        }}
+        }
         
-        .news-grid {{
+        .news-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 25px;
             padding: 30px 0;
-        }}
-        .news-card {{
+        }
+        .news-card {
             background: var(--card-bg);
             border-radius: 12px;
             overflow: hidden;
             box-shadow: var(--shadow);
             transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s;
             cursor: pointer;
-        }}
-        .news-card:hover {{
+        }
+        .news-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }}
-        .news-card img {{
+        }
+        .news-card img {
             width: 100%;
             height: 220px;
             object-fit: cover;
             background: #e0e0e0;
-        }}
-        .news-content {{ padding: 20px; }}
-        .news-date {{ color: #888; font-size: 13px; margin-bottom: 10px; }}
-        .news-title {{
+        }
+        .news-content { padding: 20px; }
+        .news-date { color: #888; font-size: 13px; margin-bottom: 10px; }
+        .news-title {
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 12px;
             line-height: 1.4;
             color: var(--text);
-        }}
-        .news-text {{
+        }
+        .news-text {
             color: var(--text);
             font-size: 15px;
             opacity: 0.8;
@@ -212,8 +210,8 @@ def generate_html(posts):
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
-        }}
-        .no-image {{
+        }
+        .no-image {
             height: 220px;
             background: var(--header-bg);
             display: flex;
@@ -221,8 +219,8 @@ def generate_html(posts):
             justify-content: center;
             color: white;
             font-size: 48px;
-        }}
-        .footer {{
+        }
+        .footer {
             text-align: center;
             padding: 30px 0;
             color: #888;
@@ -230,26 +228,26 @@ def generate_html(posts):
             border-top: 1px solid var(--border);
             margin-top: 20px;
             transition: border-color 0.3s;
-        }}
-        .read-more {{
+        }
+        .read-more {
             display: inline-block;
             margin-top: 12px;
             color: #667eea;
             font-weight: 600;
             text-decoration: none;
-        }}
-        @media (max-width: 768px) {{
-            .news-grid {{
+        }
+        @media (max-width: 768px) {
+            .news-grid {
                 grid-template-columns: 1fr;
                 padding: 15px 0;
-            }}
-            header h1 {{ font-size: 24px; }}
-            .header-content {{
+            }
+            header h1 { font-size: 24px; }
+            .header-content {
                 flex-direction: column;
                 gap: 15px;
                 text-align: center;
-            }}
-        }}
+            }
+        }
     </style>
 </head>
 <body>
@@ -280,11 +278,12 @@ def generate_html(posts):
         else:
             img_html = '<div class="no-image">📄</div>'
         
-        title_escaped = html.escape(title)
-        text_escaped = html.escape(text_preview)
+        # Используем html_module.escape вместо html.escape
+        title_escaped = html_module.escape(title)
+        text_escaped = html_module.escape(text_preview)
         
-        html += f'''
-            <div class="news-card" onclick="window.location.href='/Novikon-site/post_{post["id"]}.html'">
+        html_output += f'''
+            <div class="news-card" onclick="window.location.href='/Novikon-site/posts/post_{post["id"]}.html'">
                 {img_html}
                 <div class="news-content">
                     <div class="news-date">{date_str}</div>
@@ -295,7 +294,7 @@ def generate_html(posts):
             </div>
 '''
 
-    html += f'''
+    html_output += '''
         </div>
     </div>
     <div class="footer">
@@ -305,16 +304,15 @@ def generate_html(posts):
         </div>
     </div>
     <script>
-        function toggleTheme() {{
+        function toggleTheme() {
             const html = document.documentElement;
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             document.querySelector('.theme-toggle').textContent = newTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
-        }}
+        }
         
-        // Загрузка сохраненной темы
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
         document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
@@ -324,7 +322,7 @@ def generate_html(posts):
 '''
     
     with open('index.html', 'w', encoding='utf-8') as f:
-        f.write(html)
+        f.write(html_output)
     print("🌐 Сгенерирован index.html")
 
 def generate_post_pages(posts):
@@ -337,7 +335,7 @@ def generate_post_pages(posts):
         date_obj = datetime.fromisoformat(post['date'])
         date_str = date_obj.strftime('%d.%m.%Y %H:%M')
         
-        # Полный текст
+        # Полный текст с заменой переносов
         full_text = post['text'].replace('\n', '<br>')
         
         # Изображение
@@ -346,12 +344,14 @@ def generate_post_pages(posts):
         else:
             img_html = ''
         
-        html = f'''<!DOCTYPE html>
+        title_escaped = html_module.escape(title)
+        
+        html_output = f'''<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{html.escape(title)} - Novikon</title>
+    <title>{title_escaped} - Novikon</title>
     <style>
         :root {{
             --bg: #f5f5f5;
@@ -487,7 +487,7 @@ def generate_post_pages(posts):
     <div class="container">
         <div class="post-content">
             <div class="post-date">📅 {date_str}</div>
-            <h1 class="post-title">{html.escape(title)}</h1>
+            <h1 class="post-title">{title_escaped}</h1>
             {img_html}
             <div class="post-text">{full_text}</div>
             <a href="/Novikon-site/" class="back-button">← На главную</a>
@@ -517,7 +517,7 @@ def generate_post_pages(posts):
 '''
         
         with open(f'posts/post_{post["id"]}.html', 'w', encoding='utf-8') as f:
-            f.write(html)
+            f.write(html_output)
     
     print(f"📄 Сгенерировано {len(posts)} отдельных страниц")
 
