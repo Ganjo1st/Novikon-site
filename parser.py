@@ -64,7 +64,7 @@ async def parse_channel():
         print(f"📡 Подключен к каналу: {entity.title if hasattr(entity, 'title') else CHANNEL_ID}")
         
         posts = []
-        limit = 40
+        limit = 42  # ИЗМЕНЕНО С 40 НА 42
         count = 0
         
         os.makedirs('assets', exist_ok=True)
