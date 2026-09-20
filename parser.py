@@ -64,7 +64,7 @@ async def parse_channel():
         print(f"📡 Подключен к каналу: {entity.title if hasattr(entity, 'title') else CHANNEL_ID}")
         
         posts = []
-        limit = 42  # ИЗМЕНЕНО С 40 НА 42
+        limit = 42
         count = 0
         
         os.makedirs('assets', exist_ok=True)
@@ -123,6 +123,9 @@ async def parse_channel():
         await client.disconnect()
 
 def generate_html(posts):
+    # Подготовка данных для поиска
+    posts_json = json.dumps(posts, ensure_ascii=False)
+    
     html_output = '''<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -138,6 +141,9 @@ def generate_html(posts):
             --header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --shadow: 0 4px 15px rgba(0,0,0,0.08);
             --border: #e0e0e0;
+            --accent: #667eea;
+            --favorite: #ffc107;
+            --unread: #ff4757;
         }
         [data-theme="dark"] {
             --bg: #1a1a2e;
@@ -146,6 +152,7 @@ def generate_html(posts):
             --header-bg: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
             --shadow: 0 4px 15px rgba(0,0,0,0.3);
             --border: #2a2a4a;
+            --accent: #7b8cde;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -153,14 +160,17 @@ def generate_html(posts):
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
-            transition: background 0.3s, color 0.3s;
+            transition: background 0.4s, color 0.4s;
         }
         header {
             background: var(--header-bg);
             color: white;
             padding: 20px 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: background 0.3s;
+            transition: background 0.4s;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         .container {
             max-width: 1200px;
@@ -194,20 +204,99 @@ def generate_html(posts):
             color: rgba(255,255,255,0.9);
             font-size: 14px;
         }
-        .theme-toggle {
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .control-btn {
             background: rgba(255,255,255,0.2);
             border: 2px solid rgba(255,255,255,0.3);
             color: white;
-            padding: 10px 20px;
+            padding: 8px 14px;
             border-radius: 25px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             transition: all 0.3s;
             white-space: nowrap;
+            position: relative;
         }
-        .theme-toggle:hover {
+        .control-btn:hover {
             background: rgba(255,255,255,0.3);
             transform: scale(1.05);
+        }
+        .control-btn.active {
+            background: rgba(255,255,255,0.4);
+            border-color: white;
+        }
+        .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--unread);
+            color: white;
+            border-radius: 50%;
+            min-width: 20px;
+            height: 20px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            padding: 0 4px;
+        }
+        
+        .search-bar {
+            max-width: 1200px;
+            margin: 20px auto 0;
+            padding: 0 20px;
+            display: none;
+        }
+        .search-bar.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            background: var(--card-bg);
+            color: var(--text);
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            padding: 15px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .filter-btn {
+            padding: 8px 20px;
+            border: 2px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text);
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .filter-btn:hover {
+            border-color: var(--accent);
+        }
+        .filter-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
         }
         
         .news-grid {
@@ -221,11 +310,14 @@ def generate_html(posts):
             border-radius: 12px;
             overflow: hidden;
             box-shadow: var(--shadow);
-            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.4s;
             cursor: pointer;
             text-decoration: none;
             color: inherit;
             display: block;
+            position: relative;
+            animation: fadeIn 0.5s ease forwards;
+            opacity: 0;
         }
         .news-card:hover {
             transform: translateY(-5px);
@@ -236,6 +328,10 @@ def generate_html(posts):
             height: 220px;
             object-fit: cover;
             background: #e0e0e0;
+            transition: transform 0.5s ease;
+        }
+        .news-card:hover img {
+            transform: scale(1.05);
         }
         .news-content { padding: 20px; }
         .news-date { color: #888; font-size: 13px; margin-bottom: 10px; }
@@ -264,6 +360,39 @@ def generate_html(posts):
             color: white;
             font-size: 48px;
         }
+        
+        .card-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .action-btn:hover {
+            transform: scale(1.15);
+            background: white;
+        }
+        .action-btn.favorite.active {
+            background: var(--favorite);
+            color: white;
+        }
+        
         .footer {
             text-align: center;
             padding: 30px 0;
@@ -271,15 +400,136 @@ def generate_html(posts):
             font-size: 14px;
             border-top: 1px solid var(--border);
             margin-top: 20px;
-            transition: border-color 0.3s;
+            transition: border-color 0.4s;
         }
         .read-more {
             display: inline-block;
             margin-top: 12px;
-            color: #667eea;
+            color: var(--accent);
             font-weight: 600;
             text-decoration: none;
         }
+        
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+            font-size: 18px;
+            grid-column: 1 / -1;
+        }
+        
+        /* Toast уведомления */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: var(--card-bg);
+            color: var(--text);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            border-left: 4px solid var(--accent);
+            min-width: 280px;
+            max-width: 400px;
+            animation: slideInRight 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .toast.favorite {
+            border-left-color: var(--favorite);
+        }
+        .toast-icon {
+            font-size: 24px;
+        }
+        .toast-content {
+            flex: 1;
+            font-size: 14px;
+        }
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .badge.pulse {
+            animation: pulse 1s ease infinite;
+        }
+        
+        /* Прогресс-бар */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 9999;
+            transition: width 0.3s;
+        }
+        
+        /* Language dropdown */
+        .lang-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .lang-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            overflow: hidden;
+            min-width: 150px;
+            z-index: 200;
+        }
+        .lang-menu.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        .lang-option {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--text);
+        }
+        .lang-option:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+        .lang-option.active {
+            background: rgba(102, 126, 234, 0.15);
+            font-weight: 600;
+        }
+        
         @media (max-width: 768px) {
             .news-grid {
                 grid-template-columns: 1fr;
@@ -296,14 +546,19 @@ def generate_html(posts):
                 gap: 10px;
                 text-align: center;
             }
-            .theme-toggle {
-                font-size: 14px;
-                padding: 8px 16px;
+            .header-controls {
+                justify-content: center;
+            }
+            .control-btn {
+                font-size: 13px;
+                padding: 7px 12px;
             }
         }
     </style>
 </head>
 <body>
+    <div class="progress-bar" id="progressBar"></div>
+    
     <header>
         <div class="container">
             <div class="header-content">
@@ -312,16 +567,54 @@ def generate_html(posts):
                         <img src="logo%20Novikon.png" alt="Novikon Logo">
                         <div>
                             <div class="site-title">Novikon</div>
-                            <div class="site-subtitle">Актуальные новости и события</div>
+                            <div class="site-subtitle" data-i18n="subtitle">Актуальные новости и события</div>
                         </div>
                     </a>
                 </div>
-                <button class="theme-toggle" onclick="toggleTheme()">🌙 Тёмная тема</button>
+                <div class="header-controls">
+                    <button class="control-btn" onclick="toggleSearch()" title="Поиск">
+                        🔍 <span data-i18n="search">Поиск</span>
+                    </button>
+                    <button class="control-btn" onclick="toggleFavorites()" id="favBtn" title="Избранное">
+                        ⭐ <span data-i18n="favorites">Избранное</span>
+                        <span class="badge" id="favBadge" style="display:none">0</span>
+                    </button>
+                    <button class="control-btn" id="unreadBtn" title="Непрочитанные">
+                        📬 <span data-i18n="unread">Новые</span>
+                        <span class="badge" id="unreadBadge" style="display:none">0</span>
+                    </button>
+                    <div class="lang-dropdown">
+                        <button class="control-btn" onclick="toggleLangMenu()" title="Язык">
+                            🌐 <span id="currentLang">RU</span>
+                        </button>
+                        <div class="lang-menu" id="langMenu">
+                            <div class="lang-option active" onclick="setLanguage('ru')">🇷🇺 Русский</div>
+                            <div class="lang-option" onclick="setLanguage('en')">🇬🇧 English</div>
+                            <div class="lang-option" onclick="setLanguage('de')">🇩🇪 Deutsch</div>
+                            <div class="lang-option" onclick="setLanguage('es')">🇪🇸 Español</div>
+                        </div>
+                    </div>
+                    <button class="control-btn" onclick="toggleTheme()" id="themeBtn">🌙 <span data-i18n="theme">Тема</span></button>
+                </div>
             </div>
         </div>
     </header>
+    
+    <div class="search-bar" id="searchBar">
+        <div class="container" style="padding: 0;">
+            <input type="text" id="searchInput" placeholder="Поиск по новостям..." oninput="performSearch()">
+        </div>
+    </div>
+    
     <div class="container">
-        <div class="news-grid">
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="filterPosts('all', this)" data-i18n="all">Все</button>
+            <button class="filter-btn" onclick="filterPosts('favorites', this)" data-i18n="filterFav">⭐ Избранные</button>
+            <button class="filter-btn" onclick="filterPosts('unread', this)" data-i18n="filterUnread">📬 Непрочитанные</button>
+            <button class="filter-btn" onclick="filterPosts('read', this)" data-i18n="filterRead">✅ Прочитанные</button>
+        </div>
+        
+        <div class="news-grid" id="newsGrid">
 '''
 
     for post in posts:
@@ -361,18 +654,27 @@ def generate_html(posts):
         text_escaped = html_module.escape(preview_text)
         
         html_output += f'''
-            <a href="/Novikon-site/posts/post_{post["id"]}.html" class="news-card">
-                {img_html}
-                <div class="news-content">
-                    <div class="news-date">{date_str}</div>
-                    <div class="news-title">{title_escaped}</div>
-                    <div class="news-text">{text_escaped}</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="{post["id"]}" data-title="{html_module.escape(title.lower())}" data-text="{html_module.escape(preview_text.lower())}">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite({post["id"]}, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead({post["id"]}, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_{post["id"]}.html" style="text-decoration: none; color: inherit;" onclick="markAsRead({post["id"]})">
+                    {img_html}
+                    <div class="news-content">
+                        <div class="news-date">{date_str}</div>
+                        <div class="news-title">{title_escaped}</div>
+                        <div class="news-text">{text_escaped}</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 '''
 
     html_output += '''
+        </div>
+        <div class="no-results" id="noResults" style="display:none;">
+            <p>😔 Ничего не найдено</p>
         </div>
     </div>
     <div class="footer">
@@ -380,269 +682,323 @@ def generate_html(posts):
             <p>© 2026 Novikon</p>
         </div>
     </div>
+    
+    <div class="toast-container" id="toastContainer"></div>
+    
     <script>
+        // ============ ДАННЫЕ ============
+        const postsData = ''' + posts_json + ''';
+        
+        // ============ ПЕРЕВОДЫ ============
+        const translations = {
+            ru: {
+                subtitle: 'Актуальные новости и события',
+                search: 'Поиск',
+                favorites: 'Избранное',
+                unread: 'Новые',
+                theme: 'Тема',
+                all: 'Все',
+                filterFav: '⭐ Избранные',
+                filterUnread: '📬 Непрочитанные',
+                filterRead: '✅ Прочитанные',
+                searchPlaceholder: 'Поиск по новостям...',
+                readMore: 'Читать далее →',
+                noResults: '😔 Ничего не найдено',
+                addedToFav: 'Добавлено в избранное',
+                removedFromFav: 'Удалено из избранного',
+                newArticles: 'новых статей'
+            },
+            en: {
+                subtitle: 'Latest news and events',
+                search: 'Search',
+                favorites: 'Favorites',
+                unread: 'New',
+                theme: 'Theme',
+                all: 'All',
+                filterFav: '⭐ Favorites',
+                filterUnread: '📬 Unread',
+                filterRead: '✅ Read',
+                searchPlaceholder: 'Search news...',
+                readMore: 'Read more →',
+                noResults: '😔 Nothing found',
+                addedToFav: 'Added to favorites',
+                removedFromFav: 'Removed from favorites',
+                newArticles: 'new articles'
+            },
+            de: {
+                subtitle: 'Aktuelle Nachrichten und Ereignisse',
+                search: 'Suche',
+                favorites: 'Favoriten',
+                unread: 'Neu',
+                theme: 'Thema',
+                all: 'Alle',
+                filterFav: '⭐ Favoriten',
+                filterUnread: '📬 Ungelesen',
+                filterRead: '✅ Gelesen',
+                searchPlaceholder: 'Nachrichten durchsuchen...',
+                readMore: 'Weiterlesen →',
+                noResults: '😔 Nichts gefunden',
+                addedToFav: 'Zu Favoriten hinzugefügt',
+                removedFromFav: 'Aus Favoriten entfernt',
+                newArticles: 'neue Artikel'
+            },
+            es: {
+                subtitle: 'Últimas noticias y eventos',
+                search: 'Buscar',
+                favorites: 'Favoritos',
+                unread: 'Nuevo',
+                theme: 'Tema',
+                all: 'Todos',
+                filterFav: '⭐ Favoritos',
+                filterUnread: '📬 No leídos',
+                filterRead: '✅ Leídos',
+                searchPlaceholder: 'Buscar noticias...',
+                readMore: 'Leer más →',
+                noResults: '😔 Nada encontrado',
+                addedToFav: 'Añadido a favoritos',
+                removedFromFav: 'Eliminado de favoritos',
+                newArticles: 'nuevos artículos'
+            }
+        };
+        
+        let currentLang = localStorage.getItem('lang') || 'ru';
+        let currentFilter = 'all';
+        
+        // ============ ТЕМА ============
         function toggleTheme() {
             const html = document.documentElement;
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            document.querySelector('.theme-toggle').textContent = newTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+            updateThemeButton(newTheme);
         }
         
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
-    </script>
-</body>
-</html>
-'''
-    
-    with open('index.html', 'w', encoding='utf-8') as f:
-        f.write(html_output)
-    print("🌐 Сгенерирован index.html")
-
-def generate_post_pages(posts):
-    os.makedirs('posts', exist_ok=True)
-    
-    print(f"📝 Генерация {len(posts)} страниц постов...")
-    
-    for i, post in enumerate(posts):
-        try:
-            text_lines = post['text'].split('\n')
-            raw_title = text_lines[0] if text_lines else ''
-            title = clean_title(raw_title)
-            
-            date_obj = datetime.fromisoformat(post['date'])
-            date_str = date_obj.strftime('%d.%m.%Y %H:%M')
-            
-            full_text_lines = []
-            for line in text_lines[1:]:
-                clean_line = clean_text(line)
-                if clean_line:
-                    full_text_lines.append(clean_line)
-            
-            full_text = '<br>'.join(full_text_lines) if full_text_lines else clean_text(post['text'])
-            
-            if not full_text:
-                full_text = title
-            
-            if post.get('image_url'):
-                img_html = f'<img src="../{post["image_url"]}" alt="News image" style="display: block; max-width: 100%; border-radius: 12px; margin: 20px auto;">'
-            else:
-                img_html = ''
-            
-            title_escaped = html_module.escape(title)
-            
-            html_output = f'''<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title_escaped} - Novikon</title>
-    <link rel="icon" href="../logo%20Novikon.png" type="image/png">
-    <style>
-        :root {{
-            --bg: #f5f5f5;
-            --text: #333;
-            --card-bg: white;
-            --header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --shadow: 0 4px 15px rgba(0,0,0,0.08);
-            --border: #e0e0e0;
-        }}
-        [data-theme="dark"] {{
-            --bg: #1a1a2e;
-            --text: #e0e0e0;
-            --card-bg: #16213e;
-            --header-bg: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
-            --shadow: 0 4px 15px rgba(0,0,0,0.3);
-            --border: #2a2a4a;
-        }}
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.8;
-            transition: background 0.3s, color 0.3s;
-        }}
-        header {{
-            background: var(--header-bg);
-            color: white;
-            padding: 20px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: background 0.3s;
-        }}
-        .container {{
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }}
-        .header-content {{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }}
-        .logo-link {{
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: white;
-            text-decoration: none;
-        }}
-        .logo-link img {{
-            height: 40px;
-            width: auto;
-            border-radius: 6px;
-        }}
-        .logo-link .site-title {{
-            font-size: 22px;
-            font-weight: 700;
-        }}
-        .theme-toggle {{
-            background: rgba(255,255,255,0.2);
-            border: 2px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }}
-        .theme-toggle:hover {{
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.05);
-        }}
-        .post-content {{
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 40px;
-            margin: 30px 0;
-            box-shadow: var(--shadow);
-            transition: background 0.3s;
-        }}
-        .post-date {{
-            color: #888;
-            font-size: 14px;
-            margin-bottom: 15px;
-        }}
-        .post-title {{
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            line-height: 1.3;
-        }}
-        .post-text {{
-            font-size: 17px;
-            line-height: 1.8;
-        }}
-        .post-text a {{
-            color: #667eea;
-            text-decoration: none;
-        }}
-        .post-text img {{
-            display: block;
-            max-width: 100%;
-            border-radius: 12px;
-            margin: 20px auto;
-        }}
-        .back-button {{
-            display: inline-block;
-            margin-top: 30px;
-            padding: 12px 24px;
-            background: var(--header-bg);
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: transform 0.3s;
-        }}
-        .back-button:hover {{
-            transform: scale(1.05);
-        }}
-        .footer {{
-            text-align: center;
-            padding: 30px 0;
-            color: #888;
-            font-size: 14px;
-            border-top: 1px solid var(--border);
-            margin-top: 20px;
-            transition: border-color 0.3s;
-        }}
-        @media (max-width: 768px) {{
-            .post-content {{ padding: 20px; }}
-            .post-title {{ font-size: 22px; }}
-            .header-content {{
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }}
-            .logo-link img {{
-                height: 32px;
-            }}
-            .logo-link .site-title {{
-                font-size: 18px;
-            }}
-        }}
-    </style>
-</head>
-<body>
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <a href="/Novikon-site/" class="logo-link">
-                    <img src="../logo%20Novikon.png" alt="Novikon">
-                    <span class="site-title">Novikon</span>
-                </a>
-                <button class="theme-toggle" onclick="toggleTheme()">🌙 Тёмная тема</button>
-            </div>
-        </div>
-    </header>
-    <div class="container">
-        <div class="post-content">
-            <div class="post-date">📅 {date_str}</div>
-            <h1 class="post-title">{title_escaped}</h1>
-            {img_html}
-            <div class="post-text">{full_text}</div>
-            <a href="/Novikon-site/" class="back-button">← На главную</a>
-        </div>
-    </div>
-    <div class="footer">
-        <div class="container">
-            <p>© 2026 Novikon</p>
-        </div>
-    </div>
-    <script>
-        function toggleTheme() {{
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            document.querySelector('.theme-toggle').textContent = newTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
-        }}
+        function updateThemeButton(theme) {
+            const btn = document.getElementById('themeBtn');
+            const t = translations[currentLang];
+            btn.innerHTML = theme === 'dark' ? '☀️ <span>' + t.theme + '</span>' : '🌙 <span>' + t.theme + '</span>';
+        }
         
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
-    </script>
-</body>
-</html>
-'''
+        // ============ ЯЗЫК ============
+        function toggleLangMenu() {
+            document.getElementById('langMenu').classList.toggle('active');
+        }
+        
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('lang', lang);
             
-            with open(f'posts/post_{post["id"]}.html', 'w', encoding='utf-8') as f:
-                f.write(html_output)
+            // Обновляем активный пункт меню
+            document.querySelectorAll('.lang-option').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
             
-            if (i + 1) % 10 == 0:
-                print(f"📄 Сгенерировано {i + 1} из {len(posts)} страниц")
+            // Обновляем код языка
+            document.getElementById('currentLang').textContent = lang.toUpperCase();
+            
+            // Обновляем все элементы с data-i18n
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+            
+            // Обновляем placeholder поиска
+            document.getElementById('searchInput').placeholder = translations[lang].searchPlaceholder;
+            
+            // Обновляем "Читать далее"
+            document.querySelectorAll('.read-more').forEach(el => {
+                el.textContent = translations[lang].readMore;
+            });
+            
+            // Обновляем кнопку темы
+            updateThemeButton(document.documentElement.getAttribute('data-theme') || 'light');
+            
+            // Закрываем меню
+            document.getElementById('langMenu').classList.remove('active');
+            
+            showToast('🌐', 'Language: ' + lang.toUpperCase());
+        }
+        
+        // ============ ИЗБРАННОЕ ============
+        function getFavorites() {
+            return JSON.parse(localStorage.getItem('favorites') || '[]');
+        }
+        
+        function toggleFavorite(postId, btn) {
+            let favorites = getFavorites();
+            const index = favorites.indexOf(postId);
+            
+            if (index > -1) {
+                favorites.splice(index, 1);
+                if (btn) btn.classList.remove('active');
+                showToast('💔', translations[currentLang].removedFromFav);
+            } else {
+                favorites.push(postId);
+                if (btn) btn.classList.add('active');
+                showToast('⭐', translations[currentLang].addedToFav, 'favorite');
+            }
+            
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            updateFavBadge();
+            
+            if (currentFilter === 'favorites') {
+                filterPosts('favorites');
+            }
+        }
+        
+        function updateFavBadge() {
+            const favorites = getFavorites();
+            const badge = document.getElementById('favBadge');
+            if (favorites.length > 0) {
+                badge.textContent = favorites.length;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        
+        function toggleFavorites() {
+            const btn = document.getElementById('favBtn');
+            btn.classList.toggle('active');
+            
+            if (btn.classList.contains('active')) {
+                filterPosts('favorites');
+            } else {
+                filterPosts('all');
+            }
+        }
+        
+        // ============ ПРОЧИТАННЫЕ ============
+        function getReadPosts() {
+            return JSON.parse(localStorage.getItem('readPosts') || '[]');
+        }
+        
+        function markAsRead(postId) {
+            let readPosts = getReadPosts();
+            if (!readPosts.includes(postId)) {
+                readPosts.push(postId);
+                localStorage.setItem('readPosts', JSON.stringify(readPosts));
+                updateUnreadBadge();
+            }
+        }
+        
+        function toggleRead(postId, btn) {
+            let readPosts = getReadPosts();
+            const index = readPosts.indexOf(postId);
+            
+            if (index > -1) {
+                readPosts.splice(index, 1);
+                showToast('📬', 'Отмечено как непрочитанное');
+            } else {
+                readPosts.push(postId);
+                showToast('✅', 'Отмечено как прочитанное');
+            }
+            
+            localStorage.setItem('readPosts', JSON.stringify(readPosts));
+            updateUnreadBadge();
+            
+            if (currentFilter === 'unread' || currentFilter === 'read') {
+                filterPosts(currentFilter);
+            }
+        }
+        
+        function updateUnreadBadge() {
+            const readPosts = getReadPosts();
+            const totalPosts = postsData.length;
+            const unreadCount = totalPosts - readPosts.length;
+            
+            const badge = document.getElementById('unreadBadge');
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.style.display = 'flex';
+                badge.classList.add('pulse');
+                setTimeout(() => badge.classList.remove('pulse'), 2000);
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        
+        // ============ ПОИСК ============
+        function toggleSearch() {
+            const searchBar = document.getElementById('searchBar');
+            searchBar.classList.toggle('active');
+            
+            if (searchBar.classList.contains('active')) {
+                setTimeout(() => document.getElementById('searchInput').focus(), 100);
+            } else {
+                document.getElementById('searchInput').value = '';
+                performSearch();
+            }
+        }
+        
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.news-card');
+            let visibleCount = 0;
+            
+            cards.forEach(card => {
+                const title = card.getAttribute('data-title') || '';
+                const text = card.getAttribute('data-text') || '';
                 
-        except Exception as e:
-            print(f"❌ Ошибка при генерации страницы для поста {post['id']}: {e}")
-            continue
-    
-    print(f"✅ Сгенерировано {len(posts)} отдельных страниц")
-
-if __name__ == '__main__':
-    asyncio.run(parse_channel())
+                if (!query || title.includes(query) || text.includes(query)) {
+                    card.style.display = '';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+        
+        // ============ ФИЛЬТРЫ ============
+        function filterPosts(filter, btn) {
+            currentFilter = filter;
+            
+            // Обновляем активную кнопку
+            if (btn) {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            
+            const favorites = getFavorites();
+            const readPosts = getReadPosts();
+            const cards = document.querySelectorAll('.news-card');
+            let visibleCount = 0;
+            
+            cards.forEach(card => {
+                const postId = parseInt(card.getAttribute('data-post-id'));
+                let show = true;
+                
+                if (filter === 'favorites') {
+                    show = favorites.includes(postId);
+                } else if (filter === 'unread') {
+                    show = !readPosts.includes(postId);
+                } else if (filter === 'read') {
+                    show = readPosts.includes(postId);
+                }
+                
+                card.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+            
+            document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
+            
+            // Обновляем кнопку избранного
+            const favBtn = document.getElementById('favBtn');
+            if (filter === 'favorites') {
+                favBtn.classList.add('active');
+            } else {
+                favBtn.classList.remove('active');
+            }
+        }
+        
+        // ============ УВЕДОМЛЕНИЯ ============
+        function showToast(icon, message, type = '') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = `
+                <div class="toast-icon">${icon}</
