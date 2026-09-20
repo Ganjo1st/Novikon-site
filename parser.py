@@ -23,6 +23,8 @@ if not CHANNEL_ID:
 
 client = TelegramClient('session', API_ID, API_HASH)
 
+LOGO_FILE = 'logo_H.png'  # Новый логотип
+
 def clean_title(title):
     if not title:
         return ''
@@ -123,7 +125,6 @@ async def parse_channel():
         await client.disconnect()
 
 def generate_html(posts):
-    # Подготовка данных для поиска
     posts_json = json.dumps(posts, ensure_ascii=False)
     
     html_output = '''<!DOCTYPE html>
@@ -131,8 +132,8 @@ def generate_html(posts):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Novikon - Новости</title>
-    <link rel="icon" href="logo%20Novikon.png" type="image/png">
+    <title>Новикон - Новости</title>
+    <link rel="icon" href="''' + LOGO_FILE + '''" type="image/png">
     <style>
         :root {
             --bg: #f5f5f5;
@@ -418,7 +419,6 @@ def generate_html(posts):
             grid-column: 1 / -1;
         }
         
-        /* Toast уведомления */
         .toast-container {
             position: fixed;
             bottom: 20px;
@@ -452,12 +452,7 @@ def generate_html(posts):
             flex: 1;
             font-size: 14px;
         }
-        .toast-title {
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
         
-        /* Анимации */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -478,7 +473,6 @@ def generate_html(posts):
             animation: pulse 1s ease infinite;
         }
         
-        /* Прогресс-бар */
         .progress-bar {
             position: fixed;
             top: 0;
@@ -490,7 +484,6 @@ def generate_html(posts):
             transition: width 0.3s;
         }
         
-        /* Language dropdown */
         .lang-dropdown {
             position: relative;
             display: inline-block;
@@ -564,9 +557,9 @@ def generate_html(posts):
             <div class="header-content">
                 <div class="logo-container">
                     <a href="/Novikon-site/" style="text-decoration: none; display: flex; align-items: center; gap: 15px;">
-                        <img src="logo%20Novikon.png" alt="Novikon Logo">
+                        <img src="''' + LOGO_FILE + '''" alt="Новикон Логотип">
                         <div>
-                            <div class="site-title">Novikon</div>
+                            <div class="site-title">Новикон</div>
                             <div class="site-subtitle" data-i18n="subtitle">Актуальные новости и события</div>
                         </div>
                     </a>
@@ -650,11 +643,12 @@ def generate_html(posts):
         else:
             img_html = '<div class="no-image">📄</div>'
         
-        title_escaped = html_module.escape(title)
-        text_escaped = html_module.escape(preview_text)
+        # Экранируем для HTML-атрибутов (JSON.stringify безопасно)
+        title_for_search = json.dumps(title.lower(), ensure_ascii=False)
+        text_for_search = json.dumps(preview_text.lower(), ensure_ascii=False)
         
         html_output += f'''
-            <div class="news-card" data-post-id="{post["id"]}" data-title="{html_module.escape(title.lower())}" data-text="{html_module.escape(preview_text.lower())}">
+            <div class="news-card" data-post-id="{post["id"]}" data-title={title_for_search} data-text={text_for_search}>
                 <div class="card-actions">
                     <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite({post["id"]}, this)" title="В избранное">⭐</button>
                     <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead({post["id"]}, this)" title="Отметить прочитанным">👁️</button>
@@ -663,9 +657,9 @@ def generate_html(posts):
                     {img_html}
                     <div class="news-content">
                         <div class="news-date">{date_str}</div>
-                        <div class="news-title">{title_escaped}</div>
-                        <div class="news-text">{text_escaped}</div>
-                        <span class="read-more">Читать далее →</span>
+                        <div class="news-title">{html_module.escape(title)}</div>
+                        <div class="news-text">{html_module.escape(preview_text)}</div>
+                        <span class="read-more" data-i18n="readMore">Читать далее →</span>
                     </div>
                 </a>
             </div>
@@ -674,12 +668,12 @@ def generate_html(posts):
     html_output += '''
         </div>
         <div class="no-results" id="noResults" style="display:none;">
-            <p>😔 Ничего не найдено</p>
+            <p data-i18n="noResults">😔 Ничего не найдено</p>
         </div>
     </div>
     <div class="footer">
         <div class="container">
-            <p>© 2026 Novikon</p>
+            <p>© 2026 Новикон</p>
         </div>
     </div>
     
@@ -689,7 +683,7 @@ def generate_html(posts):
         // ============ ДАННЫЕ ============
         const postsData = ''' + posts_json + ''';
         
-        // ============ ПЕРЕВОДЫ ============
+        // ============ ПЕРЕВОДЫ ИНТЕРФЕЙСА ============
         const translations = {
             ru: {
                 subtitle: 'Актуальные новости и события',
@@ -763,6 +757,76 @@ def generate_html(posts):
         
         let currentLang = localStorage.getItem('lang') || 'ru';
         let currentFilter = 'all';
+        let originalTexts = new Map(); // Хранит оригинальные тексты статей
+        
+        // ============ АВТОПЕРЕВОД СТАТЕЙ ============
+        // Используем бесплатный API Google Translate (неофициальный)
+        async function translateText(text, targetLang) {
+            if (targetLang === 'ru') return text; // Русский - оригинал
+            if (!text || text.trim().length === 0) return text;
+            
+            try {
+                const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=' + targetLang + '&dt=t&q=' + encodeURIComponent(text.substring(0, 1500));
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data && data[0]) {
+                    return data[0].map(item => item[0]).join('');
+                }
+                return text;
+            } catch (e) {
+                console.warn('Ошибка перевода:', e);
+                return text;
+            }
+        }
+        
+        async function translateAllPosts(targetLang) {
+            const cards = document.querySelectorAll('.news-card');
+            
+            // Показываем индикатор загрузки
+            showToast('🌐', 'Перевод статей...');
+            
+            for (const card of cards) {
+                const titleEl = card.querySelector('.news-title');
+                const textEl = card.querySelector('.news-text');
+                
+                if (!titleEl || !textEl) continue;
+                
+                // Сохраняем оригинальные тексты (только один раз)
+                if (!originalTexts.has(card)) {
+                    originalTexts.set(card, {
+                        title: titleEl.textContent,
+                        text: textEl.textContent
+                    });
+                }
+                
+                const original = originalTexts.get(card);
+                
+                if (targetLang === 'ru') {
+                    // Возвращаем оригинал
+                    titleEl.textContent = original.title;
+                    textEl.textContent = original.text;
+                } else {
+                    // Переводим
+                    const [translatedTitle, translatedText] = await Promise.all([
+                        translateText(original.title, targetLang),
+                        translateText(original.text, targetLang)
+                    ]);
+                    
+                    titleEl.textContent = translatedTitle;
+                    textEl.textContent = translatedText;
+                    
+                    // Обновляем атрибуты для поиска
+                    card.setAttribute('data-title', translatedTitle.toLowerCase());
+                    card.setAttribute('data-text', translatedText.toLowerCase());
+                }
+                
+                // Небольшая задержка чтобы не превысить лимиты API
+                await new Promise(r => setTimeout(r, 100));
+            }
+            
+            showToast('✅', 'Перевод завершён!');
+        }
         
         // ============ ТЕМА ============
         function toggleTheme() {
@@ -785,7 +849,7 @@ def generate_html(posts):
             document.getElementById('langMenu').classList.toggle('active');
         }
         
-        function setLanguage(lang) {
+        async function setLanguage(lang) {
             currentLang = lang;
             localStorage.setItem('lang', lang);
             
@@ -807,18 +871,14 @@ def generate_html(posts):
             // Обновляем placeholder поиска
             document.getElementById('searchInput').placeholder = translations[lang].searchPlaceholder;
             
-            // Обновляем "Читать далее"
-            document.querySelectorAll('.read-more').forEach(el => {
-                el.textContent = translations[lang].readMore;
-            });
-            
             // Обновляем кнопку темы
             updateThemeButton(document.documentElement.getAttribute('data-theme') || 'light');
             
             // Закрываем меню
             document.getElementById('langMenu').classList.remove('active');
             
-            showToast('🌐', 'Language: ' + lang.toUpperCase());
+            // Переводим статьи
+            await translateAllPosts(lang);
         }
         
         // ============ ИЗБРАННОЕ ============
@@ -957,7 +1017,6 @@ def generate_html(posts):
         function filterPosts(filter, btn) {
             currentFilter = filter;
             
-            // Обновляем активную кнопку
             if (btn) {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -986,7 +1045,6 @@ def generate_html(posts):
             
             document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
             
-            // Обновляем кнопку избранного
             const favBtn = document.getElementById('favBtn');
             if (filter === 'favorites') {
                 favBtn.classList.add('active');
@@ -1036,7 +1094,7 @@ def generate_html(posts):
                 }
             });
             
-            // Обновляем переводы
+            // Обновляем переводы интерфейса
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if (translations[currentLang][key]) {
@@ -1044,9 +1102,7 @@ def generate_html(posts):
                 }
             });
             document.getElementById('searchInput').placeholder = translations[currentLang].searchPlaceholder;
-            document.querySelectorAll('.read-more').forEach(el => {
-                el.textContent = translations[currentLang].readMore;
-            });
+            updateThemeButton(savedTheme);
             
             // Обновляем избранное
             const favorites = getFavorites();
@@ -1077,12 +1133,16 @@ def generate_html(posts):
                 }
             });
             
+            // Если выбран не русский - переводим статьи при загрузке
+            if (currentLang !== 'ru') {
+                setTimeout(() => translateAllPosts(currentLang), 500);
+            }
+            
             // Показываем уведомление о новых статьях
             const lastVisit = localStorage.getItem('lastVisit');
             const now = Date.now();
             if (lastVisit) {
                 const timeDiff = now - parseInt(lastVisit);
-                // Если прошло больше 1 часа
                 if (timeDiff > 3600000) {
                     const unreadCount = postsData.length - getReadPosts().length;
                     if (unreadCount > 0) {
@@ -1115,7 +1175,7 @@ def generate_html(posts):
     
     with open('index.html', 'w', encoding='utf-8') as f:
         f.write(html_output)
-    print("🌐 Сгенерирован index.html со всеми функциями")
+    print("🌐 Сгенерирован index.html")
 
 def generate_post_pages(posts):
     os.makedirs('posts', exist_ok=True)
@@ -1147,15 +1207,17 @@ def generate_post_pages(posts):
             else:
                 img_html = ''
             
-            title_escaped = html_module.escape(title)
+            # Экранируем для JSON
+            title_json = json.dumps(title, ensure_ascii=False)
+            full_text_json = json.dumps(full_text, ensure_ascii=False)
             
             html_output = f'''<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title_escaped} - Novikon</title>
-    <link rel="icon" href="../logo%20Novikon.png" type="image/png">
+    <title>{html_module.escape(title)} - Новикон</title>
+    <link rel="icon" href="../''' + LOGO_FILE + '''" type="image/png">
     <style>
         :root {{
             --bg: #f5f5f5;
@@ -1246,6 +1308,43 @@ def generate_post_pages(posts):
             border-color: var(--favorite);
             color: white;
         }}
+        .lang-dropdown {{
+            position: relative;
+            display: inline-block;
+        }}
+        .lang-menu {{
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            overflow: hidden;
+            min-width: 150px;
+            z-index: 200;
+        }}
+        .lang-menu.active {{
+            display: block;
+        }}
+        .lang-option {{
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--text);
+        }}
+        .lang-option:hover {{
+            background: rgba(102, 126, 234, 0.1);
+        }}
+        .lang-option.active {{
+            background: rgba(102, 126, 234, 0.15);
+            font-weight: 600;
+        }}
         .post-content {{
             background: var(--card-bg);
             border-radius: 12px;
@@ -1309,7 +1408,6 @@ def generate_post_pages(posts):
             to {{ opacity: 1; transform: translateY(0); }}
         }}
         
-        /* Прогресс-бар */
         .progress-bar {{
             position: fixed;
             top: 0;
@@ -1321,7 +1419,6 @@ def generate_post_pages(posts):
             transition: width 0.3s;
         }}
         
-        /* Toast уведомления */
         .toast-container {{
             position: fixed;
             bottom: 20px;
@@ -1384,11 +1481,22 @@ def generate_post_pages(posts):
         <div class="container">
             <div class="header-content">
                 <a href="/Novikon-site/" class="logo-link">
-                    <img src="../logo%20Novikon.png" alt="Novikon">
-                    <span class="site-title">Novikon</span>
+                    <img src="../''' + LOGO_FILE + '''" alt="Новикон">
+                    <span class="site-title">Новикон</span>
                 </a>
                 <div class="header-btns">
                     <button class="control-btn favorite" id="favBtn" onclick="toggleFavorite()" title="В избранное">⭐</button>
+                    <div class="lang-dropdown">
+                        <button class="control-btn" onclick="toggleLangMenu()" title="Язык">
+                            🌐 <span id="currentLang">RU</span>
+                        </button>
+                        <div class="lang-menu" id="langMenu">
+                            <div class="lang-option active" onclick="setLanguage('ru')">🇷🇺 Русский</div>
+                            <div class="lang-option" onclick="setLanguage('en')">🇬🇧 English</div>
+                            <div class="lang-option" onclick="setLanguage('de')">🇩🇪 Deutsch</div>
+                            <div class="lang-option" onclick="setLanguage('es')">🇪🇸 Español</div>
+                        </div>
+                    </div>
                     <button class="control-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
                 </div>
             </div>
@@ -1397,15 +1505,15 @@ def generate_post_pages(posts):
     <div class="container">
         <div class="post-content">
             <div class="post-date">📅 {date_str}</div>
-            <h1 class="post-title">{title_escaped}</h1>
+            <h1 class="post-title" id="postTitle">{html_module.escape(title)}</h1>
             {img_html}
-            <div class="post-text">{full_text}</div>
-            <a href="/Novikon-site/" class="back-button">← На главную</a>
+            <div class="post-text" id="postText">{full_text}</div>
+            <a href="/Novikon-site/" class="back-button" data-i18n="back">← На главную</a>
         </div>
     </div>
     <div class="footer">
         <div class="container">
-            <p>© 2026 Novikon</p>
+            <p>© 2026 Новикон</p>
         </div>
     </div>
     
@@ -1413,6 +1521,100 @@ def generate_post_pages(posts):
     
     <script>
         const POST_ID = {post["id"]};
+        const ORIGINAL_TITLE = {title_json};
+        const ORIGINAL_TEXT = {full_text_json};
+        
+        const translations = {{
+            ru: {{ back: '← На главную', theme: 'Тема' }},
+            en: {{ back: '← Back to home', theme: 'Theme' }},
+            de: {{ back: '← Zurück zur Startseite', theme: 'Thema' }},
+            es: {{ back: '← Volver al inicio', theme: 'Tema' }}
+        }};
+        
+        let currentLang = localStorage.getItem('lang') || 'ru';
+        
+        // ============ ПЕРЕВОД СТАТЬИ ============
+        async function translateText(text, targetLang) {{
+            if (targetLang === 'ru') return text;
+            if (!text || text.trim().length === 0) return text;
+            
+            try {{
+                const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=' + targetLang + '&dt=t&q=' + encodeURIComponent(text.substring(0, 4500));
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data && data[0]) {{
+                    return data[0].map(item => item[0]).join('');
+                }}
+                return text;
+            }} catch (e) {{
+                console.warn('Ошибка перевода:', e);
+                return text;
+            }}
+        }}
+        
+        async function translatePost(targetLang) {{
+            const titleEl = document.getElementById('postTitle');
+            const textEl = document.getElementById('postText');
+            
+            if (targetLang === 'ru') {{
+                titleEl.textContent = ORIGINAL_TITLE;
+                textEl.innerHTML = ORIGINAL_TEXT;
+                return;
+            }}
+            
+            showToast('🌐', 'Перевод статьи...');
+            
+            // Переводим заголовок
+            const translatedTitle = await translateText(ORIGINAL_TITLE, targetLang);
+            titleEl.textContent = translatedTitle;
+            
+            // Переводим основной текст (сохраняя теги <br>)
+            const textParts = ORIGINAL_TEXT.split('<br>');
+            const translatedParts = [];
+            
+            for (const part of textParts) {{
+                if (part.trim()) {{
+                    const translated = await translateText(part, targetLang);
+                    translatedParts.push(translated);
+                    await new Promise(r => setTimeout(r, 50));
+                }} else {{
+                    translatedParts.push(part);
+                }}
+            }}
+            
+            textEl.innerHTML = translatedParts.join('<br>');
+            
+            showToast('✅', 'Перевод завершён!');
+        }}
+        
+        // ============ ЯЗЫК ============
+        function toggleLangMenu() {{
+            document.getElementById('langMenu').classList.toggle('active');
+        }}
+        
+        async function setLanguage(lang) {{
+            currentLang = lang;
+            localStorage.setItem('lang', lang);
+            
+            document.querySelectorAll('.lang-option').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('currentLang').textContent = lang.toUpperCase();
+            
+            // Обновляем переводы интерфейса
+            document.querySelectorAll('[data-i18n]').forEach(el => {{
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {{
+                    el.textContent = translations[lang][key];
+                }}
+            }});
+            
+            updateThemeBtn();
+            document.getElementById('langMenu').classList.remove('active');
+            
+            // Переводим статью
+            await translatePost(lang);
+        }}
         
         // ============ ТЕМА ============
         function toggleTheme() {{
@@ -1421,7 +1623,12 @@ def generate_post_pages(posts):
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            document.getElementById('themeBtn').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            updateThemeBtn();
+        }}
+        
+        function updateThemeBtn() {{
+            document.getElementById('themeBtn').textContent = 
+                document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
         }}
         
         // ============ ИЗБРАННОЕ ============
@@ -1448,8 +1655,7 @@ def generate_post_pages(posts):
         }}
         
         function updateFavBtn() {{
-            const favorites = getFavorites();
-            if (favorites.includes(POST_ID)) {{
+            if (getFavorites().includes(POST_ID)) {{
                 document.getElementById('favBtn').classList.add('active');
             }}
         }}
@@ -1468,10 +1674,7 @@ def generate_post_pages(posts):
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = 'toast ' + type;
-            toast.innerHTML = `
-                <div class="toast-icon">${{icon}}</div>
-                <div class="toast-content">${{message}}</div>
-            `;
+            toast.innerHTML = `<div class="toast-icon">${{icon}}</div><div class="toast-content">${{message}}</div>`;
             container.appendChild(toast);
             
             setTimeout(() => {{
@@ -1489,17 +1692,34 @@ def generate_post_pages(posts):
         }});
         
         // ============ ЗАГРУЗКА ============
-        document.addEventListener('DOMContentLoaded', function() {{
-            // Тема
+        document.addEventListener('DOMContentLoaded', async function() {{
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
-            document.getElementById('themeBtn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            updateThemeBtn();
             
-            // Избранное
+            document.getElementById('currentLang').textContent = currentLang.toUpperCase();
+            document.querySelectorAll('.lang-option').forEach(el => {{
+                el.classList.remove('active');
+                if (el.textContent.includes(currentLang === 'ru' ? 'Русский' : currentLang === 'en' ? 'English' : currentLang === 'de' ? 'Deutsch' : 'Español')) {{
+                    el.classList.add('active');
+                }}
+            }});
+            
+            // Обновляем переводы интерфейса
+            document.querySelectorAll('[data-i18n]').forEach(el => {{
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {{
+                    el.textContent = translations[currentLang][key];
+                }}
+            }});
+            
             updateFavBtn();
-            
-            // Отмечаем как прочитанное
             markAsRead();
+            
+            // Переводим статью если нужно
+            if (currentLang !== 'ru') {{
+                setTimeout(() => translatePost(currentLang), 500);
+            }}
             
             // Анимация перехода
             document.body.style.opacity = '0';
@@ -1507,6 +1727,14 @@ def generate_post_pages(posts):
             setTimeout(() => {{
                 document.body.style.opacity = '1';
             }}, 50);
+            
+            // Закрываем меню языка при клике вне
+            document.addEventListener('click', function(e) {{
+                const langDropdown = document.querySelector('.lang-dropdown');
+                if (langDropdown && !langDropdown.contains(e.target)) {{
+                    document.getElementById('langMenu').classList.remove('active');
+                }}
+            }});
         }});
     </script>
 </body>
