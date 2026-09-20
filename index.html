@@ -13,6 +13,9 @@
             --header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --shadow: 0 4px 15px rgba(0,0,0,0.08);
             --border: #e0e0e0;
+            --accent: #667eea;
+            --favorite: #ffc107;
+            --unread: #ff4757;
         }
         [data-theme="dark"] {
             --bg: #1a1a2e;
@@ -21,6 +24,7 @@
             --header-bg: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
             --shadow: 0 4px 15px rgba(0,0,0,0.3);
             --border: #2a2a4a;
+            --accent: #7b8cde;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -28,14 +32,17 @@
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
-            transition: background 0.3s, color 0.3s;
+            transition: background 0.4s, color 0.4s;
         }
         header {
             background: var(--header-bg);
             color: white;
             padding: 20px 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: background 0.3s;
+            transition: background 0.4s;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         .container {
             max-width: 1200px;
@@ -69,20 +76,99 @@
             color: rgba(255,255,255,0.9);
             font-size: 14px;
         }
-        .theme-toggle {
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .control-btn {
             background: rgba(255,255,255,0.2);
             border: 2px solid rgba(255,255,255,0.3);
             color: white;
-            padding: 10px 20px;
+            padding: 8px 14px;
             border-radius: 25px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             transition: all 0.3s;
             white-space: nowrap;
+            position: relative;
         }
-        .theme-toggle:hover {
+        .control-btn:hover {
             background: rgba(255,255,255,0.3);
             transform: scale(1.05);
+        }
+        .control-btn.active {
+            background: rgba(255,255,255,0.4);
+            border-color: white;
+        }
+        .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--unread);
+            color: white;
+            border-radius: 50%;
+            min-width: 20px;
+            height: 20px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            padding: 0 4px;
+        }
+        
+        .search-bar {
+            max-width: 1200px;
+            margin: 20px auto 0;
+            padding: 0 20px;
+            display: none;
+        }
+        .search-bar.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            background: var(--card-bg);
+            color: var(--text);
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            padding: 15px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .filter-btn {
+            padding: 8px 20px;
+            border: 2px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text);
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .filter-btn:hover {
+            border-color: var(--accent);
+        }
+        .filter-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
         }
         
         .news-grid {
@@ -96,11 +182,14 @@
             border-radius: 12px;
             overflow: hidden;
             box-shadow: var(--shadow);
-            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.4s;
             cursor: pointer;
             text-decoration: none;
             color: inherit;
             display: block;
+            position: relative;
+            animation: fadeIn 0.5s ease forwards;
+            opacity: 0;
         }
         .news-card:hover {
             transform: translateY(-5px);
@@ -111,6 +200,10 @@
             height: 220px;
             object-fit: cover;
             background: #e0e0e0;
+            transition: transform 0.5s ease;
+        }
+        .news-card:hover img {
+            transform: scale(1.05);
         }
         .news-content { padding: 20px; }
         .news-date { color: #888; font-size: 13px; margin-bottom: 10px; }
@@ -139,6 +232,39 @@
             color: white;
             font-size: 48px;
         }
+        
+        .card-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .action-btn:hover {
+            transform: scale(1.15);
+            background: white;
+        }
+        .action-btn.favorite.active {
+            background: var(--favorite);
+            color: white;
+        }
+        
         .footer {
             text-align: center;
             padding: 30px 0;
@@ -146,15 +272,136 @@
             font-size: 14px;
             border-top: 1px solid var(--border);
             margin-top: 20px;
-            transition: border-color 0.3s;
+            transition: border-color 0.4s;
         }
         .read-more {
             display: inline-block;
             margin-top: 12px;
-            color: #667eea;
+            color: var(--accent);
             font-weight: 600;
             text-decoration: none;
         }
+        
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+            font-size: 18px;
+            grid-column: 1 / -1;
+        }
+        
+        /* Toast уведомления */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: var(--card-bg);
+            color: var(--text);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            border-left: 4px solid var(--accent);
+            min-width: 280px;
+            max-width: 400px;
+            animation: slideInRight 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .toast.favorite {
+            border-left-color: var(--favorite);
+        }
+        .toast-icon {
+            font-size: 24px;
+        }
+        .toast-content {
+            flex: 1;
+            font-size: 14px;
+        }
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .badge.pulse {
+            animation: pulse 1s ease infinite;
+        }
+        
+        /* Прогресс-бар */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 9999;
+            transition: width 0.3s;
+        }
+        
+        /* Language dropdown */
+        .lang-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .lang-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            overflow: hidden;
+            min-width: 150px;
+            z-index: 200;
+        }
+        .lang-menu.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        .lang-option {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--text);
+        }
+        .lang-option:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+        .lang-option.active {
+            background: rgba(102, 126, 234, 0.15);
+            font-weight: 600;
+        }
+        
         @media (max-width: 768px) {
             .news-grid {
                 grid-template-columns: 1fr;
@@ -171,14 +418,19 @@
                 gap: 10px;
                 text-align: center;
             }
-            .theme-toggle {
-                font-size: 14px;
-                padding: 8px 16px;
+            .header-controls {
+                justify-content: center;
+            }
+            .control-btn {
+                font-size: 13px;
+                padding: 7px 12px;
             }
         }
     </style>
 </head>
 <body>
+    <div class="progress-bar" id="progressBar"></div>
+    
     <header>
         <div class="container">
             <div class="header-content">
@@ -187,437 +439,730 @@
                         <img src="logo%20Novikon.png" alt="Novikon Logo">
                         <div>
                             <div class="site-title">Novikon</div>
-                            <div class="site-subtitle">Актуальные новости и события</div>
+                            <div class="site-subtitle" data-i18n="subtitle">Актуальные новости и события</div>
                         </div>
                     </a>
                 </div>
-                <button class="theme-toggle" onclick="toggleTheme()">🌙 Тёмная тема</button>
+                <div class="header-controls">
+                    <button class="control-btn" onclick="toggleSearch()" title="Поиск">
+                        🔍 <span data-i18n="search">Поиск</span>
+                    </button>
+                    <button class="control-btn" onclick="toggleFavorites()" id="favBtn" title="Избранное">
+                        ⭐ <span data-i18n="favorites">Избранное</span>
+                        <span class="badge" id="favBadge" style="display:none">0</span>
+                    </button>
+                    <button class="control-btn" id="unreadBtn" title="Непрочитанные">
+                        📬 <span data-i18n="unread">Новые</span>
+                        <span class="badge" id="unreadBadge" style="display:none">0</span>
+                    </button>
+                    <div class="lang-dropdown">
+                        <button class="control-btn" onclick="toggleLangMenu()" title="Язык">
+                            🌐 <span id="currentLang">RU</span>
+                        </button>
+                        <div class="lang-menu" id="langMenu">
+                            <div class="lang-option active" onclick="setLanguage('ru')">🇷🇺 Русский</div>
+                            <div class="lang-option" onclick="setLanguage('en')">🇬🇧 English</div>
+                            <div class="lang-option" onclick="setLanguage('de')">🇩🇪 Deutsch</div>
+                            <div class="lang-option" onclick="setLanguage('es')">🇪🇸 Español</div>
+                        </div>
+                    </div>
+                    <button class="control-btn" onclick="toggleTheme()" id="themeBtn">🌙 <span data-i18n="theme">Тема</span></button>
+                </div>
             </div>
         </div>
     </header>
+    
+    <div class="search-bar" id="searchBar">
+        <div class="container" style="padding: 0;">
+            <input type="text" id="searchInput" placeholder="Поиск по новостям..." oninput="performSearch()">
+        </div>
+    </div>
+    
     <div class="container">
-        <div class="news-grid">
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="filterPosts('all', this)" data-i18n="all">Все</button>
+            <button class="filter-btn" onclick="filterPosts('favorites', this)" data-i18n="filterFav">⭐ Избранные</button>
+            <button class="filter-btn" onclick="filterPosts('unread', this)" data-i18n="filterUnread">📬 Непрочитанные</button>
+            <button class="filter-btn" onclick="filterPosts('read', this)" data-i18n="filterRead">✅ Прочитанные</button>
+        </div>
+        
+        <div class="news-grid" id="newsGrid">
 
-            <a href="/Novikon-site/posts/post_2075.html" class="news-card">
-                <img src="assets/post_2075.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">20.09.2026 11:21</div>
-                    <div class="news-title">Великобритания подозрительно пахнет СССР поздней стадии</div>
-                    <div class="news-text">«Эра Вестминстера подходит к концу!» — заявили на этой неделе националистические лидеры Шотландии, Уэльса и Северной Ирландии. Джон Суинни, Рун ап Йорверт и Мишель О’Нил собрались в Кардиффе, чтобы по...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2075" data-title="великобритания подозрительно пахнет ссср поздней стадии" data-text="«эра вестминстера подходит к концу!» — заявили на этой неделе националистические лидеры шотландии, уэльса и северной ирландии. джон суинни, рун ап йорверт и мишель о’нил собрались в кардиффе, чтобы по...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2075, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2075, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2075.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2075)">
+                    <img src="assets/post_2075.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">20.09.2026 11:21</div>
+                        <div class="news-title">Великобритания подозрительно пахнет СССР поздней стадии</div>
+                        <div class="news-text">«Эра Вестминстера подходит к концу!» — заявили на этой неделе националистические лидеры Шотландии, Уэльса и Северной Ирландии. Джон Суинни, Рун ап Йорверт и Мишель О’Нил собрались в Кардиффе, чтобы по...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2074.html" class="news-card">
-                <img src="assets/post_2074.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">20.09.2026 11:21</div>
-                    <div class="news-title">Трамп обещает не замедлять работу ИИ, несмотря на предупреждения отрасли</div>
-                    <div class="news-text">Президент США Дональд Трамп пообещал не замедлять развитие искусственного интеллекта, несмотря на предупреждения ведущих технологических руководителей о потенциальных рисках, связанных со все более мо...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2074" data-title="трамп обещает не замедлять работу ии, несмотря на предупреждения отрасли" data-text="президент сша дональд трамп пообещал не замедлять развитие искусственного интеллекта, несмотря на предупреждения ведущих технологических руководителей о потенциальных рисках, связанных со все более мо...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2074, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2074, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2074.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2074)">
+                    <img src="assets/post_2074.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">20.09.2026 11:21</div>
+                        <div class="news-title">Трамп обещает не замедлять работу ИИ, несмотря на предупреждения отрасли</div>
+                        <div class="news-text">Президент США Дональд Трамп пообещал не замедлять развитие искусственного интеллекта, несмотря на предупреждения ведущих технологических руководителей о потенциальных рисках, связанных со все более мо...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2073.html" class="news-card">
-                <img src="assets/post_2073.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">20.09.2026 06:09</div>
-                    <div class="news-title">Принцы доллара: почему QE закончилось</div>
-                    <div class="news-text">Автор Кейн Макгукин через Bombthrower, На каждом переходе есть дорожные знаки. Мэтт Дайнс был одним из наиболее точных умов в последнее время в отношении денежно-кредитного и геополитического перехода...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2073" data-title="принцы доллара: почему qe закончилось" data-text="автор кейн макгукин через bombthrower, на каждом переходе есть дорожные знаки. мэтт дайнс был одним из наиболее точных умов в последнее время в отношении денежно-кредитного и геополитического перехода...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2073, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2073, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2073.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2073)">
+                    <img src="assets/post_2073.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">20.09.2026 06:09</div>
+                        <div class="news-title">Принцы доллара: почему QE закончилось</div>
+                        <div class="news-text">Автор Кейн Макгукин через Bombthrower, На каждом переходе есть дорожные знаки. Мэтт Дайнс был одним из наиболее точных умов в последнее время в отношении денежно-кредитного и геополитического перехода...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2072.html" class="news-card">
-                <img src="assets/post_2072.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">20.09.2026 06:09</div>
-                    <div class="news-title">Сведения о военном отчете Шесть НЛО, движущихся со скоростью 480 МИЛЬ в час</div>
-                    <div class="news-text">По данным NY Post, недавно опубликованные военные записи предлагают еще раз взглянуть на необъяснимые объекты, с которыми сталкиваются силы США, включая кластер, который, как сообщается, перемещается ...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2072" data-title="сведения о военном отчете шесть нло, движущихся со скоростью 480 миль в час" data-text="по данным ny post, недавно опубликованные военные записи предлагают еще раз взглянуть на необъяснимые объекты, с которыми сталкиваются силы сша, включая кластер, который, как сообщается, перемещается ...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2072, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2072, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2072.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2072)">
+                    <img src="assets/post_2072.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">20.09.2026 06:09</div>
+                        <div class="news-title">Сведения о военном отчете Шесть НЛО, движущихся со скоростью 480 МИЛЬ в час</div>
+                        <div class="news-text">По данным NY Post, недавно опубликованные военные записи предлагают еще раз взглянуть на необъяснимые объекты, с которыми сталкиваются силы США, включая кластер, который, как сообщается, перемещается ...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2071.html" class="news-card">
-                <img src="assets/post_2071.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">20.09.2026 06:09</div>
-                    <div class="news-title">Апокалиптическая игра: паника и возможности</div>
-                    <div class="news-text">Автор Саша Гонг через American Greatness, Последний аргумент Америки по поводу искусственного интеллекта внезапно стал апокалиптическим. Бывший исследователь антропии Джейкоб Коксон обвинил компании И...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2071" data-title="апокалиптическая игра: паника и возможности" data-text="автор саша гонг через american greatness, последний аргумент америки по поводу искусственного интеллекта внезапно стал апокалиптическим. бывший исследователь антропии джейкоб коксон обвинил компании и...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2071, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2071, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2071.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2071)">
+                    <img src="assets/post_2071.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">20.09.2026 06:09</div>
+                        <div class="news-title">Апокалиптическая игра: паника и возможности</div>
+                        <div class="news-text">Автор Саша Гонг через American Greatness, Последний аргумент Америки по поводу искусственного интеллекта внезапно стал апокалиптическим. Бывший исследователь антропии Джейкоб Коксон обвинил компании И...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2070.html" class="news-card">
-                <img src="assets/post_2070.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">20.09.2026 06:09</div>
-                    <div class="news-title">Куба погружается во тьму на фоне общенационального отключения электроэнергии</div>
-                    <div class="news-text">Куба пережила еще одно общенациональное отключение электроэнергии, оставив миллионы людей без электричества на фоне серьезной нехватки топлива и ограничений США на поставки нефти. Это, по крайней мере...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2070" data-title="куба погружается во тьму на фоне общенационального отключения электроэнергии" data-text="куба пережила еще одно общенациональное отключение электроэнергии, оставив миллионы людей без электричества на фоне серьезной нехватки топлива и ограничений сша на поставки нефти. это, по крайней мере...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2070, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2070, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2070.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2070)">
+                    <img src="assets/post_2070.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">20.09.2026 06:09</div>
+                        <div class="news-title">Куба погружается во тьму на фоне общенационального отключения электроэнергии</div>
+                        <div class="news-text">Куба пережила еще одно общенациональное отключение электроэнергии, оставив миллионы людей без электричества на фоне серьезной нехватки топлива и ограничений США на поставки нефти. Это, по крайней мере...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2069.html" class="news-card">
-                <img src="assets/post_2069.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">20.09.2026 06:08</div>
-                    <div class="news-title">Чрезмерная зависимость США от ИИ способствовала смертельной забастовке в школах Ирана – Bloomberg</div>
-                    <div class="news-text">Сильная зависимость от ИИ, сокращения персонала и поспешные процедуры нацеливания способствовали ракетному удару США по иранской школе для девочек в Минабе, сообщило в пятницу агентство Bloomberg со с...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2069" data-title="чрезмерная зависимость сша от ии способствовала смертельной забастовке в школах ирана – bloomberg" data-text="сильная зависимость от ии, сокращения персонала и поспешные процедуры нацеливания способствовали ракетному удару сша по иранской школе для девочек в минабе, сообщило в пятницу агентство bloomberg со с...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2069, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2069, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2069.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2069)">
+                    <img src="assets/post_2069.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">20.09.2026 06:08</div>
+                        <div class="news-title">Чрезмерная зависимость США от ИИ способствовала смертельной забастовке в школах Ирана – Bloomberg</div>
+                        <div class="news-text">Сильная зависимость от ИИ, сокращения персонала и поспешные процедуры нацеливания способствовали ракетному удару США по иранской школе для девочек в Минабе, сообщило в пятницу агентство Bloomberg со с...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2068.html" class="news-card">
-                <img src="assets/post_2068.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">20.09.2026 01:04</div>
-                    <div class="news-title">Апелляционный суд постановил, что федеральный запрет на продажу огнестрельного оружия между штатами является неконституционным</div>
-                    <div class="news-text">Автор Джилл Маклафлин для The Epoch Times, 18 сентября Апелляционный суд пятого округа вынес решение со счетом 2:1 против запрета федерального правительства на передачу огнестрельного оружия между шта...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2068" data-title="апелляционный суд постановил, что федеральный запрет на продажу огнестрельного оружия между штатами является неконституционным" data-text="автор джилл маклафлин для the epoch times, 18 сентября апелляционный суд пятого округа вынес решение со счетом 2:1 против запрета федерального правительства на передачу огнестрельного оружия между шта...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2068, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2068, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2068.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2068)">
+                    <img src="assets/post_2068.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">20.09.2026 01:04</div>
+                        <div class="news-title">Апелляционный суд постановил, что федеральный запрет на продажу огнестрельного оружия между штатами является неконституционным</div>
+                        <div class="news-text">Автор Джилл Маклафлин для The Epoch Times, 18 сентября Апелляционный суд пятого округа вынес решение со счетом 2:1 против запрета федерального правительства на передачу огнестрельного оружия между шта...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2067.html" class="news-card">
-                <img src="assets/post_2067.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">20.09.2026 01:04</div>
-                    <div class="news-title">HHS выделило 42,3 миллиона долларов на продвижение первой модели лечения бездомности и наркозависимости</div>
-                    <div class="news-text">Автор Кимберли Хайек через The Epoch Times, Федеральное агентство при Министерстве здравоохранения и социальных служб США (HHS) в пятницу выделило штатам и территориям новые дополнительные денежные ср...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2067" data-title="hhs выделило 42,3 миллиона долларов на продвижение первой модели лечения бездомности и наркозависимости" data-text="автор кимберли хайек через the epoch times, федеральное агентство при министерстве здравоохранения и социальных служб сша (hhs) в пятницу выделило штатам и территориям новые дополнительные денежные ср...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2067, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2067, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2067.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2067)">
+                    <img src="assets/post_2067.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">20.09.2026 01:04</div>
+                        <div class="news-title">HHS выделило 42,3 миллиона долларов на продвижение первой модели лечения бездомности и наркозависимости</div>
+                        <div class="news-text">Автор Кимберли Хайек через The Epoch Times, Федеральное агентство при Министерстве здравоохранения и социальных служб США (HHS) в пятницу выделило штатам и территориям новые дополнительные денежные ср...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2066.html" class="news-card">
-                <img src="assets/post_2066.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">20.09.2026 01:03</div>
-                    <div class="news-title">Инженеры Tesla проверяют китайских поставщиков по мере приближения коммерциализации Optimus</div>
-                    <div class="news-text">Примерно через месяц после того, как аналитики JPMorgan посетили завод Tesla во Фримонте и подтвердили «целевой четырехмесячный переход после окончания производства S/X в мае» на линии по производству...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2066" data-title="инженеры tesla проверяют китайских поставщиков по мере приближения коммерциализации optimus" data-text="примерно через месяц после того, как аналитики jpmorgan посетили завод tesla во фримонте и подтвердили «целевой четырехмесячный переход после окончания производства s/x в мае» на линии по производству...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2066, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2066, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2066.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2066)">
+                    <img src="assets/post_2066.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">20.09.2026 01:03</div>
+                        <div class="news-title">Инженеры Tesla проверяют китайских поставщиков по мере приближения коммерциализации Optimus</div>
+                        <div class="news-text">Примерно через месяц после того, как аналитики JPMorgan посетили завод Tesla во Фримонте и подтвердили «целевой четырехмесячный переход после окончания производства S/X в мае» на линии по производству...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2065.html" class="news-card">
-                <img src="assets/post_2065.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">20.09.2026 01:03</div>
-                    <div class="news-title">Новый закон США о санкциях подрывает мирные усилия Украины – Кремль</div>
-                    <div class="news-text">Главный закон о санкциях США, подписанный президентом Дональдом Трампом на этой неделе, подорвет усилия по разрешению украинского конфликта дипломатическим путем, заявил официальный представитель Крем...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2065" data-title="новый закон сша о санкциях подрывает мирные усилия украины – кремль" data-text="главный закон о санкциях сша, подписанный президентом дональдом трампом на этой неделе, подорвет усилия по разрешению украинского конфликта дипломатическим путем, заявил официальный представитель крем...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2065, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2065, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2065.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2065)">
+                    <img src="assets/post_2065.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">20.09.2026 01:03</div>
+                        <div class="news-title">Новый закон США о санкциях подрывает мирные усилия Украины – Кремль</div>
+                        <div class="news-text">Главный закон о санкциях США, подписанный президентом Дональдом Трампом на этой неделе, подорвет усилия по разрешению украинского конфликта дипломатическим путем, заявил официальный представитель Крем...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2064.html" class="news-card">
-                <img src="assets/post_2064.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">20.09.2026 01:03</div>
-                    <div class="news-title">США выпустили предупреждения о безопасности на Ближнем Востоке</div>
-                    <div class="news-text">США выпустили предупреждения о безопасности для своих граждан на Ближнем Востоке, предупреждая о дальнейшей эскалации между Саудовской Аравией и поддерживаемыми Ираном повстанцами-хуситами в Йемене. У...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2064" data-title="сша выпустили предупреждения о безопасности на ближнем востоке" data-text="сша выпустили предупреждения о безопасности для своих граждан на ближнем востоке, предупреждая о дальнейшей эскалации между саудовской аравией и поддерживаемыми ираном повстанцами-хуситами в йемене. у...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2064, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2064, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2064.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2064)">
+                    <img src="assets/post_2064.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">20.09.2026 01:03</div>
+                        <div class="news-title">США выпустили предупреждения о безопасности на Ближнем Востоке</div>
+                        <div class="news-text">США выпустили предупреждения о безопасности для своих граждан на Ближнем Востоке, предупреждая о дальнейшей эскалации между Саудовской Аравией и поддерживаемыми Ираном повстанцами-хуситами в Йемене. У...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2063.html" class="news-card">
-                <img src="assets/post_2063.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 23:05</div>
-                    <div class="news-title">Иран отправил США условия мира</div>
-                    <div class="news-text">Иран передал США свои мирные условия через катарских посредников, заявил высокопоставленный чиновник службы безопасности страны Мохсен Резаи, утверждая, что принять их — в интересах Вашингтона. 60-дне...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2063" data-title="иран отправил сша условия мира" data-text="иран передал сша свои мирные условия через катарских посредников, заявил высокопоставленный чиновник службы безопасности страны мохсен резаи, утверждая, что принять их — в интересах вашингтона. 60-дне...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2063, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2063, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2063.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2063)">
+                    <img src="assets/post_2063.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 23:05</div>
+                        <div class="news-title">Иран отправил США условия мира</div>
+                        <div class="news-text">Иран передал США свои мирные условия через катарских посредников, заявил высокопоставленный чиновник службы безопасности страны Мохсен Резаи, утверждая, что принять их — в интересах Вашингтона. 60-дне...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2062.html" class="news-card">
-                <img src="assets/post_2062.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 21:11</div>
-                    <div class="news-title">Агентство здравоохранения изучает электромагнитные поля и беспроводное излучение: РФК-младший.</div>
-                    <div class="news-text">Автор: Закари Стибер для The Epoch Times, Министерство здравоохранения и социальных служб (HHS) изучает электромагнитные поля, заявил 17 сентября министр здравоохранения Роберт Ф. Кеннеди-младший. Деп...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2062" data-title="агентство здравоохранения изучает электромагнитные поля и беспроводное излучение: рфк-младший." data-text="автор: закари стибер для the epoch times, министерство здравоохранения и социальных служб (hhs) изучает электромагнитные поля, заявил 17 сентября министр здравоохранения роберт ф. кеннеди-младший. деп...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2062, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2062, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2062.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2062)">
+                    <img src="assets/post_2062.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 21:11</div>
+                        <div class="news-title">Агентство здравоохранения изучает электромагнитные поля и беспроводное излучение: РФК-младший.</div>
+                        <div class="news-text">Автор: Закари Стибер для The Epoch Times, Министерство здравоохранения и социальных служб (HHS) изучает электромагнитные поля, заявил 17 сентября министр здравоохранения Роберт Ф. Кеннеди-младший. Деп...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2061.html" class="news-card">
-                <img src="assets/post_2061.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 21:11</div>
-                    <div class="news-title">Техасскому детскому саду предъявлен иск за управление бойцовским клубом для малышей</div>
-                    <div class="news-text">Забудьте на мгновение о мошенничестве в детских садах Сомали – вы слышали о бойцовском клубе для малышей? Детский сад в Форт-Уэрте, штат Техас, сталкивается с расследованиями и судебными разбирательст...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2061" data-title="техасскому детскому саду предъявлен иск за управление бойцовским клубом для малышей" data-text="забудьте на мгновение о мошенничестве в детских садах сомали – вы слышали о бойцовском клубе для малышей? детский сад в форт-уэрте, штат техас, сталкивается с расследованиями и судебными разбирательст...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2061, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2061, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2061.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2061)">
+                    <img src="assets/post_2061.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 21:11</div>
+                        <div class="news-title">Техасскому детскому саду предъявлен иск за управление бойцовским клубом для малышей</div>
+                        <div class="news-text">Забудьте на мгновение о мошенничестве в детских садах Сомали – вы слышали о бойцовском клубе для малышей? Детский сад в Форт-Уэрте, штат Техас, сталкивается с расследованиями и судебными разбирательст...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2060.html" class="news-card">
-                <img src="assets/post_2060.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 21:11</div>
-                    <div class="news-title">Больше никаких обязательных сборов ESG для молочных фермеров, правила Министерства сельского хозяйства США</div>
-                    <div class="news-text">Автор: Навин Атрапулли для The Epoch Times, Министерство сельского хозяйства США (USDA) прекратило экологические, социальные и управленческие инициативы (ESG) в рамках молочной программы, финансируемо...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2060" data-title="больше никаких обязательных сборов esg для молочных фермеров, правила министерства сельского хозяйства сша" data-text="автор: навин атрапулли для the epoch times, министерство сельского хозяйства сша (usda) прекратило экологические, социальные и управленческие инициативы (esg) в рамках молочной программы, финансируемо...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2060, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2060, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2060.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2060)">
+                    <img src="assets/post_2060.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 21:11</div>
+                        <div class="news-title">Больше никаких обязательных сборов ESG для молочных фермеров, правила Министерства сельского хозяйства США</div>
+                        <div class="news-text">Автор: Навин Атрапулли для The Epoch Times, Министерство сельского хозяйства США (USDA) прекратило экологические, социальные и управленческие инициативы (ESG) в рамках молочной программы, финансируемо...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2059.html" class="news-card">
-                <img src="assets/post_2059.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 21:10</div>
-                    <div class="news-title">Взрывы сотрясли столицу Саудовской Аравии – СМИ</div>
-                    <div class="news-text">Сообщалось о нескольких взрывах в столице Саудовской Аравии Эр-Рияде, которые нарушили полеты и вызвали предупреждения о воздушном налете на фоне эскалации боевых действий с йеменскими хуситами. По да...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2059" data-title="взрывы сотрясли столицу саудовской аравии – сми" data-text="сообщалось о нескольких взрывах в столице саудовской аравии эр-рияде, которые нарушили полеты и вызвали предупреждения о воздушном налете на фоне эскалации боевых действий с йеменскими хуситами. по да...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2059, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2059, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2059.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2059)">
+                    <img src="assets/post_2059.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 21:10</div>
+                        <div class="news-title">Взрывы сотрясли столицу Саудовской Аравии – СМИ</div>
+                        <div class="news-text">Сообщалось о нескольких взрывах в столице Саудовской Аравии Эр-Рияде, которые нарушили полеты и вызвали предупреждения о воздушном налете на фоне эскалации боевых действий с йеменскими хуситами. По да...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2058.html" class="news-card">
-                <img src="assets/post_2058.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 21:10</div>
-                    <div class="news-title">Пекин раскритиковал новые санкции США против России</div>
-                    <div class="news-text">Китай осудил последнее расширение санкций США против России, включая потенциальные тарифы до 100% для основных покупателей российских энергоносителей, пообещав принять «все необходимые меры» для защит...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2058" data-title="пекин раскритиковал новые санкции сша против россии" data-text="китай осудил последнее расширение санкций сша против россии, включая потенциальные тарифы до 100% для основных покупателей российских энергоносителей, пообещав принять «все необходимые меры» для защит...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2058, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2058, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2058.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2058)">
+                    <img src="assets/post_2058.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 21:10</div>
+                        <div class="news-title">Пекин раскритиковал новые санкции США против России</div>
+                        <div class="news-text">Китай осудил последнее расширение санкций США против России, включая потенциальные тарифы до 100% для основных покупателей российских энергоносителей, пообещав принять «все необходимые меры» для защит...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2057.html" class="news-card">
-                <img src="assets/post_2057.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 21:10</div>
-                    <div class="news-title">Империя наркотиков: Искоренение талибами опиума раскрывает суровую реальность американской оккупации Афганистана</div>
-                    <div class="news-text">Почему США-НАТО вторглись в Афганистан 7 октября 2001 года? Второй запрет на выращивание опиума в апреле 2022 года. Автор: Мишель Чоссудовский. Введение. Ниже приводится выдающийся и своевременный ана...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2057" data-title="империя наркотиков: искоренение талибами опиума раскрывает суровую реальность американской оккупации афганистана" data-text="почему сша-нато вторглись в афганистан 7 октября 2001 года? второй запрет на выращивание опиума в апреле 2022 года. автор: мишель чоссудовский. введение. ниже приводится выдающийся и своевременный ана...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2057, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2057, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2057.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2057)">
+                    <img src="assets/post_2057.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 21:10</div>
+                        <div class="news-title">Империя наркотиков: Искоренение талибами опиума раскрывает суровую реальность американской оккупации Афганистана</div>
+                        <div class="news-text">Почему США-НАТО вторглись в Афганистан 7 октября 2001 года? Второй запрет на выращивание опиума в апреле 2022 года. Автор: Мишель Чоссудовский. Введение. Ниже приводится выдающийся и своевременный ана...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2056.html" class="news-card">
-                <img src="assets/post_2056.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 21:10</div>
-                    <div class="news-title">Киевский режим в роли мафии – украинская кантора включена в черный список</div>
-                    <div class="news-text">Кроме того, мы могли бы включить имена людей в общественный список всех, кто хочет ликвидировать, или режим Киева также может быть изменен в качестве меры безопасности. Недавно мы узнали, как украинск...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2056" data-title="киевский режим в роли мафии – украинская кантора включена в черный список" data-text="кроме того, мы могли бы включить имена людей в общественный список всех, кто хочет ликвидировать, или режим киева также может быть изменен в качестве меры безопасности. недавно мы узнали, как украинск...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2056, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2056, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2056.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2056)">
+                    <img src="assets/post_2056.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 21:10</div>
+                        <div class="news-title">Киевский режим в роли мафии – украинская кантора включена в черный список</div>
+                        <div class="news-text">Кроме того, мы могли бы включить имена людей в общественный список всех, кто хочет ликвидировать, или режим Киева также может быть изменен в качестве меры безопасности. Недавно мы узнали, как украинск...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2055.html" class="news-card">
-                <img src="assets/post_2055.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 18:51</div>
-                    <div class="news-title">Баллистические ракеты хуситов попали в топливные баки возле аэропорта Эр-Рияда во время войны</div>
-                    <div class="news-text">Впервые в истории йеменского конфликта баллистические ракеты хуситов обрушились на саудовскую столицу Эр-Рияд в одночасье, вызвав редкую тревогу о воздушном налете и общее состояние паники среди насел...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2055" data-title="баллистические ракеты хуситов попали в топливные баки возле аэропорта эр-рияда во время войны" data-text="впервые в истории йеменского конфликта баллистические ракеты хуситов обрушились на саудовскую столицу эр-рияд в одночасье, вызвав редкую тревогу о воздушном налете и общее состояние паники среди насел...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2055, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2055, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2055.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2055)">
+                    <img src="assets/post_2055.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 18:51</div>
+                        <div class="news-title">Баллистические ракеты хуситов попали в топливные баки возле аэропорта Эр-Рияда во время войны</div>
+                        <div class="news-text">Впервые в истории йеменского конфликта баллистические ракеты хуситов обрушились на саудовскую столицу Эр-Рияд в одночасье, вызвав редкую тревогу о воздушном налете и общее состояние паники среди насел...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2054.html" class="news-card">
-                <img src="assets/post_2054.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 18:51</div>
-                    <div class="news-title">Современная мистификация линчевания... и слон в комнате</div>
-                    <div class="news-text">Автор Ларри Элдер через The Epoch Times, Около 60 членов Конгресса от Демократической партии подписали письмо, чтобы бить тревогу: чернокожих американцев находят повешенными, в том числе на деревьях, ...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2054" data-title="современная мистификация линчевания... и слон в комнате" data-text="автор ларри элдер через the epoch times, около 60 членов конгресса от демократической партии подписали письмо, чтобы бить тревогу: чернокожих американцев находят повешенными, в том числе на деревьях, ...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2054, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2054, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2054.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2054)">
+                    <img src="assets/post_2054.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 18:51</div>
+                        <div class="news-title">Современная мистификация линчевания... и слон в комнате</div>
+                        <div class="news-text">Автор Ларри Элдер через The Epoch Times, Около 60 членов Конгресса от Демократической партии подписали письмо, чтобы бить тревогу: чернокожих американцев находят повешенными, в том числе на деревьях, ...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2053.html" class="news-card">
-                <img src="assets/post_2053.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 18:51</div>
-                    <div class="news-title">Лидер Северной Кореи призывает к более широкому использованию искусственного интеллекта в военных целях</div>
-                    <div class="news-text">Лидер Северной Кореи Ким Чен Ын призвал к более широкому использованию искусственного интеллекта и автоматизации в наступательных и оборонительных вооружениях страны, одновременно призывая производите...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2053" data-title="лидер северной кореи призывает к более широкому использованию искусственного интеллекта в военных целях" data-text="лидер северной кореи ким чен ын призвал к более широкому использованию искусственного интеллекта и автоматизации в наступательных и оборонительных вооружениях страны, одновременно призывая производите...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2053, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2053, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2053.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2053)">
+                    <img src="assets/post_2053.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 18:51</div>
+                        <div class="news-title">Лидер Северной Кореи призывает к более широкому использованию искусственного интеллекта в военных целях</div>
+                        <div class="news-text">Лидер Северной Кореи Ким Чен Ын призвал к более широкому использованию искусственного интеллекта и автоматизации в наступательных и оборонительных вооружениях страны, одновременно призывая производите...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2052.html" class="news-card">
-                <img src="assets/post_2052.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 18:51</div>
-                    <div class="news-title">Суверенитет Канады под угрозой? 51-й штат, Дежавю: Милитаризация Северной Америки.</div>
-                    <div class="news-text">Впервые опубликовано 24 января 2025 года, через четыре дня после инаугурации президента Трампа. Он очень тщательно документирует главу нашей недавней истории, которая не была предметом дебатов в Палат...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2052" data-title="суверенитет канады под угрозой? 51-й штат, дежавю: милитаризация северной америки." data-text="впервые опубликовано 24 января 2025 года, через четыре дня после инаугурации президента трампа. он очень тщательно документирует главу нашей недавней истории, которая не была предметом дебатов в палат...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2052, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2052, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2052.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2052)">
+                    <img src="assets/post_2052.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 18:51</div>
+                        <div class="news-title">Суверенитет Канады под угрозой? 51-й штат, Дежавю: Милитаризация Северной Америки.</div>
+                        <div class="news-text">Впервые опубликовано 24 января 2025 года, через четыре дня после инаугурации президента Трампа. Он очень тщательно документирует главу нашей недавней истории, которая не была предметом дебатов в Палат...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2051.html" class="news-card">
-                <img src="assets/post_2051.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 16:35</div>
-                    <div class="news-title">Лос-Анджелес занимает последнее место среди 100 мегаполисов США по доступности и строительству новых домов</div>
-                    <div class="news-text">Автор: Мэри Пренон для The Epoch Times, Де-Мойн, штат Айова, занял первое место, а Лос-Анджелес занял последнее место в первом отчете Realtor.com, оценивающем 100 крупнейших в США показателей доступно...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2051" data-title="лос-анджелес занимает последнее место среди 100 мегаполисов сша по доступности и строительству новых домов" data-text="автор: мэри пренон для the epoch times, де-мойн, штат айова, занял первое место, а лос-анджелес занял последнее место в первом отчете realtor.com, оценивающем 100 крупнейших в сша показателей доступно...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2051, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2051, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2051.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2051)">
+                    <img src="assets/post_2051.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 16:35</div>
+                        <div class="news-title">Лос-Анджелес занимает последнее место среди 100 мегаполисов США по доступности и строительству новых домов</div>
+                        <div class="news-text">Автор: Мэри Пренон для The Epoch Times, Де-Мойн, штат Айова, занял первое место, а Лос-Анджелес занял последнее место в первом отчете Realtor.com, оценивающем 100 крупнейших в США показателей доступно...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2050.html" class="news-card">
-                <img src="assets/post_2050.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 16:35</div>
-                    <div class="news-title">Альянс морской обороны 14 стран приближается к развертыванию в Красном море и Аденском заливе</div>
-                    <div class="news-text">Поскольку саудовское судоходство в Баб-эль-Мандебском проливе находится под беспрецедентной угрозой, недавно созданная Многонациональная коалиция морской обороны приближается к развертыванию кораблей ...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2050" data-title="альянс морской обороны 14 стран приближается к развертыванию в красном море и аденском заливе" data-text="поскольку саудовское судоходство в баб-эль-мандебском проливе находится под беспрецедентной угрозой, недавно созданная многонациональная коалиция морской обороны приближается к развертыванию кораблей ...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2050, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2050, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2050.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2050)">
+                    <img src="assets/post_2050.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 16:35</div>
+                        <div class="news-title">Альянс морской обороны 14 стран приближается к развертыванию в Красном море и Аденском заливе</div>
+                        <div class="news-text">Поскольку саудовское судоходство в Баб-эль-Мандебском проливе находится под беспрецедентной угрозой, недавно созданная Многонациональная коалиция морской обороны приближается к развертыванию кораблей ...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2049.html" class="news-card">
-                <img src="assets/post_2049.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 16:35</div>
-                    <div class="news-title">Они говорят нам, что приближается большая война...</div>
-                    <div class="news-text">Британское правительство стирает пыль с секретного руководства времен холодной войны, предписывающего домохозяйствам запасать дома консервные банки и воду в бутылках, в то время как государственные СМ...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2049" data-title="они говорят нам, что приближается большая война..." data-text="британское правительство стирает пыль с секретного руководства времен холодной войны, предписывающего домохозяйствам запасать дома консервные банки и воду в бутылках, в то время как государственные см...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2049, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2049, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2049.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2049)">
+                    <img src="assets/post_2049.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 16:35</div>
+                        <div class="news-title">Они говорят нам, что приближается большая война...</div>
+                        <div class="news-text">Британское правительство стирает пыль с секретного руководства времен холодной войны, предписывающего домохозяйствам запасать дома консервные банки и воду в бутылках, в то время как государственные СМ...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2048.html" class="news-card">
-                <img src="assets/post_2048.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 16:34</div>
-                    <div class="news-title">Пропалестинский французский депутат Европарламента обвинил министра внутренних дел в разжигании клеветы на наркотики</div>
-                    <div class="news-text">Депутат Европарламента от Франции Рима Хассан подала официальную жалобу на министра внутренних дел Лорана Нуньеса, обвинив его в том, что он помог спровоцировать против нее ложные обвинения в наркотик...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2048" data-title="пропалестинский французский депутат европарламента обвинил министра внутренних дел в разжигании клеветы на наркотики" data-text="депутат европарламента от франции рима хассан подала официальную жалобу на министра внутренних дел лорана нуньеса, обвинив его в том, что он помог спровоцировать против нее ложные обвинения в наркотик...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2048, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2048, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2048.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2048)">
+                    <img src="assets/post_2048.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 16:34</div>
+                        <div class="news-title">Пропалестинский французский депутат Европарламента обвинил министра внутренних дел в разжигании клеветы на наркотики</div>
+                        <div class="news-text">Депутат Европарламента от Франции Рима Хассан подала официальную жалобу на министра внутренних дел Лорана Нуньеса, обвинив его в том, что он помог спровоцировать против нее ложные обвинения в наркотик...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2047.html" class="news-card">
-                <img src="assets/post_2047.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 16:34</div>
-                    <div class="news-title">Союзникам США грозит пятилетняя задержка поставок ракет – Bloomberg</div>
-                    <div class="news-text">США предупредили своих союзников, что поставки ключевых ракетных систем, вероятно, будут отложены на несколько лет из-за истощения запасов оружия на фоне войны с Ираном, сообщило в пятницу агентство B...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2047" data-title="союзникам сша грозит пятилетняя задержка поставок ракет – bloomberg" data-text="сша предупредили своих союзников, что поставки ключевых ракетных систем, вероятно, будут отложены на несколько лет из-за истощения запасов оружия на фоне войны с ираном, сообщило в пятницу агентство b...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2047, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2047, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2047.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2047)">
+                    <img src="assets/post_2047.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 16:34</div>
+                        <div class="news-title">Союзникам США грозит пятилетняя задержка поставок ракет – Bloomberg</div>
+                        <div class="news-text">США предупредили своих союзников, что поставки ключевых ракетных систем, вероятно, будут отложены на несколько лет из-за истощения запасов оружия на фоне войны с Ираном, сообщило в пятницу агентство B...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2046.html" class="news-card">
-                <img src="assets/post_2046.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 16:34</div>
-                    <div class="news-title">США продолжают хвастаться милитаризацией космоса спустя 60 лет после Договора по космосу</div>
-                    <div class="news-text">Драго Боснич, независимый геополитический и военный аналитик. В последние дни и недели Соединенные Штаты открыто начали хвастаться наличием орбитального оружия, что является прямым нарушением Договора...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2046" data-title="сша продолжают хвастаться милитаризацией космоса спустя 60 лет после договора по космосу" data-text="драго боснич, независимый геополитический и военный аналитик. в последние дни и недели соединенные штаты открыто начали хвастаться наличием орбитального оружия, что является прямым нарушением договора...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2046, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2046, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2046.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2046)">
+                    <img src="assets/post_2046.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 16:34</div>
+                        <div class="news-title">США продолжают хвастаться милитаризацией космоса спустя 60 лет после Договора по космосу</div>
+                        <div class="news-text">Драго Боснич, независимый геополитический и военный аналитик. В последние дни и недели Соединенные Штаты открыто начали хвастаться наличием орбитального оружия, что является прямым нарушением Договора...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2045.html" class="news-card">
-                <img src="assets/post_2045.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 13:17</div>
-                    <div class="news-title">74% подозреваемых в сексуальных преступлениях в Испании Страна Басков - иностранцы</div>
-                    <div class="news-text">Подозреваемые, родившиеся за границей, составляют почти три четверти арестов за сексуальные преступления в Стране Басков, согласно официальным данным Официальная статистика, опубликованная баскской ре...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2045" data-title="74% подозреваемых в сексуальных преступлениях в испании страна басков - иностранцы" data-text="подозреваемые, родившиеся за границей, составляют почти три четверти арестов за сексуальные преступления в стране басков, согласно официальным данным официальная статистика, опубликованная баскской ре...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2045, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2045, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2045.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2045)">
+                    <img src="assets/post_2045.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 13:17</div>
+                        <div class="news-title">74% подозреваемых в сексуальных преступлениях в Испании Страна Басков - иностранцы</div>
+                        <div class="news-text">Подозреваемые, родившиеся за границей, составляют почти три четверти арестов за сексуальные преступления в Стране Басков, согласно официальным данным Официальная статистика, опубликованная баскской ре...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2044.html" class="news-card">
-                <img src="assets/post_2044.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 13:17</div>
-                    <div class="news-title">Россия конфискует активы швейцарского продовольственного гиганта Nestle</div>
-                    <div class="news-text">Российские власти захватили оставшиеся предприятия и активы швейцарского продовольственного гиганта Nestle и трех французских групп, что стало последним шагом против западных фирм в ответ на санкции п...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2044" data-title="россия конфискует активы швейцарского продовольственного гиганта nestle" data-text="российские власти захватили оставшиеся предприятия и активы швейцарского продовольственного гиганта nestle и трех французских групп, что стало последним шагом против западных фирм в ответ на санкции п...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2044, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2044, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2044.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2044)">
+                    <img src="assets/post_2044.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 13:17</div>
+                        <div class="news-title">Россия конфискует активы швейцарского продовольственного гиганта Nestle</div>
+                        <div class="news-text">Российские власти захватили оставшиеся предприятия и активы швейцарского продовольственного гиганта Nestle и трех французских групп, что стало последним шагом против западных фирм в ответ на санкции п...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2043.html" class="news-card">
-                <img src="assets/post_2043.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 13:17</div>
-                    <div class="news-title">Как бывший глава МИ-6, ясно, что британская климатическая политика оставляет нас в опасном положении перед нашими врагами</div>
-                    <div class="news-text">Автор: Ричард Дирлав (Richard Dearlove), The Daily Sceptic, Это стенограмма лекции, прочитанной вчера вечером в Лондоне Фонду политики глобального потепления сэром Ричардом Дирлавом, бывшим главой МИ-...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2043" data-title="как бывший глава ми-6, ясно, что британская климатическая политика оставляет нас в опасном положении перед нашими врагами" data-text="автор: ричард дирлав (richard dearlove), the daily sceptic, это стенограмма лекции, прочитанной вчера вечером в лондоне фонду политики глобального потепления сэром ричардом дирлавом, бывшим главой ми-...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2043, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2043, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2043.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2043)">
+                    <img src="assets/post_2043.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 13:17</div>
+                        <div class="news-title">Как бывший глава МИ-6, ясно, что британская климатическая политика оставляет нас в опасном положении перед нашими врагами</div>
+                        <div class="news-text">Автор: Ричард Дирлав (Richard Dearlove), The Daily Sceptic, Это стенограмма лекции, прочитанной вчера вечером в Лондоне Фонду политики глобального потепления сэром Ричардом Дирлавом, бывшим главой МИ-...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2042.html" class="news-card">
-                <img src="assets/post_2042.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 13:17</div>
-                    <div class="news-title">В войне в Иране погибло больше американских военнослужащих, чем раскрыл Пентагон – WaPo</div>
-                    <div class="news-text">Число военнослужащих США, погибших во время развертывания на Ближнем Востоке с начала войны в Иране, выше, чем общественный подсчет Пентагона, сообщила в пятницу газета Washington Post со ссылкой на в...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2042" data-title="в войне в иране погибло больше американских военнослужащих, чем раскрыл пентагон – wapo" data-text="число военнослужащих сша, погибших во время развертывания на ближнем востоке с начала войны в иране, выше, чем общественный подсчет пентагона, сообщила в пятницу газета washington post со ссылкой на в...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2042, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2042, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2042.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2042)">
+                    <img src="assets/post_2042.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 13:17</div>
+                        <div class="news-title">В войне в Иране погибло больше американских военнослужащих, чем раскрыл Пентагон – WaPo</div>
+                        <div class="news-text">Число военнослужащих США, погибших во время развертывания на Ближнем Востоке с начала войны в Иране, выше, чем общественный подсчет Пентагона, сообщила в пятницу газета Washington Post со ссылкой на в...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2041.html" class="news-card">
-                <img src="assets/post_2041.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 09:24</div>
-                    <div class="news-title">Трамп подписал новый законопроект о санкциях против России</div>
-                    <div class="news-text">Президент США Дональд Трамп подписал радикальный закон, расширяющий санкции в отношении России и разрешающий повышение тарифов до 100% для основных покупателей российских энергоносителей. Москва преду...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2041" data-title="трамп подписал новый законопроект о санкциях против россии" data-text="президент сша дональд трамп подписал радикальный закон, расширяющий санкции в отношении россии и разрешающий повышение тарифов до 100% для основных покупателей российских энергоносителей. москва преду...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2041, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2041, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2041.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2041)">
+                    <img src="assets/post_2041.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 09:24</div>
+                        <div class="news-title">Трамп подписал новый законопроект о санкциях против России</div>
+                        <div class="news-text">Президент США Дональд Трамп подписал радикальный закон, расширяющий санкции в отношении России и разрешающий повышение тарифов до 100% для основных покупателей российских энергоносителей. Москва преду...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2040.html" class="news-card">
-                <img src="assets/post_2040.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 08:16</div>
-                    <div class="news-title">Немецкое спонсорство сионистских поселений разоблачено</div>
-                    <div class="news-text">Используя академические учреждения в качестве прикрытия, в период с 2017 по 2021 год правительство Германии тайно направило миллионы в крайне дискриминационный проект, способствующий расширению сионис...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2040" data-title="немецкое спонсорство сионистских поселений разоблачено" data-text="используя академические учреждения в качестве прикрытия, в период с 2017 по 2021 год правительство германии тайно направило миллионы в крайне дискриминационный проект, способствующий расширению сионис...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2040, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2040, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2040.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2040)">
+                    <img src="assets/post_2040.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 08:16</div>
+                        <div class="news-title">Немецкое спонсорство сионистских поселений разоблачено</div>
+                        <div class="news-text">Используя академические учреждения в качестве прикрытия, в период с 2017 по 2021 год правительство Германии тайно направило миллионы в крайне дискриминационный проект, способствующий расширению сионис...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2039.html" class="news-card">
-                <img src="assets/post_2039.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 05:02</div>
-                    <div class="news-title">США запрещают президенту Палестинской автономии посещать ООН, но допускают иранцев</div>
-                    <div class="news-text">Министерство иностранных дел Палестинской администрации (ПА) в четверг осудило решение США запретить палестинским должностным лицам участвовать в Генеральной Ассамблее ООН второй год подряд. США отказ...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2039" data-title="сша запрещают президенту палестинской автономии посещать оон, но допускают иранцев" data-text="министерство иностранных дел палестинской администрации (па) в четверг осудило решение сша запретить палестинским должностным лицам участвовать в генеральной ассамблее оон второй год подряд. сша отказ...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2039, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2039, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2039.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2039)">
+                    <img src="assets/post_2039.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 05:02</div>
+                        <div class="news-title">США запрещают президенту Палестинской автономии посещать ООН, но допускают иранцев</div>
+                        <div class="news-text">Министерство иностранных дел Палестинской администрации (ПА) в четверг осудило решение США запретить палестинским должностным лицам участвовать в Генеральной Ассамблее ООН второй год подряд. США отказ...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2038.html" class="news-card">
-                <img src="assets/post_2038.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 05:02</div>
-                    <div class="news-title">Фонд помощи против ICE в Миннесоте закрыт из-за необузданного мошенничества</div>
-                    <div class="news-text">Чиновники в округе Хеннепин, штат Миннесота,закрыли фонд помощи в размере 2 миллионов $ для предприятий, утверждающих, что они пострадали от федерального иммиграционного законодательства после того, к...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2038" data-title="фонд помощи против ice в миннесоте закрыт из-за необузданного мошенничества" data-text="чиновники в округе хеннепин, штат миннесота,закрыли фонд помощи в размере 2 миллионов $ для предприятий, утверждающих, что они пострадали от федерального иммиграционного законодательства после того, к...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2038, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2038, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2038.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2038)">
+                    <img src="assets/post_2038.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 05:02</div>
+                        <div class="news-title">Фонд помощи против ICE в Миннесоте закрыт из-за необузданного мошенничества</div>
+                        <div class="news-text">Чиновники в округе Хеннепин, штат Миннесота,закрыли фонд помощи в размере 2 миллионов $ для предприятий, утверждающих, что они пострадали от федерального иммиграционного законодательства после того, к...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2037.html" class="news-card">
-                <img src="assets/post_2037.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 05:01</div>
-                    <div class="news-title">Предстоящий саммит Трамп-Си - это действительно саммит ИИ</div>
-                    <div class="news-text">Автор Джеймс Горри через The Epoch Times, Когда президент Дональд Трамп и китайский лидер Си Цзиньпин встретятся в Белом доме 24 сентября, общественная повестка дня будет намного больше, чем искусстве...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2037" data-title="предстоящий саммит трамп-си - это действительно саммит ии" data-text="автор джеймс горри через the epoch times, когда президент дональд трамп и китайский лидер си цзиньпин встретятся в белом доме 24 сентября, общественная повестка дня будет намного больше, чем искусстве...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2037, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2037, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2037.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2037)">
+                    <img src="assets/post_2037.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 05:01</div>
+                        <div class="news-title">Предстоящий саммит Трамп-Си - это действительно саммит ИИ</div>
+                        <div class="news-text">Автор Джеймс Горри через The Epoch Times, Когда президент Дональд Трамп и китайский лидер Си Цзиньпин встретятся в Белом доме 24 сентября, общественная повестка дня будет намного больше, чем искусстве...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2036.html" class="news-card">
-                <img src="assets/post_2036.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 05:01</div>
-                    <div class="news-title">ЦЕНТКОМ оценивает войну с Ираном</div>
-                    <div class="news-text">Война с Ираном обошлась в $ 43,6 млрд, причем почти две трети законопроекта направлены на пополнение запасов истощенных боеприпасов, согласно данным Центрального командования США (CENTCOM), направленн...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2036" data-title="центком оценивает войну с ираном" data-text="война с ираном обошлась в $ 43,6 млрд, причем почти две трети законопроекта направлены на пополнение запасов истощенных боеприпасов, согласно данным центрального командования сша (centcom), направленн...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2036, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2036, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2036.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2036)">
+                    <img src="assets/post_2036.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 05:01</div>
+                        <div class="news-title">ЦЕНТКОМ оценивает войну с Ираном</div>
+                        <div class="news-text">Война с Ираном обошлась в $ 43,6 млрд, причем почти две трети законопроекта направлены на пополнение запасов истощенных боеприпасов, согласно данным Центрального командования США (CENTCOM), направленн...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2035.html" class="news-card">
-                <img src="assets/post_2035.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 05:01</div>
-                    <div class="news-title">Канада надеется нажиться на схеме вооружений ЕС в Украине на € 90 млрд</div>
-                    <div class="news-text">Канада стремится присоединиться к кредитной программе ЕС на € 90 млрд для Украины, заявил в пятницу представитель Европейской комиссии, что позволит канадским производителям оружия конкурировать за ко...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2035" data-title="канада надеется нажиться на схеме вооружений ес в украине на € 90 млрд" data-text="канада стремится присоединиться к кредитной программе ес на € 90 млрд для украины, заявил в пятницу представитель европейской комиссии, что позволит канадским производителям оружия конкурировать за ко...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2035, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2035, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2035.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2035)">
+                    <img src="assets/post_2035.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 05:01</div>
+                        <div class="news-title">Канада надеется нажиться на схеме вооружений ЕС в Украине на € 90 млрд</div>
+                        <div class="news-text">Канада стремится присоединиться к кредитной программе ЕС на € 90 млрд для Украины, заявил в пятницу представитель Европейской комиссии, что позволит канадским производителям оружия конкурировать за ко...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
-            <a href="/Novikon-site/posts/post_2034.html" class="news-card">
-                <img src="assets/post_2034.jpg" alt="News image" loading="lazy">
-                <div class="news-content">
-                    <div class="news-date">19.09.2026 05:01</div>
-                    <div class="news-title">ФБР приостановило сотрудничество с Канадой из-за языка 11 сентября – NYT</div>
-                    <div class="news-text">ФБР временно приостановило сотрудничество со своим канадским коллегой в этом месяце после того, как общественный вещатель страны поручил журналистам не называть теракты 11 сентября терроризмом, не при...</div>
-                    <span class="read-more">Читать далее →</span>
+            <div class="news-card" data-post-id="2034" data-title="фбр приостановило сотрудничество с канадой из-за языка 11 сентября – nyt" data-text="фбр временно приостановило сотрудничество со своим канадским коллегой в этом месяце после того, как общественный вещатель страны поручил журналистам не называть теракты 11 сентября терроризмом, не при...">
+                <div class="card-actions">
+                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(2034, this)" title="В избранное">⭐</button>
+                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(2034, this)" title="Отметить прочитанным">👁️</button>
                 </div>
-            </a>
+                <a href="/Novikon-site/posts/post_2034.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(2034)">
+                    <img src="assets/post_2034.jpg" alt="News image" loading="lazy">
+                    <div class="news-content">
+                        <div class="news-date">19.09.2026 05:01</div>
+                        <div class="news-title">ФБР приостановило сотрудничество с Канадой из-за языка 11 сентября – NYT</div>
+                        <div class="news-text">ФБР временно приостановило сотрудничество со своим канадским коллегой в этом месяце после того, как общественный вещатель страны поручил журналистам не называть теракты 11 сентября терроризмом, не при...</div>
+                        <span class="read-more">Читать далее →</span>
+                    </div>
+                </a>
+            </div>
 
+        </div>
+        <div class="no-results" id="noResults" style="display:none;">
+            <p>😔 Ничего не найдено</p>
         </div>
     </div>
     <div class="footer">
@@ -625,19 +1170,432 @@
             <p>© 2026 Novikon</p>
         </div>
     </div>
+    
+    <div class="toast-container" id="toastContainer"></div>
+    
     <script>
+        // ============ ДАННЫЕ ============
+        const postsData = [{"id": 2075, "date": "2026-09-20T11:21:45+00:00", "text": "**Великобритания подозрительно пахнет СССР поздней стадии**\n\n«Эра Вестминстера подходит к концу!» — заявили на этой неделе националистические лидеры Шотландии, Уэльса и Северной Ирландии.\n\nДжон Суинни, Рун ап Йорверт и Мишель О’Нил собрались в Кардиффе, чтобы подписать соглашение, подтверждающее право их наций на самоопределение, поскольку они призвали Лондон не препятствовать референдумам и изложили свои предпочтительные варианты будущего за пределами Великобритании, включая членство в ЕС для независимых Шотландии и Уэльса и воссоединение Ирландии для Северной Ирландии.\n\nВ России эту встречу уже окрестили британской версией Беловежских соглашений, и это сравнение заманчиво, поскольку, как и в 1991 году, политические лидеры трех составных частей государства собрались за столом, чтобы обсудить цивилизованный развод.", "image_url": "assets/post_2075.jpg"}, {"id": 2074, "date": "2026-09-20T11:21:32+00:00", "text": "**Трамп обещает не замедлять работу ИИ, несмотря на предупреждения отрасли**\n\nПрезидент США Дональд Трамп пообещал не замедлять развитие искусственного интеллекта, несмотря на предупреждения ведущих технологических руководителей о потенциальных рисках, связанных со все более мощными системами.\n\nТрамп также объявил о создании «Сил ИИ» и заявил, что назначит царя ИИ, одновременно пообещав сохранить лидерство Америки над Китаем в быстро развивающихся технологиях.\n\n«Мы никоим образом не будем препятствовать или подавлять рост этой невероятной индустрии, — написал он в субботу на Truth Social. — Скорее, мы будем беречь ее, помогать ей и следить за ее ростом!»\n\nТрамп обвинил своих политических оппонентов в стремлении к «уничтожению или уничтожению» искусственного интеллекта, назвав этот шаг последним из серии мистификаций, созданных «радикальными левыми демократами». Он утверждал, что злоупотребления технологией могут быть решены через систему правосудия.", "image_url": "assets/post_2074.jpg"}, {"id": 2073, "date": "2026-09-20T06:09:46+00:00", "text": "**Принцы доллара: почему QE закончилось**\n\nАвтор Кейн Макгукин через Bombthrower,\n\nНа каждом переходе есть дорожные знаки. Мэтт Дайнс был одним из наиболее точных умов в последнее время в отношении денежно-кредитного и геополитического перехода, который мы переживаем.\n\nЕго комментарий и комментарий Камрона Оцуки в начале этого месяца на Mine Print Hash, опубликованный после встречи G20 в Северной Каролине, проливает свет на основные камни преткновения, которые проложат путь как для будущей политики, так и для денежно-кредитной системы. Это не произойдет в одночасье, но в то же время мы, скорее всего, оглянемся назад и скажем: «чувак, мир быстро изменился».\n\n1. Совет по финансовой стабильности (FSB). Так же, как встречи Великой депрессии принесли новые организации для следующего цикла, встречи G20 после GFC принесли FSB по той же причине. Новые правила, прокладывающие путь к стабильности в новую экономическую эпоху (саммит в Питтсбурге в 2009 году).", "image_url": "assets/post_2073.jpg"}, {"id": 2072, "date": "2026-09-20T06:09:33+00:00", "text": "**Сведения о военном отчете Шесть НЛО, движущихся со скоростью 480 МИЛЬ в час**\n\nПо данным NY Post, недавно опубликованные военные записи предлагают еще раз взглянуть на необъяснимые объекты, с которыми сталкиваются силы США, включая кластер, который, как сообщается, перемещается через воздушное пространство Ближнего Востока с необычайной скоростью.\n\nСогласно отчету CENTCOM от 2025 года, военнослужащие отслеживали шесть круглых объектов, движущихся вместе со скоростью около 480 миль в час. Их траектория полета была достаточно необычной, чтобы привлечь внимание, поскольку объекты неоднократно меняли курс. Военное видео со встречи показывает несколько небольших объектов, пересекающих небо над засушливым ландшафтом.\n\nВ отчете Центрального командования США (CENTCOM) за 2025 год подробно описывается наблюдение «шести небольших сферических объектов, сгруппированных вместе» и «часто меняющих направление» на скорости 480 миль в час.", "image_url": "assets/post_2072.jpg"}, {"id": 2071, "date": "2026-09-20T06:09:19+00:00", "text": "**Апокалиптическая игра: паника и возможности**\n\nАвтор Саша Гонг через American Greatness,\n\nПоследний аргумент Америки по поводу искусственного интеллекта внезапно стал апокалиптическим. Бывший исследователь антропии Джейкоб Коксон обвинил компании ИИ в «азартных играх с нашей жизнью». Генеральный директор Anthropic Дарио Амодей призвал отрасль замедлить разработку пограничных моделей, идею поддержали генеральный директор OpenAI Сэм Альтман и Илон Маск. В то же время оппозиция к центрам обработки данных, необходимым для питания ИИ, распространяется по всей территории Соединенных Штатов.\n\nКитай заметил. X недавно обнаружил предполагаемую китайскую сеть влияния примерно из 200 000 поддельных учетных записей; около 200 из них были непосредственно вовлечены в усиление утверждений о том, что американские центры обработки данных повышают цены на электроэнергию и перегружают энергосистему.\n\nЭто не означает, что в Пекине критикуют ИИ или центры обработки данных.", "image_url": "assets/post_2071.jpg"}, {"id": 2070, "date": "2026-09-20T06:09:05+00:00", "text": "**Куба погружается во тьму на фоне общенационального отключения электроэнергии**\n\nКуба пережила еще одно общенациональное отключение электроэнергии, оставив миллионы людей без электричества на фоне серьезной нехватки топлива и ограничений США на поставки нефти. Это, по крайней мере, шестое крупное отключение электроэнергии на острове с начала года.\n\nИз-за эмбарго США на протяжении десятилетий Куба столкнулась с обострением дефицита топлива, поскольку Венесуэла, ранее являвшаяся основным поставщиком нефти в Гавану, прекратила поставки после захвата США президента Николаса Мадуро в январе.\n\nПрезидент США Дональд Трамп впоследствии объявил чрезвычайное положение на Кубе, заблокировав поставки нефти на остров и угрожая тарифами против стран, которые продолжают ее поставлять. Трамп неоднократно заявлял, что намерен взять Кубу«так или иначе», и назвал смену режима там «вопросом времени».", "image_url": "assets/post_2070.jpg"}, {"id": 2069, "date": "2026-09-20T06:08:52+00:00", "text": "**Чрезмерная зависимость США от ИИ способствовала смертельной забастовке в школах Ирана – Bloomberg**\n\nСильная зависимость от ИИ, сокращения персонала и поспешные процедуры нацеливания способствовали ракетному удару США по иранской школе для девочек в Минабе, сообщило в пятницу агентство Bloomberg со ссылкой на должностных лиц, участвующих в расследовании Пентагона.\n\n28 февраля две ракеты Tomahawk попали в начальную школу Shajarah Tayyebeh на юге Ирана, в результате чего погибли по меньшей мере 157 человек, в том числе 123 ребенка. Удар произошел во время первой волны атак США и Израиля по всей стране. Школа стояла напротив военно-морской базы, которая, вероятно, была намеченной целью.\n\nНекоторые сотрудники Центрального командования США (CENTCOM), как сообщается, ожидали, что интеллектуальная система Palantir Maven будет отмечать устаревшие или непоследовательные разведданные при выборе потенциальных целей.", "image_url": "assets/post_2069.jpg"}, {"id": 2068, "date": "2026-09-20T01:04:19+00:00", "text": "**Апелляционный суд постановил, что федеральный запрет на продажу огнестрельного оружия между штатами является неконституционным**\n\nАвтор Джилл Маклафлин для The Epoch Times,\n\n18 сентября Апелляционный суд пятого округа вынес решение со счетом 2:1 против запрета федерального правительства на передачу огнестрельного оружия между штатами, признав закон, принятый почти 60 лет назад, неконституционным.\n\nПостановление отменяет положения Закона о контроле над огнестрельным оружием 1968 года, которые запрещают продажу пистолетов напрямую от лицензированных торговцев огнестрельным оружием покупателям за пределами штата.\n\n«Запрет запятнает простой текст Второй поправки и несовместим с национальной традицией регулирования огнестрельного оружия, восходящей к эпохе ее основания в соответствии с этой поправкой», — написал в постановлении окружной судья Джерри Смит.", "image_url": "assets/post_2068.jpg"}, {"id": 2067, "date": "2026-09-20T01:04:05+00:00", "text": "**HHS выделило 42,3 миллиона долларов на продвижение первой модели лечения бездомности и наркозависимости**\n\nАвтор Кимберли Хайек через The Epoch Times,\n\nФедеральное агентство при Министерстве здравоохранения и социальных служб США (HHS) в пятницу выделило штатам и территориям новые дополнительные денежные средства в размере 42,3 миллиона долларов с целью ускорить внедрение модели «Сначала лечение» для бездомных, связанных с зависимостью.\n\nФинансирование Управления служб по борьбе со злоупотреблением психоактивными веществами и психическим здоровьем (SAMHSA) поддерживает инициативу, предусмотренную указом президента Дональда Трампа под названием «Покончить с преступностью и беспорядками на улицах Америки» и последовавшим за ним соответствующим набором передовых практик. Этот приказ от июля 2025 года предписывал агентствам ставить лечение и восстановление выше старых подходов.", "image_url": "assets/post_2067.jpg"}, {"id": 2066, "date": "2026-09-20T01:03:52+00:00", "text": "**Инженеры Tesla проверяют китайских поставщиков по мере приближения коммерциализации Optimus**\n\nПримерно через месяц после того, как аналитики JPMorgan посетили завод Tesla во Фримонте и подтвердили «целевой четырехмесячный переход после окончания производства S/X в мае» на линии по производству гуманоидов, в новом отчете в пятницу говорится, что инженеры Tesla прибыли в Китай для проверки поставщиков компонентов для робототехники, поскольку Илон Маск, похоже, все ближе и ближе приближается к коммерциализации гуманоидных роботов.\n\nBloomberg первым сообщил об этом, когда инженеры Tesla прибыли в Нинбо, крупный порт и производственный город в провинции Чжэцзян на восточном побережье Китая, к югу от Шанхая. Инженеры осмотрели заводы по производству деталей и компонентов для робота-гуманоида по имени «Оптимус».", "image_url": "assets/post_2066.jpg"}, {"id": 2065, "date": "2026-09-20T01:03:40+00:00", "text": "**Новый закон США о санкциях подрывает мирные усилия Украины – Кремль**\n\nГлавный закон о санкциях США, подписанный президентом Дональдом Трампом на этой неделе, подорвет усилия по разрешению украинского конфликта дипломатическим путем, заявил официальный представитель Кремля Дмитрий Песков.\n\nВ пятницу Трамп подписал Закон Линдси О. Грэма о санкциях в отношении России и Ирана от 2026 года, который разрешает более жесткие ограничения в отношении Москвы и тарифы до 100% для основных покупателей российской нефти и газа.\n\n«Очевидно, что это не может иметь положительного эффекта», — заявил Песков РИА Новости в субботу, отвечая на вопрос, как закон повлияет на перспективы мирного урегулирования на Украине и возможный «прорыв» в российско-американских отношениях.", "image_url": "assets/post_2065.jpg"}, {"id": 2064, "date": "2026-09-20T01:03:28+00:00", "text": "**США выпустили предупреждения о безопасности на Ближнем Востоке**\n\nСША выпустили предупреждения о безопасности для своих граждан на Ближнем Востоке, предупреждая о дальнейшей эскалации между Саудовской Аравией и поддерживаемыми Ираном повстанцами-хуситами в Йемене.\n\nУведомления охватывают Израиль, Ливан, Иорданию, Ирак, Саудовскую Аравию, Кувейт, Бахрейн, Катар, ОАЭ и Оман.\n\n«Американцы, которые в настоящее время находятся на Ближнем Востоке, должны проявлять повышенную бдительность и знать о возможных отменах рейсов, закрытии воздушного пространства и перебоях в поездках», — заявил Госдепартамент США в субботу вечером.\n\n\"Поддерживаемые Ираном хуситы участвуют в боевых действиях против Саудовской Аравии, в том числе против гражданских аэропортов. Этот военный конфликт имеет потенциал быстрой эскалации\", - говорится в уведомлении, призывающем американцев воздержаться от поездок на Ближний Восток.", "image_url": "assets/post_2064.jpg"}, {"id": 2063, "date": "2026-09-19T23:05:10+00:00", "text": "**Иран отправил США условия мира**\n\nИран передал США свои мирные условия через катарских посредников, заявил высокопоставленный чиновник службы безопасности страны Мохсен Резаи, утверждая, что принять их — в интересах Вашингтона.\n\n60-дневный период, предусмотренный американо-иранским меморандумом о взаимопонимании для переговоров об урегулировании, истек в прошлом месяце без заключения соглашения, в то время как нарушение морского сообщения через Ормузский пролив продолжает способствовать росту цен на энергоносители.\n\n\"Семь условий, поставленных Ираном для начала любых переговоров, были доведены до сведения администрации США. Послание Тегерана ясно и недвусмысленно: если Вашингтон хочет избежать затруднительного положения, которое он для себя создал, и не запутываться в нем еще больше, у него нет другого выбора, кроме как признать права Ирана и принять его условия\", - написал Резаи в эфире X в субботу.", "image_url": "assets/post_2063.jpg"}, {"id": 2062, "date": "2026-09-19T21:11:28+00:00", "text": "**Агентство здравоохранения изучает электромагнитные поля и беспроводное излучение: РФК-младший.**\n\nАвтор: Закари Стибер для The Epoch Times,\n\nМинистерство здравоохранения и социальных служб (HHS) изучает электромагнитные поля, заявил 17 сентября министр здравоохранения Роберт Ф. Кеннеди-младший.\n\nДепартамент обратился к исследователям и другим лицам с просьбой предоставить информацию о влиянии воздействия электромагнитного поля (ЭМП), включая радиочастотное излучение, поскольку он работает над выяснением текущей доказательной базы и разработкой рекомендаций для школ и семей.\n\nОбеспокоенность по поводу потенциальных последствий для здоровья от воздействия «возросла, особенно в отношении детей, школ и долгосрочного кумулятивного воздействия», написал Кеннеди в документе. «В то же время научная литература обширна, технически сложна, и ее не всегда легко интерпретировать политикам или заинтересованным сторонам общественного здравоохранения».", "image_url": "assets/post_2062.jpg"}, {"id": 2061, "date": "2026-09-19T21:11:14+00:00", "text": "**Техасскому детскому саду предъявлен иск за управление бойцовским клубом для малышей**\n\nЗабудьте на мгновение о мошенничестве в детских садах Сомали – вы слышали о бойцовском клубе для малышей? Детский сад в Форт-Уэрте, штат Техас, сталкивается с расследованиями и судебными разбирательствами после того, как доказательства показали, что сотрудники жестоко обращаются с маленькими детьми и заставляют их драться друг с другом.\n\nОдна мать, Хизер Харрис, поняла, что что-то не так, когда забрала своего 4-летнего сына в детский сад Арка Монтессори Академии Райзингер. Он бесконтрольно плакал и был весь в синяках.  Сотрудники сообщили матери, что ее сын подрался с другим ребенком, но их объяснения не совпали, согласно иску, поданному в этом месяце Харрис и ее мужем Ричардом Харрисом.  Она настояла на том, чтобы просмотреть записи с камер наблюдения в классе.", "image_url": "assets/post_2061.jpg"}, {"id": 2060, "date": "2026-09-19T21:11:01+00:00", "text": "**Больше никаких обязательных сборов ESG для молочных фермеров, правила Министерства сельского хозяйства США**\n\nАвтор: Навин Атрапулли для The Epoch Times,\n\nМинистерство сельского хозяйства США (USDA) прекратило экологические, социальные и управленческие инициативы (ESG) в рамках молочной программы, финансируемой молочными фермерами.\n\nОбновление относится к Национальной программе продвижения и исследования молочных продуктов, также известной как Программа проверки молочных продуктов.\n\nПрограмма финансирует исследования, рекламу и деятельность в области питания, направленную на укрепление рынков американских молочных продуктов.\n\nТем не менее, Инновационный центр молочной промышленности США, созданный в рамках программы, реализует «обширные ESG-инициативы, включая цели по сокращению выбросов парниковых газов и достижению нулевых выбросов», говорится в заявлении Министерства сельского хозяйства США от 17 сентября.", "image_url": "assets/post_2060.jpg"}, {"id": 2059, "date": "2026-09-19T21:10:47+00:00", "text": "**Взрывы сотрясли столицу Саудовской Аравии – СМИ**\n\nСообщалось о нескольких взрывах в столице Саудовской Аравии Эр-Рияде, которые нарушили полеты и вызвали предупреждения о воздушном налете на фоне эскалации боевых действий с йеменскими хуситами.\n\nПо данным нескольких СМИ, власти Саудовской Аравии разослали экстренные оповещения рано утром в субботу, предупреждая жителей о «враждебной воздушной угрозе» и призывая их оставаться дома. Сообщается, что взрывы были слышны по всему городу, прежде чем примерно через полчаса агентство гражданской обороны дало разрешение. Это было первое подобное предупреждение в Эр-Рияде с тех пор, как в июле усилились боевые действия в соседнем Йемене.\n\nПозже в субботу возле международного аэропорта имени короля Халида был замечен большой столб черного дыма и пламени.", "image_url": "assets/post_2059.jpg"}, {"id": 2058, "date": "2026-09-19T21:10:33+00:00", "text": "**Пекин раскритиковал новые санкции США против России**\n\nКитай осудил последнее расширение санкций США против России, включая потенциальные тарифы до 100% для основных покупателей российских энергоносителей, пообещав принять «все необходимые меры» для защиты своих национальных интересов.\n\nПрезидент США Дональд Трамп подписал радикальный закон в пятницу. Среди других мер законопроект разрешает введение вторичных санкций против пяти крупнейших покупателей российской сырой нефти и природного газа. В нем прямо не упоминаются основные импортеры, такие как Китай или Индия.\n\nПекин решительно осудил эту меру, а представитель Министерства торговли Китая заявил, что страна «всегда выступала против односторонних санкций, не имеющих мандата ООН», а также «введения так называемых вторичных санкций».", "image_url": "assets/post_2058.jpg"}, {"id": 2057, "date": "2026-09-19T21:10:18+00:00", "text": "**Империя наркотиков: Искоренение талибами опиума раскрывает суровую реальность американской оккупации Афганистана**\n\nПочему США-НАТО вторглись в Афганистан 7 октября 2001 года? Второй запрет на выращивание опиума в апреле 2022 года. Автор: Мишель Чоссудовский. Введение. Ниже приводится выдающийся и своевременный анализ Шарлотты Гринфилд, в котором документируется проект правительства Талибана на 2022 год по искоренению опиума и внедрению замены сельскохозяйственных культур. Исторический контекст. 21 год спустя. Афганистан вводит второй запрет на опиум в апреле 2022 года. Примечательно то, что в 2000-2001 годах аналогичный проект был реализован под эгидой ООН, представленный Генеральной Ассамблее ООН в октябре 2001 года, в разгар вторжения США и НАТО. Правительство Талибана в сотрудничестве с Организацией Объединенных Наций ввело успешный запрет на выращивание мака. Производство опиума сократилось более чем на 90 процентов в апреле 2022 года. 2001.", "image_url": "assets/post_2057.jpg"}, {"id": 2056, "date": "2026-09-19T21:10:05+00:00", "text": "**Киевский режим в роли мафии – украинская кантора включена в черный список**\n\nКроме того, мы могли бы включить имена людей в общественный список всех, кто хочет ликвидировать, или режим Киева также может быть изменен в качестве меры безопасности. Недавно мы узнали, как украинские агенты потребовали денег, чтобы удалить имена с позорного сайта «Миротворец» — снова как вердадейра мафия, которая кобры ума такса, чтобы не атаковать их витимас.\n\nУкраинский кантор Олег Винник, радикально настроенный в Берлиме, рассказал о недавнем интересе, который был получен от украинских агентов, связавшихся с сайтом Миротворец. Он получил предложение на выплату имущества в размере 750 миллионов долларов за удаление своего имени из списка остальных. Во-вторых, предложение для нескольких дней назад — конкретное в 2022 году, это еще одно предложение, которое находится на сайте.", "image_url": "assets/post_2056.jpg"}, {"id": 2055, "date": "2026-09-19T18:51:52+00:00", "text": "**Баллистические ракеты хуситов попали в топливные баки возле аэропорта Эр-Рияда во время войны**\n\nВпервые в истории йеменского конфликта баллистические ракеты хуситов обрушились на саудовскую столицу Эр-Рияд в одночасье, вызвав редкую тревогу о воздушном налете и общее состояние паники среди населения.\n\nНападением мог стать международный аэропорт, поскольку над городским международным аэропортом имени короля Халида были замечены огромные столбы черного дыма. Судя по всему, недалеко от крупного авиационного узла произошел серьезный удар по земле.\n\nThe Guardian сообщает: «В столице были слышны взрывы, когда пожарные пытались потушить пламя горящего топливного бака с логотипом саудовской нефтяной компании Aramco возле городского международного аэропорта имени короля Халида».\n\nНочью в столице прозвучало несколько взрывов, появились сообщения об отмене и приостановке рейсов, при этом FlightRadar24 сослался на «серьезные проблемы» в аэропорту.", "image_url": "assets/post_2055.jpg"}, {"id": 2054, "date": "2026-09-19T18:51:38+00:00", "text": "**Современная мистификация линчевания... и слон в комнате**\n\nАвтор Ларри Элдер через The Epoch Times,\n\nОколо 60 членов Конгресса от Демократической партии подписали письмо, чтобы бить тревогу: чернокожих американцев находят повешенными, в том числе на деревьях, в волне возможных «современных линчеваний».\n\nВ их письме Министерству юстиции и ФБР говорилось: «Ряд смертей вызывает серьезные подозрения в нечестной игре, учитывая роль линчевания в истории нашей страны». Член палаты представителей Аянна Прессли назвала это «национальным кризисом». Член палаты представителей Александрия Окасио-Кортес, подписавшая письмо, написала в Твиттере о «широко распространённых современных линчеваниях» и «расовом терроре».\n\nКаждая подозрительная смерть заслуживает расследования. Но история не является доказательством. Каковы факты?\n\nДемартравион «Трей» Рид, 21 год, был найден повешенным в Государственном университете Дельты в Кливленде, штат Миссисипи.", "image_url": "assets/post_2054.jpg"}, {"id": 2053, "date": "2026-09-19T18:51:26+00:00", "text": "**Лидер Северной Кореи призывает к более широкому использованию искусственного интеллекта в военных целях**\n\nЛидер Северной Кореи Ким Чен Ын призвал к более широкому использованию искусственного интеллекта и автоматизации в наступательных и оборонительных вооружениях страны, одновременно призывая производителей увеличить производство.\n\nКим сделал это заявление во время проверки нескольких оборонных предприятий со среды по пятницу в сопровождении высокопоставленных чиновников и своей влиятельной сестры Ким Ё Чжон.\n\nНа фотографиях, опубликованных государственными СМИ, видно, как он посещает предприятия по производству беспилотников и артиллерийских систем, в том числе массивных 600-мм реактивных систем залпового огня (РСЗО).\n\nИзвестная за пределами Северной Кореи как KN-25, система напоминает HIMARS американского производства, но вышла за рамки обычной РСЗО и эффективно функционирует как пусковая установка баллистических ракет малой дальности.", "image_url": "assets/post_2053.jpg"}, {"id": 2052, "date": "2026-09-19T18:51:11+00:00", "text": "**Суверенитет Канады под угрозой? 51-й штат, Дежавю: Милитаризация Северной Америки.**\n\nВпервые опубликовано 24 января 2025 года, через четыре дня после инаугурации президента Трампа.\n\nОн очень тщательно документирует главу нашей недавней истории, которая не была предметом дебатов в Палате общин и не освещалась в средствах массовой информации.  (М.Ч, октябрь 2025 г.).\n\nОбновление было составлено 23 января 2026 года.\n\nВооруженные силы Канады «смоделировали» возможное военное вторжение США\n\nПо данным Global and Mail и London’s Independent: «Канадские вооруженные силы смоделировали гипотетическое военное вторжение США в Канаду и потенциальный ответ страны».\n\n«Считается, что впервые за столетие канадские вооруженные силы создали модель американского нападения на эту страну, которая является одним из основателей Организации Североатлантического договора и партнером США в континентальной противовоздушной обороне.", "image_url": "assets/post_2052.jpg"}, {"id": 2051, "date": "2026-09-19T16:35:29+00:00", "text": "**Лос-Анджелес занимает последнее место среди 100 мегаполисов США по доступности и строительству новых домов**\n\nАвтор: Мэри Пренон для The Epoch Times,\n\nДе-Мойн, штат Айова, занял первое место, а Лос-Анджелес занял последнее место в первом отчете Realtor.com, оценивающем 100 крупнейших в США показателей доступности жилья и жилищного строительства.\n\nРезультаты показали, как местное зонирование и выдача разрешений могут повлиять на доступность жилья в различных районах.\n\nПервый отчет платформы недвижимости о доступности метро и жилищном строительстве, опубликованный 16 сентября, показал, что Де-Мойн получил оценку «А+» с оценкой 83,4, самой высокой среди 100 проанализированных метро, ​​что отражает его активную деятельность в области жилищного строительства и доступность.\n\nСредняя цена размещения в городе составляет 349 903 доллара, при этом ежемесячные выплаты по ипотеке требуют 27,5 процентов дохода домохозяйства со средним доходом, что ниже обычно упоминаемого порога в 30 процентов.", "image_url": "assets/post_2051.jpg"}, {"id": 2050, "date": "2026-09-19T16:35:16+00:00", "text": "**Альянс морской обороны 14 стран приближается к развертыванию в Красном море и Аденском заливе**\n\nПоскольку саудовское судоходство в Баб-эль-Мандебском проливе находится под беспрецедентной угрозой, недавно созданная Многонациональная коалиция морской обороны приближается к развертыванию кораблей для обеспечения свободы судоходства в Красном море, сообщило в пятницу министерство обороны Саудовской Аравии.\n\nВ Многонациональную коалицию морской обороны, созданную 30 июля по инициативе Саудовской Аравии, входят 14 стран: Саудовская Аравия, Кувейт, Бахрейн, Катар, Пакистан, Турция, Египет, Иордания, Йемен, Бангладеш, Нигерия, Судан, Джибути и Сомали. Представители 41 страны и Европейского Союза, в том числе 154 военно-морских офицера и чиновника, присутствовали на четвертом совещании по планированию коалиции в командовании Западного флота Саудовской Аравии в Джидде.", "image_url": "assets/post_2050.jpg"}, {"id": 2049, "date": "2026-09-19T16:35:04+00:00", "text": "**Они говорят нам, что приближается большая война...**\n\nБританское правительство стирает пыль с секретного руководства времен холодной войны, предписывающего домохозяйствам запасать дома консервные банки и воду в бутылках, в то время как государственные СМИ публикуют статьи, в которых обсуждается, готова ли страна морально к войне.\n\nСекретная правительственная книга военных действий переписывается впервые с 2004 года. В старом документе изложено, как министерства будут обеспечивать поставки продовольствия, открытые коммуникации и работу самого правительства, если конфликт достигнет территории страны.\n\nПосле Холодной войны его законсервировали. Сейчас его возрождают в рамках Программы внутренней обороны, которая, по словам чиновников, позволит согласовать военные и гражданские меры реагирования, если международные военные действия затронут материковую часть Великобритании.", "image_url": "assets/post_2049.jpg"}, {"id": 2048, "date": "2026-09-19T16:34:51+00:00", "text": "**Пропалестинский французский депутат Европарламента обвинил министра внутренних дел в разжигании клеветы на наркотики**\n\nДепутат Европарламента от Франции Рима Хассан подала официальную жалобу на министра внутренних дел Лорана Нуньеса, обвинив его в том, что он помог спровоцировать против нее ложные обвинения в наркотиках.\n\nВидный пропалестинский депутат был задержан в апреле в рамках расследования предполагаемых «извинений за терроризм» из-за недавно удаленного поста в социальных сетях. При обыске ее вещей полиция обнаружила подозрительные вещества, что побудило провести отдельное расследование по делу о хранении наркотиков, а СМИ сообщили, что у нее были обнаружены синтетические наркотики. Расследование по делу о наркотиках было прекращено после того, как лабораторные тесты не выявили синтетических наркотиков, но не раньше, чем эта история привлекла широкое внимание средств массовой информации.", "image_url": "assets/post_2048.jpg"}, {"id": 2047, "date": "2026-09-19T16:34:37+00:00", "text": "**Союзникам США грозит пятилетняя задержка поставок ракет – Bloomberg**\n\nСША предупредили своих союзников, что поставки ключевых ракетных систем, вероятно, будут отложены на несколько лет из-за истощения запасов оружия на фоне войны с Ираном, сообщило в пятницу агентство Bloomberg со ссылкой на источники. Нехватка также усложняет усилия ЕС по поддержке Киева крайне необходимыми боеприпасами для ПВО, говорится в статье.\n\nВ этом ключе Германия попросила Вашингтон ускорить поставки крылатых ракет «Томагавк» и наземных пусковых установок «Тифон», но компания Raytheon вряд ли выполнит заказ в течение пяти лет из-за дефицита запасов, сообщает издание. Некоторые восточноевропейские страны также столкнулись с задержками, поскольку вскоре после начала американо-израильской войны с Ираном, утверждают источники Bloomberg.\n\nХотя президент США Дональд Трамп отверг утверждения о том, что война с Ираном лишила США боеприпасов, Пентагон публично признал наличие напряжения.", "image_url": "assets/post_2047.jpg"}, {"id": 2046, "date": "2026-09-19T16:34:24+00:00", "text": "**США продолжают хвастаться милитаризацией космоса спустя 60 лет после Договора по космосу**\n\nДраго Боснич, независимый геополитический и военный аналитик.\n\nВ последние дни и недели Соединенные Штаты открыто начали хвастаться наличием орбитального оружия, что является прямым нарушением Договора по космосу (ДОСТ) 1967 года, который фактически запрещает милитаризацию космоса. Основная пропагандистская машина пытается обелить Пентагон, утверждая, что это якобы «положит конец десятилетиям официальной двусмысленности» относительно американского военного потенциала в космосе. Однако многие из моих уважаемых коллег и я уже много лет пишем о нарушениях США в космосе. По словам министра ВВС США Троя Мейнка, Вашингтон уже имеет «орбитальное оружие контроля космического пространства», которое предположительно «предназначено для защиты американских войск от враждебных действий». Космические силы США утверждают, что эти системы «способны нанести ущерб, деградацию и даже уничтожение противника».", "image_url": "assets/post_2046.jpg"}, {"id": 2045, "date": "2026-09-19T13:17:59+00:00", "text": "**74% подозреваемых в сексуальных преступлениях в Испании Страна Басков - иностранцы**\n\nПодозреваемые, родившиеся за границей, составляют почти три четверти арестов за сексуальные преступления в Стране Басков, согласно официальным данным\n\nОфициальная статистика, опубликованная баскской региональной полицией Ertzaintza, показывает, что люди, родившиеся за пределами Испании, составили 58,7 процента всех арестов в первой половине 2026 года, хотя они составляют 10,2 процента населения.\n\nРазличия более резкие в нескольких категориях громких преступлений.\n\nИз 107 человек, задержанных за преступления против сексуальной свободы, 79 родились за границей, что составляет 74 процента арестов в этой категории, согласно данным, полученным The Objective.\n\nПодозреваемые, родившиеся за рубежом, также составили 73,3 процента арестов за убийство и 61,3 процента за причинение телесных повреждений.", "image_url": "assets/post_2045.jpg"}, {"id": 2044, "date": "2026-09-19T13:17:46+00:00", "text": "**Россия конфискует активы швейцарского продовольственного гиганта Nestle**\n\nРоссийские власти захватили оставшиеся предприятия и активы швейцарского продовольственного гиганта Nestle и трех французских групп, что стало последним шагом против западных фирм в ответ на санкции против Москвы.\n\nУказ, подписанный президентом Владимиром Путиным поздно вечером в четверг, передал российские операции Nestle, французского ритейлера Auchan и бывшей сети Leroy Merlin DIY, теперь известной как Lemana Pro, компании под названием LEV Management. Указ также распространяется на российские дочерние компании французской логистической группы FM Logistic, сообщает France24.\n\nСледственное издание «Новая газета Европа» сообщило, что «Управление ЛЬВА» было создано только в конце 2025 года и возглавляется генералом МВД России. У него не было известной деловой активности.", "image_url": "assets/post_2044.jpg"}, {"id": 2043, "date": "2026-09-19T13:17:32+00:00", "text": "**Как бывший глава МИ-6, ясно, что британская климатическая политика оставляет нас в опасном положении перед нашими врагами**\n\nАвтор: Ричард Дирлав (Richard Dearlove), The Daily Sceptic,\n\nЭто стенограмма лекции, прочитанной вчера вечером в Лондоне Фонду политики глобального потепления сэром Ричардом Дирлавом, бывшим главой МИ-6, под названием «Энергетическая безопасность: ветер на ветру». Полный текст лекции доступен для просмотра на YouTube.\n\nЛето засухи и рекордных температур доставило дискомфорт стране: пересохшая земля, перегретый общественный транспорт, бессонные ночи и искаженные и навязчивые СМИ. Это отвлекающий фон для лекции по энергетической безопасности - «изменение климата» должно быть самой повторяемой фразой за последние три месяца с момента первой волны жары летом еще в мае. Выйти из этого контекста будет казаться ересью для идеологов Net Zero. Вы слепы к тревожным свидетельствам вокруг нас, спросят они.", "image_url": "assets/post_2043.jpg"}, {"id": 2042, "date": "2026-09-19T13:17:18+00:00", "text": "**В войне в Иране погибло больше американских военнослужащих, чем раскрыл Пентагон – WaPo**\n\nЧисло военнослужащих США, погибших во время развертывания на Ближнем Востоке с начала войны в Иране, выше, чем общественный подсчет Пентагона, сообщила в пятницу газета Washington Post со ссылкой на военные источники. Согласно отчету, в публичной базе данных о потерях Пентагона может отсутствовать целых пять военных погибших.\n\nПо состоянию на пятницу, система анализа потерь в обороне Пентагона (DCAS) перечислила 18 погибших американских военных, в том числе погибших в результате враждебных и не враждебных действий с начала войны в Иране 28 февраля.\n\nПять источников, однако, сообщили изданию, что погибло по меньшей мере 22 военных, в то время как шестой указал, что число погибших еще выше, заявив, что с начала войны погибли 23 военнослужащих.", "image_url": "assets/post_2042.jpg"}, {"id": 2041, "date": "2026-09-19T09:24:33+00:00", "text": "**Трамп подписал новый законопроект о санкциях против России**\n\nПрезидент США Дональд Трамп подписал радикальный закон, расширяющий санкции в отношении России и разрешающий повышение тарифов до 100% для основных покупателей российских энергоносителей. Москва предупредила, что дополнительные санкции осложнят усилия по урегулированию украинского конфликта и могут еще больше дестабилизировать энергетические рынки.\n\nВ заявлении в пятницу Белый дом объявил, что Трамп одобрил Закон Линдси О. Грэма о санкциях в отношении России и Ирана после того, как Сенат принял его 86 голосами против 11 в августе, а Палата представителей приняла его со счетом 262 против 159 в среду.\n\nЗаконодательство нацелено на высокопоставленных российских чиновников, банки, оборонные и энергетические предприятия, а также на то, что западные страны называют «теневым флотом» российских кораблей.", "image_url": "assets/post_2041.jpg"}, {"id": 2040, "date": "2026-09-19T08:16:57+00:00", "text": "**Немецкое спонсорство сионистских поселений разоблачено**\n\nИспользуя академические учреждения в качестве прикрытия, в период с 2017 по 2021 год правительство Германии тайно направило миллионы в крайне дискриминационный проект, способствующий расширению сионистских поселений на оккупированном Западном берегу. Под его эгидой государственные деньги и производство знаний были переданы по своей сути незаконному, аморальному предприятию, что является вопиющим нарушением международных правовых обязательств Берлина и внутренних ограничений на научные исследования. Неизвестный скандал является лишь одним из компонентов того, как Германия тайно помогает расширению сионистских поселений и полному уничтожению Палестины.\n\nТаковы шокирующие результаты совместного расследования, проведенного кластером немецких студенческих палестинских организаций солидарности, в том числе «Не от нашего имени» и «Академическая оппозиция».", "image_url": "assets/post_2040.jpg"}, {"id": 2039, "date": "2026-09-19T05:02:22+00:00", "text": "**США запрещают президенту Палестинской автономии посещать ООН, но допускают иранцев**\n\nМинистерство иностранных дел Палестинской администрации (ПА) в четверг осудило решение США запретить палестинским должностным лицам участвовать в Генеральной Ассамблее ООН второй год подряд.\n\nСША отказали палестинскому президенту Махмуду Аббасу в визе для участия в Генеральной Ассамблее ООН в Нью-Йорке на следующей неделе, повторив шаг, который вызвал широкую критику в прошлом году.\n\nВ своем заявлении в среду Государственный департамент США заявил, что продлит визовые ограничения для членов Организации освобождения Палестины (ООП) и должностных лиц Палестинской администрации (ПА).\n\nПалестинский МИД осудил это решение как «неоправданную меру, которая противоречит усилиям по восстановлению доверия, развитию палестино-американских отношений и созданию необходимого политического климата для реализации решения о двух государствах и достижения мира и стабильности в регионе».", "image_url": "assets/post_2039.jpg"}, {"id": 2038, "date": "2026-09-19T05:02:08+00:00", "text": "**Фонд помощи против ICE в Миннесоте закрыт из-за необузданного мошенничества**\n\nЧиновники в округе Хеннепин, штат Миннесота,закрыли фонд помощи в размере 2 миллионов $ для предприятий, утверждающих, что они пострадали от федерального иммиграционного законодательства после того, как чиновники обнаружили широко распространенное мошенничество среди заявителей, вынудив их прекратить программу. Окружной совет создал фонд, чтобы помочь предприятиям, «пострадавшим» от операции Metro Surge, федеральной операции по обеспечению соблюдения иммиграционного законодательства, которая началась в декабре 2025 года. В январе федеральные агенты застрелили двух граждан США, Рене Гуд и Алекса Претти, в Миннеаполисе, превратив это в одно из самых тщательно изученных иммиграционных правоприменительных действий в стране.\n\nИз около 300 поданных заявлений только 82 были признаны законными. Чиновники раздали только $ 500 000, прежде чем закрыть программу.", "image_url": "assets/post_2038.jpg"}, {"id": 2037, "date": "2026-09-19T05:01:54+00:00", "text": "**Предстоящий саммит Трамп-Си - это действительно саммит ИИ**\n\nАвтор Джеймс Горри через The Epoch Times,\n\nКогда президент Дональд Трамп и китайский лидер Си Цзиньпин встретятся в Белом доме 24 сентября, общественная повестка дня будет намного больше, чем искусственный интеллект (ИИ). Торговля, полупроводники, редкоземельные металлы, Тайвань и другие споры будут обсуждаться.\n\nТорговые соглашения могут быть пересмотрены. Тарифы могут быть повышены или понижены. Ограничения для полупроводников могут быть изменены.\n\nИИ становится технологией общего назначения, которая может одновременно трансформировать военную мощь, производство, кибервойну, научные исследования и глобальную экономику.\n\nЭто делает встречу Трампа и Си, в очень важном смысле, саммитом ИИ.\n\nСтарые предположения о подчиненном положении Китая в ИИ были простыми: у Америки были технологии, а Китай пытался догнать.", "image_url": "assets/post_2037.jpg"}, {"id": 2036, "date": "2026-09-19T05:01:40+00:00", "text": "**ЦЕНТКОМ оценивает войну с Ираном**\n\nВойна с Ираном обошлась в $ 43,6 млрд, причем почти две трети законопроекта направлены на пополнение запасов истощенных боеприпасов, согласно данным Центрального командования США (CENTCOM), направленным законодателям и переданным средствам массовой информации в пятницу.\n\nСмета покрывает расходы до 3 сентября. Пентагон выделил около $ 11,2 млрд на военные операции и прогнозировал, что для замены израсходованных боеприпасов потребуется еще $ 28,1 млрд. Еще $ 4,3 млрд было направлено на восполнение потерь оборудования.\n\nПо данным Bloomberg, цифра в $ 43,6 млрд не включает вероятные миллиарды долларов, необходимые для ремонта баз США и других военных объектов в регионе, поврежденных или разрушенных в результате иранских атак.\n\nСогласно отчету генерального инспектора Пентагона, опубликованному в понедельник, Иран повредил или разрушил сотни зданий и других сооружений на базах США в восьми странах Ближнего Востока.", "image_url": "assets/post_2036.jpg"}, {"id": 2035, "date": "2026-09-19T05:01:26+00:00", "text": "**Канада надеется нажиться на схеме вооружений ЕС в Украине на € 90 млрд**\n\nКанада стремится присоединиться к кредитной программе ЕС на € 90 млрд для Украины, заявил в пятницу представитель Европейской комиссии, что позволит канадским производителям оружия конкурировать за контракты, финансируемые по этой схеме.\n\nОттава обсуждает участие с Брюсселем в течение некоторого времени и должна будет внести свой вклад в покрытие расходов ЕС по займам в обмен на доступ к схеме закупок. Великобритания присоединилась к механизму в рамках аналогичной договоренности в июле.\n\n«Я могу подтвердить, что Канада выразила заинтересованность в присоединении к 90-миллиардному кредиту поддержки Украины», - заявил журналистам в Брюсселе пресс-секретарь Европейской комиссии Балаж Уджвари.«Технические обмены продолжаются с Канадой в течение некоторого времени, и они все еще продолжаются», - добавил он.\n\nКанадское участие не увеличит доступные Киеву € 90 млрд.", "image_url": "assets/post_2035.jpg"}, {"id": 2034, "date": "2026-09-19T05:01:11+00:00", "text": "**ФБР приостановило сотрудничество с Канадой из-за языка 11 сентября – NYT**\n\nФБР временно приостановило сотрудничество со своим канадским коллегой в этом месяце после того, как общественный вещатель страны поручил журналистам не называть теракты 11 сентября терроризмом, не приписывая их экспертам или властям, сообщила в пятницу газета New York Times со ссылкой на чиновников, знакомых с этим вопросом.\n\nКак сообщает Times, чиновники ФБР отменили встречи с Королевской канадской конной полицией (RCMP). Нормальное сотрудничество было восстановлено примерно в 25-ю годовщину терактов 11 сентября, после того, как Канадская вещательная корпорация (CBC) изменила свою позицию.\n\nВ ответ на сообщение Times комиссар КККП Марк Дюхем сказал:«Мы ценим наши отношения с нашими американскими коллегами, поскольку мы тесно сотрудничаем, чтобы реагировать на угрозы национальной безопасности и поддерживать ситуационную осведомленность о возникающих рисках».", "image_url": "assets/post_2034.jpg"}];
+        
+        // ============ ПЕРЕВОДЫ ============
+        const translations = {
+            ru: {
+                subtitle: 'Актуальные новости и события',
+                search: 'Поиск',
+                favorites: 'Избранное',
+                unread: 'Новые',
+                theme: 'Тема',
+                all: 'Все',
+                filterFav: '⭐ Избранные',
+                filterUnread: '📬 Непрочитанные',
+                filterRead: '✅ Прочитанные',
+                searchPlaceholder: 'Поиск по новостям...',
+                readMore: 'Читать далее →',
+                noResults: '😔 Ничего не найдено',
+                addedToFav: 'Добавлено в избранное',
+                removedFromFav: 'Удалено из избранного',
+                newArticles: 'новых статей'
+            },
+            en: {
+                subtitle: 'Latest news and events',
+                search: 'Search',
+                favorites: 'Favorites',
+                unread: 'New',
+                theme: 'Theme',
+                all: 'All',
+                filterFav: '⭐ Favorites',
+                filterUnread: '📬 Unread',
+                filterRead: '✅ Read',
+                searchPlaceholder: 'Search news...',
+                readMore: 'Read more →',
+                noResults: '😔 Nothing found',
+                addedToFav: 'Added to favorites',
+                removedFromFav: 'Removed from favorites',
+                newArticles: 'new articles'
+            },
+            de: {
+                subtitle: 'Aktuelle Nachrichten und Ereignisse',
+                search: 'Suche',
+                favorites: 'Favoriten',
+                unread: 'Neu',
+                theme: 'Thema',
+                all: 'Alle',
+                filterFav: '⭐ Favoriten',
+                filterUnread: '📬 Ungelesen',
+                filterRead: '✅ Gelesen',
+                searchPlaceholder: 'Nachrichten durchsuchen...',
+                readMore: 'Weiterlesen →',
+                noResults: '😔 Nichts gefunden',
+                addedToFav: 'Zu Favoriten hinzugefügt',
+                removedFromFav: 'Aus Favoriten entfernt',
+                newArticles: 'neue Artikel'
+            },
+            es: {
+                subtitle: 'Últimas noticias y eventos',
+                search: 'Buscar',
+                favorites: 'Favoritos',
+                unread: 'Nuevo',
+                theme: 'Tema',
+                all: 'Todos',
+                filterFav: '⭐ Favoritos',
+                filterUnread: '📬 No leídos',
+                filterRead: '✅ Leídos',
+                searchPlaceholder: 'Buscar noticias...',
+                readMore: 'Leer más →',
+                noResults: '😔 Nada encontrado',
+                addedToFav: 'Añadido a favoritos',
+                removedFromFav: 'Eliminado de favoritos',
+                newArticles: 'nuevos artículos'
+            }
+        };
+        
+        let currentLang = localStorage.getItem('lang') || 'ru';
+        let currentFilter = 'all';
+        
+        // ============ ТЕМА ============
         function toggleTheme() {
             const html = document.documentElement;
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            document.querySelector('.theme-toggle').textContent = newTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+            updateThemeButton(newTheme);
         }
         
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+        function updateThemeButton(theme) {
+            const btn = document.getElementById('themeBtn');
+            const t = translations[currentLang];
+            btn.innerHTML = theme === 'dark' ? '☀️ <span>' + t.theme + '</span>' : '🌙 <span>' + t.theme + '</span>';
+        }
+        
+        // ============ ЯЗЫК ============
+        function toggleLangMenu() {
+            document.getElementById('langMenu').classList.toggle('active');
+        }
+        
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('lang', lang);
+            
+            // Обновляем активный пункт меню
+            document.querySelectorAll('.lang-option').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Обновляем код языка
+            document.getElementById('currentLang').textContent = lang.toUpperCase();
+            
+            // Обновляем все элементы с data-i18n
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+            
+            // Обновляем placeholder поиска
+            document.getElementById('searchInput').placeholder = translations[lang].searchPlaceholder;
+            
+            // Обновляем "Читать далее"
+            document.querySelectorAll('.read-more').forEach(el => {
+                el.textContent = translations[lang].readMore;
+            });
+            
+            // Обновляем кнопку темы
+            updateThemeButton(document.documentElement.getAttribute('data-theme') || 'light');
+            
+            // Закрываем меню
+            document.getElementById('langMenu').classList.remove('active');
+            
+            showToast('🌐', 'Language: ' + lang.toUpperCase());
+        }
+        
+        // ============ ИЗБРАННОЕ ============
+        function getFavorites() {
+            return JSON.parse(localStorage.getItem('favorites') || '[]');
+        }
+        
+        function toggleFavorite(postId, btn) {
+            let favorites = getFavorites();
+            const index = favorites.indexOf(postId);
+            
+            if (index > -1) {
+                favorites.splice(index, 1);
+                if (btn) btn.classList.remove('active');
+                showToast('💔', translations[currentLang].removedFromFav);
+            } else {
+                favorites.push(postId);
+                if (btn) btn.classList.add('active');
+                showToast('⭐', translations[currentLang].addedToFav, 'favorite');
+            }
+            
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            updateFavBadge();
+            
+            if (currentFilter === 'favorites') {
+                filterPosts('favorites');
+            }
+        }
+        
+        function updateFavBadge() {
+            const favorites = getFavorites();
+            const badge = document.getElementById('favBadge');
+            if (favorites.length > 0) {
+                badge.textContent = favorites.length;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        
+        function toggleFavorites() {
+            const btn = document.getElementById('favBtn');
+            btn.classList.toggle('active');
+            
+            if (btn.classList.contains('active')) {
+                filterPosts('favorites');
+            } else {
+                filterPosts('all');
+            }
+        }
+        
+        // ============ ПРОЧИТАННЫЕ ============
+        function getReadPosts() {
+            return JSON.parse(localStorage.getItem('readPosts') || '[]');
+        }
+        
+        function markAsRead(postId) {
+            let readPosts = getReadPosts();
+            if (!readPosts.includes(postId)) {
+                readPosts.push(postId);
+                localStorage.setItem('readPosts', JSON.stringify(readPosts));
+                updateUnreadBadge();
+            }
+        }
+        
+        function toggleRead(postId, btn) {
+            let readPosts = getReadPosts();
+            const index = readPosts.indexOf(postId);
+            
+            if (index > -1) {
+                readPosts.splice(index, 1);
+                showToast('📬', 'Отмечено как непрочитанное');
+            } else {
+                readPosts.push(postId);
+                showToast('✅', 'Отмечено как прочитанное');
+            }
+            
+            localStorage.setItem('readPosts', JSON.stringify(readPosts));
+            updateUnreadBadge();
+            
+            if (currentFilter === 'unread' || currentFilter === 'read') {
+                filterPosts(currentFilter);
+            }
+        }
+        
+        function updateUnreadBadge() {
+            const readPosts = getReadPosts();
+            const totalPosts = postsData.length;
+            const unreadCount = totalPosts - readPosts.length;
+            
+            const badge = document.getElementById('unreadBadge');
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.style.display = 'flex';
+                badge.classList.add('pulse');
+                setTimeout(() => badge.classList.remove('pulse'), 2000);
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        
+        // ============ ПОИСК ============
+        function toggleSearch() {
+            const searchBar = document.getElementById('searchBar');
+            searchBar.classList.toggle('active');
+            
+            if (searchBar.classList.contains('active')) {
+                setTimeout(() => document.getElementById('searchInput').focus(), 100);
+            } else {
+                document.getElementById('searchInput').value = '';
+                performSearch();
+            }
+        }
+        
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.news-card');
+            let visibleCount = 0;
+            
+            cards.forEach(card => {
+                const title = card.getAttribute('data-title') || '';
+                const text = card.getAttribute('data-text') || '';
+                
+                if (!query || title.includes(query) || text.includes(query)) {
+                    card.style.display = '';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+        
+        // ============ ФИЛЬТРЫ ============
+        function filterPosts(filter, btn) {
+            currentFilter = filter;
+            
+            // Обновляем активную кнопку
+            if (btn) {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            
+            const favorites = getFavorites();
+            const readPosts = getReadPosts();
+            const cards = document.querySelectorAll('.news-card');
+            let visibleCount = 0;
+            
+            cards.forEach(card => {
+                const postId = parseInt(card.getAttribute('data-post-id'));
+                let show = true;
+                
+                if (filter === 'favorites') {
+                    show = favorites.includes(postId);
+                } else if (filter === 'unread') {
+                    show = !readPosts.includes(postId);
+                } else if (filter === 'read') {
+                    show = readPosts.includes(postId);
+                }
+                
+                card.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+            
+            document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
+            
+            // Обновляем кнопку избранного
+            const favBtn = document.getElementById('favBtn');
+            if (filter === 'favorites') {
+                favBtn.classList.add('active');
+            } else {
+                favBtn.classList.remove('active');
+            }
+        }
+        
+        // ============ УВЕДОМЛЕНИЯ ============
+        function showToast(icon, message, type = '') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = `
+                <div class="toast-icon">${icon}</div>
+                <div class="toast-content">${message}</div>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideInRight 0.4s ease reverse';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+        
+        // ============ ПРОГРЕСС-БАР ============
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.pageYOffset;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            document.getElementById('progressBar').style.width = scrollPercent + '%';
+        });
+        
+        // ============ ЗАГРУЗКА СТРАНИЦЫ ============
+        document.addEventListener('DOMContentLoaded', function() {
+            // Тема
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeButton(savedTheme);
+            
+            // Язык
+            document.getElementById('currentLang').textContent = currentLang.toUpperCase();
+            document.querySelectorAll('.lang-option').forEach(el => {
+                el.classList.remove('active');
+                if (el.textContent.includes(currentLang === 'ru' ? 'Русский' : currentLang === 'en' ? 'English' : currentLang === 'de' ? 'Deutsch' : 'Español')) {
+                    el.classList.add('active');
+                }
+            });
+            
+            // Обновляем переводы
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.textContent = translations[currentLang][key];
+                }
+            });
+            document.getElementById('searchInput').placeholder = translations[currentLang].searchPlaceholder;
+            document.querySelectorAll('.read-more').forEach(el => {
+                el.textContent = translations[currentLang].readMore;
+            });
+            
+            // Обновляем избранное
+            const favorites = getFavorites();
+            document.querySelectorAll('.news-card').forEach(card => {
+                const postId = parseInt(card.getAttribute('data-post-id'));
+                const favBtn = card.querySelector('.favorite');
+                if (favorites.includes(postId) && favBtn) {
+                    favBtn.classList.add('active');
+                }
+            });
+            updateFavBadge();
+            
+            // Обновляем непрочитанные
+            updateUnreadBadge();
+            
+            // Анимация появления карточек
+            document.querySelectorAll('.news-card').forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.animationDelay = (index * 0.05) + 's';
+                }, 0);
+            });
+            
+            // Закрываем меню языка при клике вне
+            document.addEventListener('click', function(e) {
+                const langDropdown = document.querySelector('.lang-dropdown');
+                if (langDropdown && !langDropdown.contains(e.target)) {
+                    document.getElementById('langMenu').classList.remove('active');
+                }
+            });
+            
+            // Показываем уведомление о новых статьях
+            const lastVisit = localStorage.getItem('lastVisit');
+            const now = Date.now();
+            if (lastVisit) {
+                const timeDiff = now - parseInt(lastVisit);
+                // Если прошло больше 1 часа
+                if (timeDiff > 3600000) {
+                    const unreadCount = postsData.length - getReadPosts().length;
+                    if (unreadCount > 0) {
+                        setTimeout(() => {
+                            showToast('🔔', unreadCount + ' ' + translations[currentLang].newArticles);
+                        }, 1000);
+                    }
+                }
+            }
+            localStorage.setItem('lastVisit', now.toString());
+        });
+        
+        // ============ ПЕРЕХОДЫ С АНИМАЦИЕЙ ============
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.hostname === window.location.hostname) {
+                    e.preventDefault();
+                    document.body.style.opacity = '0';
+                    document.body.style.transition = 'opacity 0.3s';
+                    setTimeout(() => {
+                        window.location.href = this.href;
+                    }, 300);
+                }
+            });
+        });
     </script>
 </body>
 </html>

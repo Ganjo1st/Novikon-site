@@ -13,6 +13,8 @@
             --header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --shadow: 0 4px 15px rgba(0,0,0,0.08);
             --border: #e0e0e0;
+            --accent: #667eea;
+            --favorite: #ffc107;
         }
         [data-theme="dark"] {
             --bg: #1a1a2e;
@@ -21,6 +23,7 @@
             --header-bg: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
             --shadow: 0 4px 15px rgba(0,0,0,0.3);
             --border: #2a2a4a;
+            --accent: #7b8cde;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -28,14 +31,17 @@
             background: var(--bg);
             color: var(--text);
             line-height: 1.8;
-            transition: background 0.3s, color 0.3s;
+            transition: background 0.4s, color 0.4s;
         }
         header {
             background: var(--header-bg);
             color: white;
             padding: 20px 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: background 0.3s;
+            transition: background 0.4s;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         .container {
             max-width: 800px;
@@ -65,19 +71,29 @@
             font-size: 22px;
             font-weight: 700;
         }
-        .theme-toggle {
+        .header-btns {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .control-btn {
             background: rgba(255,255,255,0.2);
             border: 2px solid rgba(255,255,255,0.3);
             color: white;
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-radius: 25px;
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s;
         }
-        .theme-toggle:hover {
+        .control-btn:hover {
             background: rgba(255,255,255,0.3);
             transform: scale(1.05);
+        }
+        .control-btn.favorite.active {
+            background: var(--favorite);
+            border-color: var(--favorite);
+            color: white;
         }
         .post-content {
             background: var(--card-bg);
@@ -85,7 +101,8 @@
             padding: 40px;
             margin: 30px 0;
             box-shadow: var(--shadow);
-            transition: background 0.3s;
+            transition: background 0.4s;
+            animation: fadeIn 0.5s ease;
         }
         .post-date {
             color: #888;
@@ -103,7 +120,7 @@
             line-height: 1.8;
         }
         .post-text a {
-            color: #667eea;
+            color: var(--accent);
             text-decoration: none;
         }
         .post-text img {
@@ -133,8 +150,65 @@
             font-size: 14px;
             border-top: 1px solid var(--border);
             margin-top: 20px;
-            transition: border-color 0.3s;
+            transition: border-color 0.4s;
         }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Прогресс-бар */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 9999;
+            transition: width 0.3s;
+        }
+        
+        /* Toast уведомления */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: var(--card-bg);
+            color: var(--text);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            border-left: 4px solid var(--accent);
+            min-width: 280px;
+            animation: slideInRight 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .toast.favorite {
+            border-left-color: var(--favorite);
+        }
+        .toast-icon {
+            font-size: 24px;
+        }
+        .toast-content {
+            flex: 1;
+            font-size: 14px;
+        }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
         @media (max-width: 768px) {
             .post-content { padding: 20px; }
             .post-title { font-size: 22px; }
@@ -153,6 +227,8 @@
     </style>
 </head>
 <body>
+    <div class="progress-bar" id="progressBar"></div>
+    
     <header>
         <div class="container">
             <div class="header-content">
@@ -160,7 +236,10 @@
                     <img src="../logo%20Novikon.png" alt="Novikon">
                     <span class="site-title">Novikon</span>
                 </a>
-                <button class="theme-toggle" onclick="toggleTheme()">🌙 Тёмная тема</button>
+                <div class="header-btns">
+                    <button class="control-btn favorite" id="favBtn" onclick="toggleFavorite()" title="В избранное">⭐</button>
+                    <button class="control-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+                </div>
             </div>
         </div>
     </header>
@@ -178,19 +257,106 @@
             <p>© 2026 Novikon</p>
         </div>
     </div>
+    
+    <div class="toast-container" id="toastContainer"></div>
+    
     <script>
+        const POST_ID = 2059;
+        
+        // ============ ТЕМА ============
         function toggleTheme() {
             const html = document.documentElement;
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            document.querySelector('.theme-toggle').textContent = newTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+            document.getElementById('themeBtn').textContent = newTheme === 'dark' ? '☀️' : '🌙';
         }
         
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+        // ============ ИЗБРАННОЕ ============
+        function getFavorites() {
+            return JSON.parse(localStorage.getItem('favorites') || '[]');
+        }
+        
+        function toggleFavorite() {
+            let favorites = getFavorites();
+            const index = favorites.indexOf(POST_ID);
+            const btn = document.getElementById('favBtn');
+            
+            if (index > -1) {
+                favorites.splice(index, 1);
+                btn.classList.remove('active');
+                showToast('💔', 'Удалено из избранного');
+            } else {
+                favorites.push(POST_ID);
+                btn.classList.add('active');
+                showToast('⭐', 'Добавлено в избранное', 'favorite');
+            }
+            
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+        }
+        
+        function updateFavBtn() {
+            const favorites = getFavorites();
+            if (favorites.includes(POST_ID)) {
+                document.getElementById('favBtn').classList.add('active');
+            }
+        }
+        
+        // ============ ПРОЧИТАННЫЕ ============
+        function markAsRead() {
+            let readPosts = JSON.parse(localStorage.getItem('readPosts') || '[]');
+            if (!readPosts.includes(POST_ID)) {
+                readPosts.push(POST_ID);
+                localStorage.setItem('readPosts', JSON.stringify(readPosts));
+            }
+        }
+        
+        // ============ УВЕДОМЛЕНИЯ ============
+        function showToast(icon, message, type = '') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = `
+                <div class="toast-icon">${icon}</div>
+                <div class="toast-content">${message}</div>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideInRight 0.4s ease reverse';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+        
+        // ============ ПРОГРЕСС-БАР ============
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.pageYOffset;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            document.getElementById('progressBar').style.width = scrollPercent + '%';
+        });
+        
+        // ============ ЗАГРУЗКА ============
+        document.addEventListener('DOMContentLoaded', function() {
+            // Тема
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.getElementById('themeBtn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            
+            // Избранное
+            updateFavBtn();
+            
+            // Отмечаем как прочитанное
+            markAsRead();
+            
+            // Анимация перехода
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 0.4s';
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+            }, 50);
+        });
     </script>
 </body>
 </html>
