@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Принцы доллара: почему QE закончилось - Novikon</title>
-    <link rel="icon" href="../logo%20Novikon.png" type="image/png">
+    <title>Принцы доллара: почему QE закончилось - Новикон</title>
+    <link rel="icon" href="../logo_H.png" type="image/png">
     <style>
-        :root {
+        :root {{
             --bg: #f5f5f5;
             --text: #333;
             --card-bg: white;
@@ -15,8 +15,8 @@
             --border: #e0e0e0;
             --accent: #667eea;
             --favorite: #ffc107;
-        }
-        [data-theme="dark"] {
+        }}
+        [data-theme="dark"] {{
             --bg: #1a1a2e;
             --text: #e0e0e0;
             --card-bg: #16213e;
@@ -24,16 +24,16 @@
             --shadow: 0 4px 15px rgba(0,0,0,0.3);
             --border: #2a2a4a;
             --accent: #7b8cde;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
+        }}
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.8;
             transition: background 0.4s, color 0.4s;
-        }
-        header {
+        }}
+        header {{
             background: var(--header-bg);
             color: white;
             padding: 20px 0;
@@ -42,41 +42,41 @@
             position: sticky;
             top: 0;
             z-index: 100;
-        }
-        .container {
+        }}
+        .container {{
             max-width: 800px;
             margin: 0 auto;
             padding: 0 20px;
-        }
-        .header-content {
+        }}
+        .header-content {{
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 10px;
-        }
-        .logo-link {
+        }}
+        .logo-link {{
             display: flex;
             align-items: center;
             gap: 12px;
             color: white;
             text-decoration: none;
-        }
-        .logo-link img {
+        }}
+        .logo-link img {{
             height: 40px;
             width: auto;
             border-radius: 6px;
-        }
-        .logo-link .site-title {
+        }}
+        .logo-link .site-title {{
             font-size: 22px;
             font-weight: 700;
-        }
-        .header-btns {
+        }}
+        .header-btns {{
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
-        }
-        .control-btn {
+        }}
+        .control-btn {{
             background: rgba(255,255,255,0.2);
             border: 2px solid rgba(255,255,255,0.3);
             color: white;
@@ -85,17 +85,54 @@
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s;
-        }
-        .control-btn:hover {
+        }}
+        .control-btn:hover {{
             background: rgba(255,255,255,0.3);
             transform: scale(1.05);
-        }
-        .control-btn.favorite.active {
+        }}
+        .control-btn.favorite.active {{
             background: var(--favorite);
             border-color: var(--favorite);
             color: white;
-        }
-        .post-content {
+        }}
+        .lang-dropdown {{
+            position: relative;
+            display: inline-block;
+        }}
+        .lang-menu {{
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            overflow: hidden;
+            min-width: 150px;
+            z-index: 200;
+        }}
+        .lang-menu.active {{
+            display: block;
+        }}
+        .lang-option {{
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--text);
+        }}
+        .lang-option:hover {{
+            background: rgba(102, 126, 234, 0.1);
+        }}
+        .lang-option.active {{
+            background: rgba(102, 126, 234, 0.15);
+            font-weight: 600;
+        }}
+        .post-content {{
             background: var(--card-bg);
             border-radius: 12px;
             padding: 40px;
@@ -103,33 +140,33 @@
             box-shadow: var(--shadow);
             transition: background 0.4s;
             animation: fadeIn 0.5s ease;
-        }
-        .post-date {
+        }}
+        .post-date {{
             color: #888;
             font-size: 14px;
             margin-bottom: 15px;
-        }
-        .post-title {
+        }}
+        .post-title {{
             font-size: 28px;
             font-weight: 700;
             margin-bottom: 20px;
             line-height: 1.3;
-        }
-        .post-text {
+        }}
+        .post-text {{
             font-size: 17px;
             line-height: 1.8;
-        }
-        .post-text a {
+        }}
+        .post-text a {{
             color: var(--accent);
             text-decoration: none;
-        }
-        .post-text img {
+        }}
+        .post-text img {{
             display: block;
             max-width: 100%;
             border-radius: 12px;
             margin: 20px auto;
-        }
-        .back-button {
+        }}
+        .back-button {{
             display: inline-block;
             margin-top: 30px;
             padding: 12px 24px;
@@ -139,11 +176,11 @@
             border-radius: 8px;
             font-weight: 600;
             transition: transform 0.3s;
-        }
-        .back-button:hover {
+        }}
+        .back-button:hover {{
             transform: scale(1.05);
-        }
-        .footer {
+        }}
+        .footer {{
             text-align: center;
             padding: 30px 0;
             color: #888;
@@ -151,15 +188,14 @@
             border-top: 1px solid var(--border);
             margin-top: 20px;
             transition: border-color 0.4s;
-        }
+        }}
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn {{
+            from {{ opacity: 0; transform: translateY(20px); }}
+            to {{ opacity: 1; transform: translateY(0); }}
+        }}
         
-        /* Прогресс-бар */
-        .progress-bar {
+        .progress-bar {{
             position: fixed;
             top: 0;
             left: 0;
@@ -168,10 +204,9 @@
             width: 0%;
             z-index: 9999;
             transition: width 0.3s;
-        }
+        }}
         
-        /* Toast уведомления */
-        .toast-container {
+        .toast-container {{
             position: fixed;
             bottom: 20px;
             right: 20px;
@@ -179,8 +214,8 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-        }
-        .toast {
+        }}
+        .toast {{
             background: var(--card-bg);
             color: var(--text);
             padding: 15px 20px;
@@ -192,38 +227,38 @@
             display: flex;
             align-items: center;
             gap: 12px;
-        }
-        .toast.favorite {
+        }}
+        .toast.favorite {{
             border-left-color: var(--favorite);
-        }
-        .toast-icon {
+        }}
+        .toast-icon {{
             font-size: 24px;
-        }
-        .toast-content {
+        }}
+        .toast-content {{
             flex: 1;
             font-size: 14px;
-        }
+        }}
         
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(100px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
+        @keyframes slideInRight {{
+            from {{ opacity: 0; transform: translateX(100px); }}
+            to {{ opacity: 1; transform: translateX(0); }}
+        }}
         
-        @media (max-width: 768px) {
-            .post-content { padding: 20px; }
-            .post-title { font-size: 22px; }
-            .header-content {
+        @media (max-width: 768px) {{
+            .post-content {{ padding: 20px; }}
+            .post-title {{ font-size: 22px; }}
+            .header-content {{
                 flex-direction: column;
                 gap: 10px;
                 text-align: center;
-            }
-            .logo-link img {
+            }}
+            .logo-link img {{
                 height: 32px;
-            }
-            .logo-link .site-title {
+            }}
+            .logo-link .site-title {{
                 font-size: 18px;
-            }
-        }
+            }}
+        }}
     </style>
 </head>
 <body>
@@ -233,11 +268,22 @@
         <div class="container">
             <div class="header-content">
                 <a href="/Novikon-site/" class="logo-link">
-                    <img src="../logo%20Novikon.png" alt="Novikon">
-                    <span class="site-title">Novikon</span>
+                    <img src="../logo_H.png" alt="Новикон">
+                    <span class="site-title">Новикон</span>
                 </a>
                 <div class="header-btns">
                     <button class="control-btn favorite" id="favBtn" onclick="toggleFavorite()" title="В избранное">⭐</button>
+                    <div class="lang-dropdown">
+                        <button class="control-btn" onclick="toggleLangMenu()" title="Язык">
+                            🌐 <span id="currentLang">RU</span>
+                        </button>
+                        <div class="lang-menu" id="langMenu">
+                            <div class="lang-option active" onclick="setLanguage('ru')">🇷🇺 Русский</div>
+                            <div class="lang-option" onclick="setLanguage('en')">🇬🇧 English</div>
+                            <div class="lang-option" onclick="setLanguage('de')">🇩🇪 Deutsch</div>
+                            <div class="lang-option" onclick="setLanguage('es')">🇪🇸 Español</div>
+                        </div>
+                    </div>
                     <button class="control-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
                 </div>
             </div>
@@ -245,118 +291,238 @@
     </header>
     <div class="container">
         <div class="post-content">
-            <div class="post-date">📅 20.09.2026 06:09</div>
-            <h1 class="post-title">Принцы доллара: почему QE закончилось</h1>
-            <img src="../assets/post_2073.jpg" alt="News image" style="display: block; max-width: 100%; border-radius: 12px; margin: 20px auto;">
-            <div class="post-text">Автор Кейн Макгукин через Bombthrower,<br>На каждом переходе есть дорожные знаки. Мэтт Дайнс был одним из наиболее точных умов в последнее время в отношении денежно-кредитного и геополитического перехода, который мы переживаем.<br>Его комментарий и комментарий Камрона Оцуки в начале этого месяца на Mine Print Hash, опубликованный после встречи G20 в Северной Каролине, проливает свет на основные камни преткновения, которые проложат путь как для будущей политики, так и для денежно-кредитной системы. Это не произойдет в одночасье, но в то же время мы, скорее всего, оглянемся назад и скажем: «чувак, мир быстро изменился».<br>1. Совет по финансовой стабильности (FSB). Так же, как встречи Великой депрессии принесли новые организации для следующего цикла, встречи G20 после GFC принесли FSB по той же причине. Новые правила, прокладывающие путь к стабильности в новую экономическую эпоху (саммит в Питтсбурге в 2009 году).</div>
-            <a href="/Novikon-site/" class="back-button">← На главную</a>
+            <div class="post-date">📅 {date_str}</div>
+            <h1 class="post-title" id="postTitle">{html_module.escape(title)}</h1>
+            {img_html}
+            <div class="post-text" id="postText">{full_text}</div>
+            <a href="/Novikon-site/" class="back-button" data-i18n="back">← На главную</a>
         </div>
     </div>
     <div class="footer">
         <div class="container">
-            <p>© 2026 Novikon</p>
+            <p>© 2026 Новикон</p>
         </div>
     </div>
     
     <div class="toast-container" id="toastContainer"></div>
     
     <script>
-        const POST_ID = 2073;
+        const POST_ID = {post["id"]};
+        const ORIGINAL_TITLE = {title_json};
+        const ORIGINAL_TEXT = {full_text_json};
+        
+        const translations = {{
+            ru: {{ back: '← На главную', theme: 'Тема' }},
+            en: {{ back: '← Back to home', theme: 'Theme' }},
+            de: {{ back: '← Zurück zur Startseite', theme: 'Thema' }},
+            es: {{ back: '← Volver al inicio', theme: 'Tema' }}
+        }};
+        
+        let currentLang = localStorage.getItem('lang') || 'ru';
+        
+        // ============ ПЕРЕВОД СТАТЬИ ============
+        async function translateText(text, targetLang) {{
+            if (targetLang === 'ru') return text;
+            if (!text || text.trim().length === 0) return text;
+            
+            try {{
+                const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=' + targetLang + '&dt=t&q=' + encodeURIComponent(text.substring(0, 4500));
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data && data[0]) {{
+                    return data[0].map(item => item[0]).join('');
+                }}
+                return text;
+            }} catch (e) {{
+                console.warn('Ошибка перевода:', e);
+                return text;
+            }}
+        }}
+        
+        async function translatePost(targetLang) {{
+            const titleEl = document.getElementById('postTitle');
+            const textEl = document.getElementById('postText');
+            
+            if (targetLang === 'ru') {{
+                titleEl.textContent = ORIGINAL_TITLE;
+                textEl.innerHTML = ORIGINAL_TEXT;
+                return;
+            }}
+            
+            showToast('🌐', 'Перевод статьи...');
+            
+            // Переводим заголовок
+            const translatedTitle = await translateText(ORIGINAL_TITLE, targetLang);
+            titleEl.textContent = translatedTitle;
+            
+            // Переводим основной текст (сохраняя теги <br>)
+            const textParts = ORIGINAL_TEXT.split('<br>');
+            const translatedParts = [];
+            
+            for (const part of textParts) {{
+                if (part.trim()) {{
+                    const translated = await translateText(part, targetLang);
+                    translatedParts.push(translated);
+                    await new Promise(r => setTimeout(r, 50));
+                }} else {{
+                    translatedParts.push(part);
+                }}
+            }}
+            
+            textEl.innerHTML = translatedParts.join('<br>');
+            
+            showToast('✅', 'Перевод завершён!');
+        }}
+        
+        // ============ ЯЗЫК ============
+        function toggleLangMenu() {{
+            document.getElementById('langMenu').classList.toggle('active');
+        }}
+        
+        async function setLanguage(lang) {{
+            currentLang = lang;
+            localStorage.setItem('lang', lang);
+            
+            document.querySelectorAll('.lang-option').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('currentLang').textContent = lang.toUpperCase();
+            
+            // Обновляем переводы интерфейса
+            document.querySelectorAll('[data-i18n]').forEach(el => {{
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {{
+                    el.textContent = translations[lang][key];
+                }}
+            }});
+            
+            updateThemeBtn();
+            document.getElementById('langMenu').classList.remove('active');
+            
+            // Переводим статью
+            await translatePost(lang);
+        }}
         
         // ============ ТЕМА ============
-        function toggleTheme() {
+        function toggleTheme() {{
             const html = document.documentElement;
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            document.getElementById('themeBtn').textContent = newTheme === 'dark' ? '☀️' : '🌙';
-        }
+            updateThemeBtn();
+        }}
+        
+        function updateThemeBtn() {{
+            document.getElementById('themeBtn').textContent = 
+                document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+        }}
         
         // ============ ИЗБРАННОЕ ============
-        function getFavorites() {
+        function getFavorites() {{
             return JSON.parse(localStorage.getItem('favorites') || '[]');
-        }
+        }}
         
-        function toggleFavorite() {
+        function toggleFavorite() {{
             let favorites = getFavorites();
             const index = favorites.indexOf(POST_ID);
             const btn = document.getElementById('favBtn');
             
-            if (index > -1) {
+            if (index > -1) {{
                 favorites.splice(index, 1);
                 btn.classList.remove('active');
                 showToast('💔', 'Удалено из избранного');
-            } else {
+            }} else {{
                 favorites.push(POST_ID);
                 btn.classList.add('active');
                 showToast('⭐', 'Добавлено в избранное', 'favorite');
-            }
+            }}
             
             localStorage.setItem('favorites', JSON.stringify(favorites));
-        }
+        }}
         
-        function updateFavBtn() {
-            const favorites = getFavorites();
-            if (favorites.includes(POST_ID)) {
+        function updateFavBtn() {{
+            if (getFavorites().includes(POST_ID)) {{
                 document.getElementById('favBtn').classList.add('active');
-            }
-        }
+            }}
+        }}
         
         // ============ ПРОЧИТАННЫЕ ============
-        function markAsRead() {
+        function markAsRead() {{
             let readPosts = JSON.parse(localStorage.getItem('readPosts') || '[]');
-            if (!readPosts.includes(POST_ID)) {
+            if (!readPosts.includes(POST_ID)) {{
                 readPosts.push(POST_ID);
                 localStorage.setItem('readPosts', JSON.stringify(readPosts));
-            }
-        }
+            }}
+        }}
         
         // ============ УВЕДОМЛЕНИЯ ============
-        function showToast(icon, message, type = '') {
+        function showToast(icon, message, type = '') {{
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = 'toast ' + type;
-            toast.innerHTML = `
-                <div class="toast-icon">${icon}</div>
-                <div class="toast-content">${message}</div>
-            `;
+            toast.innerHTML = `<div class="toast-icon">${{icon}}</div><div class="toast-content">${{message}}</div>`;
             container.appendChild(toast);
             
-            setTimeout(() => {
+            setTimeout(() => {{
                 toast.style.animation = 'slideInRight 0.4s ease reverse';
                 setTimeout(() => toast.remove(), 400);
-            }, 3000);
-        }
+            }}, 3000);
+        }}
         
         // ============ ПРОГРЕСС-БАР ============
-        window.addEventListener('scroll', () => {
+        window.addEventListener('scroll', () => {{
             const scrollTop = window.pageYOffset;
             const docHeight = document.documentElement.scrollHeight - window.innerHeight;
             const scrollPercent = (scrollTop / docHeight) * 100;
             document.getElementById('progressBar').style.width = scrollPercent + '%';
-        });
+        }});
         
         // ============ ЗАГРУЗКА ============
-        document.addEventListener('DOMContentLoaded', function() {
-            // Тема
+        document.addEventListener('DOMContentLoaded', async function() {{
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
-            document.getElementById('themeBtn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            updateThemeBtn();
             
-            // Избранное
+            document.getElementById('currentLang').textContent = currentLang.toUpperCase();
+            document.querySelectorAll('.lang-option').forEach(el => {{
+                el.classList.remove('active');
+                if (el.textContent.includes(currentLang === 'ru' ? 'Русский' : currentLang === 'en' ? 'English' : currentLang === 'de' ? 'Deutsch' : 'Español')) {{
+                    el.classList.add('active');
+                }}
+            }});
+            
+            // Обновляем переводы интерфейса
+            document.querySelectorAll('[data-i18n]').forEach(el => {{
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {{
+                    el.textContent = translations[currentLang][key];
+                }}
+            }});
+            
             updateFavBtn();
-            
-            // Отмечаем как прочитанное
             markAsRead();
+            
+            // Переводим статью если нужно
+            if (currentLang !== 'ru') {{
+                setTimeout(() => translatePost(currentLang), 500);
+            }}
             
             // Анимация перехода
             document.body.style.opacity = '0';
             document.body.style.transition = 'opacity 0.4s';
-            setTimeout(() => {
+            setTimeout(() => {{
                 document.body.style.opacity = '1';
-            }, 50);
-        });
+            }}, 50);
+            
+            // Закрываем меню языка при клике вне
+            document.addEventListener('click', function(e) {{
+                const langDropdown = document.querySelector('.lang-dropdown');
+                if (langDropdown && !langDropdown.contains(e.target)) {{
+                    document.getElementById('langMenu').classList.remove('active');
+                }}
+            }});
+        }});
     </script>
 </body>
 </html>
