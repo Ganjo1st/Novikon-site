@@ -1001,4 +1001,529 @@ def generate_html(posts):
             const toast = document.createElement('div');
             toast.className = 'toast ' + type;
             toast.innerHTML = `
-                <div class="toast-icon">${icon}</
+                <div class="toast-icon">${icon}</div>
+                <div class="toast-content">${message}</div>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideInRight 0.4s ease reverse';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+        
+        // ============ ПРОГРЕСС-БАР ============
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.pageYOffset;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            document.getElementById('progressBar').style.width = scrollPercent + '%';
+        });
+        
+        // ============ ЗАГРУЗКА СТРАНИЦЫ ============
+        document.addEventListener('DOMContentLoaded', function() {
+            // Тема
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeButton(savedTheme);
+            
+            // Язык
+            document.getElementById('currentLang').textContent = currentLang.toUpperCase();
+            document.querySelectorAll('.lang-option').forEach(el => {
+                el.classList.remove('active');
+                if (el.textContent.includes(currentLang === 'ru' ? 'Русский' : currentLang === 'en' ? 'English' : currentLang === 'de' ? 'Deutsch' : 'Español')) {
+                    el.classList.add('active');
+                }
+            });
+            
+            // Обновляем переводы
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.textContent = translations[currentLang][key];
+                }
+            });
+            document.getElementById('searchInput').placeholder = translations[currentLang].searchPlaceholder;
+            document.querySelectorAll('.read-more').forEach(el => {
+                el.textContent = translations[currentLang].readMore;
+            });
+            
+            // Обновляем избранное
+            const favorites = getFavorites();
+            document.querySelectorAll('.news-card').forEach(card => {
+                const postId = parseInt(card.getAttribute('data-post-id'));
+                const favBtn = card.querySelector('.favorite');
+                if (favorites.includes(postId) && favBtn) {
+                    favBtn.classList.add('active');
+                }
+            });
+            updateFavBadge();
+            
+            // Обновляем непрочитанные
+            updateUnreadBadge();
+            
+            // Анимация появления карточек
+            document.querySelectorAll('.news-card').forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.animationDelay = (index * 0.05) + 's';
+                }, 0);
+            });
+            
+            // Закрываем меню языка при клике вне
+            document.addEventListener('click', function(e) {
+                const langDropdown = document.querySelector('.lang-dropdown');
+                if (langDropdown && !langDropdown.contains(e.target)) {
+                    document.getElementById('langMenu').classList.remove('active');
+                }
+            });
+            
+            // Показываем уведомление о новых статьях
+            const lastVisit = localStorage.getItem('lastVisit');
+            const now = Date.now();
+            if (lastVisit) {
+                const timeDiff = now - parseInt(lastVisit);
+                // Если прошло больше 1 часа
+                if (timeDiff > 3600000) {
+                    const unreadCount = postsData.length - getReadPosts().length;
+                    if (unreadCount > 0) {
+                        setTimeout(() => {
+                            showToast('🔔', unreadCount + ' ' + translations[currentLang].newArticles);
+                        }, 1000);
+                    }
+                }
+            }
+            localStorage.setItem('lastVisit', now.toString());
+        });
+        
+        // ============ ПЕРЕХОДЫ С АНИМАЦИЕЙ ============
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.hostname === window.location.hostname) {
+                    e.preventDefault();
+                    document.body.style.opacity = '0';
+                    document.body.style.transition = 'opacity 0.3s';
+                    setTimeout(() => {
+                        window.location.href = this.href;
+                    }, 300);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+'''
+    
+    with open('index.html', 'w', encoding='utf-8') as f:
+        f.write(html_output)
+    print("🌐 Сгенерирован index.html со всеми функциями")
+
+def generate_post_pages(posts):
+    os.makedirs('posts', exist_ok=True)
+    
+    print(f"📝 Генерация {len(posts)} страниц постов...")
+    
+    for i, post in enumerate(posts):
+        try:
+            text_lines = post['text'].split('\n')
+            raw_title = text_lines[0] if text_lines else ''
+            title = clean_title(raw_title)
+            
+            date_obj = datetime.fromisoformat(post['date'])
+            date_str = date_obj.strftime('%d.%m.%Y %H:%M')
+            
+            full_text_lines = []
+            for line in text_lines[1:]:
+                clean_line = clean_text(line)
+                if clean_line:
+                    full_text_lines.append(clean_line)
+            
+            full_text = '<br>'.join(full_text_lines) if full_text_lines else clean_text(post['text'])
+            
+            if not full_text:
+                full_text = title
+            
+            if post.get('image_url'):
+                img_html = f'<img src="../{post["image_url"]}" alt="News image" style="display: block; max-width: 100%; border-radius: 12px; margin: 20px auto;">'
+            else:
+                img_html = ''
+            
+            title_escaped = html_module.escape(title)
+            
+            html_output = f'''<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title_escaped} - Novikon</title>
+    <link rel="icon" href="../logo%20Novikon.png" type="image/png">
+    <style>
+        :root {{
+            --bg: #f5f5f5;
+            --text: #333;
+            --card-bg: white;
+            --header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow: 0 4px 15px rgba(0,0,0,0.08);
+            --border: #e0e0e0;
+            --accent: #667eea;
+            --favorite: #ffc107;
+        }}
+        [data-theme="dark"] {{
+            --bg: #1a1a2e;
+            --text: #e0e0e0;
+            --card-bg: #16213e;
+            --header-bg: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            --shadow: 0 4px 15px rgba(0,0,0,0.3);
+            --border: #2a2a4a;
+            --accent: #7b8cde;
+        }}
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            transition: background 0.4s, color 0.4s;
+        }}
+        header {{
+            background: var(--header-bg);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: background 0.4s;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }}
+        .container {{
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }}
+        .header-content {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }}
+        .logo-link {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            text-decoration: none;
+        }}
+        .logo-link img {{
+            height: 40px;
+            width: auto;
+            border-radius: 6px;
+        }}
+        .logo-link .site-title {{
+            font-size: 22px;
+            font-weight: 700;
+        }}
+        .header-btns {{
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }}
+        .control-btn {{
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }}
+        .control-btn:hover {{
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }}
+        .control-btn.favorite.active {{
+            background: var(--favorite);
+            border-color: var(--favorite);
+            color: white;
+        }}
+        .post-content {{
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 40px;
+            margin: 30px 0;
+            box-shadow: var(--shadow);
+            transition: background 0.4s;
+            animation: fadeIn 0.5s ease;
+        }}
+        .post-date {{
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }}
+        .post-title {{
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }}
+        .post-text {{
+            font-size: 17px;
+            line-height: 1.8;
+        }}
+        .post-text a {{
+            color: var(--accent);
+            text-decoration: none;
+        }}
+        .post-text img {{
+            display: block;
+            max-width: 100%;
+            border-radius: 12px;
+            margin: 20px auto;
+        }}
+        .back-button {{
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 24px;
+            background: var(--header-bg);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.3s;
+        }}
+        .back-button:hover {{
+            transform: scale(1.05);
+        }}
+        .footer {{
+            text-align: center;
+            padding: 30px 0;
+            color: #888;
+            font-size: 14px;
+            border-top: 1px solid var(--border);
+            margin-top: 20px;
+            transition: border-color 0.4s;
+        }}
+        
+        @keyframes fadeIn {{
+            from {{ opacity: 0; transform: translateY(20px); }}
+            to {{ opacity: 1; transform: translateY(0); }}
+        }}
+        
+        /* Прогресс-бар */
+        .progress-bar {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 9999;
+            transition: width 0.3s;
+        }}
+        
+        /* Toast уведомления */
+        .toast-container {{
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }}
+        .toast {{
+            background: var(--card-bg);
+            color: var(--text);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            border-left: 4px solid var(--accent);
+            min-width: 280px;
+            animation: slideInRight 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }}
+        .toast.favorite {{
+            border-left-color: var(--favorite);
+        }}
+        .toast-icon {{
+            font-size: 24px;
+        }}
+        .toast-content {{
+            flex: 1;
+            font-size: 14px;
+        }}
+        
+        @keyframes slideInRight {{
+            from {{ opacity: 0; transform: translateX(100px); }}
+            to {{ opacity: 1; transform: translateX(0); }}
+        }}
+        
+        @media (max-width: 768px) {{
+            .post-content {{ padding: 20px; }}
+            .post-title {{ font-size: 22px; }}
+            .header-content {{
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }}
+            .logo-link img {{
+                height: 32px;
+            }}
+            .logo-link .site-title {{
+                font-size: 18px;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="/Novikon-site/" class="logo-link">
+                    <img src="../logo%20Novikon.png" alt="Novikon">
+                    <span class="site-title">Novikon</span>
+                </a>
+                <div class="header-btns">
+                    <button class="control-btn favorite" id="favBtn" onclick="toggleFavorite()" title="В избранное">⭐</button>
+                    <button class="control-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="container">
+        <div class="post-content">
+            <div class="post-date">📅 {date_str}</div>
+            <h1 class="post-title">{title_escaped}</h1>
+            {img_html}
+            <div class="post-text">{full_text}</div>
+            <a href="/Novikon-site/" class="back-button">← На главную</a>
+        </div>
+    </div>
+    <div class="footer">
+        <div class="container">
+            <p>© 2026 Novikon</p>
+        </div>
+    </div>
+    
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <script>
+        const POST_ID = {post["id"]};
+        
+        // ============ ТЕМА ============
+        function toggleTheme() {{
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            document.getElementById('themeBtn').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        }}
+        
+        // ============ ИЗБРАННОЕ ============
+        function getFavorites() {{
+            return JSON.parse(localStorage.getItem('favorites') || '[]');
+        }}
+        
+        function toggleFavorite() {{
+            let favorites = getFavorites();
+            const index = favorites.indexOf(POST_ID);
+            const btn = document.getElementById('favBtn');
+            
+            if (index > -1) {{
+                favorites.splice(index, 1);
+                btn.classList.remove('active');
+                showToast('💔', 'Удалено из избранного');
+            }} else {{
+                favorites.push(POST_ID);
+                btn.classList.add('active');
+                showToast('⭐', 'Добавлено в избранное', 'favorite');
+            }}
+            
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+        }}
+        
+        function updateFavBtn() {{
+            const favorites = getFavorites();
+            if (favorites.includes(POST_ID)) {{
+                document.getElementById('favBtn').classList.add('active');
+            }}
+        }}
+        
+        // ============ ПРОЧИТАННЫЕ ============
+        function markAsRead() {{
+            let readPosts = JSON.parse(localStorage.getItem('readPosts') || '[]');
+            if (!readPosts.includes(POST_ID)) {{
+                readPosts.push(POST_ID);
+                localStorage.setItem('readPosts', JSON.stringify(readPosts));
+            }}
+        }}
+        
+        // ============ УВЕДОМЛЕНИЯ ============
+        function showToast(icon, message, type = '') {{
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = `
+                <div class="toast-icon">${{icon}}</div>
+                <div class="toast-content">${{message}}</div>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => {{
+                toast.style.animation = 'slideInRight 0.4s ease reverse';
+                setTimeout(() => toast.remove(), 400);
+            }}, 3000);
+        }}
+        
+        // ============ ПРОГРЕСС-БАР ============
+        window.addEventListener('scroll', () => {{
+            const scrollTop = window.pageYOffset;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            document.getElementById('progressBar').style.width = scrollPercent + '%';
+        }});
+        
+        // ============ ЗАГРУЗКА ============
+        document.addEventListener('DOMContentLoaded', function() {{
+            // Тема
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.getElementById('themeBtn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            
+            // Избранное
+            updateFavBtn();
+            
+            // Отмечаем как прочитанное
+            markAsRead();
+            
+            // Анимация перехода
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 0.4s';
+            setTimeout(() => {{
+                document.body.style.opacity = '1';
+            }}, 50);
+        }});
+    </script>
+</body>
+</html>
+'''
+            
+            with open(f'posts/post_{post["id"]}.html', 'w', encoding='utf-8') as f:
+                f.write(html_output)
+            
+            if (i + 1) % 10 == 0:
+                print(f"📄 Сгенерировано {i + 1} из {len(posts)} страниц")
+                
+        except Exception as e:
+            print(f"❌ Ошибка при генерации страницы для поста {post['id']}: {e}")
+            continue
+    
+    print(f"✅ Сгенерировано {len(posts)} отдельных страниц")
+
+if __name__ == '__main__':
+    asyncio.run(parse_channel())
