@@ -12,6 +12,7 @@ import re
 API_ID = int(os.getenv('API_ID', 0))
 API_HASH = os.getenv('API_HASH', '')
 CHANNEL_ID = os.getenv('TELEGRAM_CHANNEL_ID', '')
+API_BACKEND_URL = os.getenv('API_BACKEND_URL', 'https://your-backend.koyeb.app')
 
 if not API_ID or not API_HASH:
     print("❌ Ошибка: API_ID или API_HASH не установлены")
@@ -22,8 +23,7 @@ if not CHANNEL_ID:
     exit(1)
 
 client = TelegramClient('session', API_ID, API_HASH)
-
-LOGO_FILE = 'logo_H.png'  # Новый логотип
+LOGO_FILE = 'logo_H.png'
 
 def clean_title(title):
     if not title:
@@ -66,7 +66,7 @@ async def parse_channel():
         print(f"📡 Подключен к каналу: {entity.title if hasattr(entity, 'title') else CHANNEL_ID}")
         
         posts = []
-        limit = 42
+        limit = 200  # Загружаем 200, но на сайте показываем по лимиту
         count = 0
         
         os.makedirs('assets', exist_ok=True)
@@ -100,7 +100,8 @@ async def parse_channel():
             
             posts.append(post)
             count += 1
-            print(f"✅ Обработан пост #{count} (ID: {message.id})")
+            if count % 10 == 0:
+                print(f"✅ Обработано {count} постов...")
         
         print(f"📊 Всего обработано {len(posts)} постов")
         
@@ -109,8 +110,8 @@ async def parse_channel():
         print("💾 Сохранен posts.json")
         
         print("📝 Генерация HTML страниц...")
-        generate_html(posts)
-        generate_post_pages(posts)
+        generate_html(posts, API_BACKEND_URL)
+        generate_post_pages(posts, API_BACKEND_URL)
         
         posts_files = os.listdir('posts')
         print(f"📁 В папке posts создано {len(posts_files)} файлов")
@@ -124,8 +125,11 @@ async def parse_channel():
         traceback.print_exc()
         await client.disconnect()
 
-def generate_html(posts):
-    posts_json = json.dumps(posts, ensure_ascii=False)
+def generate_html(posts, api_url):
+    # Передаём только первые 42 статьи в HTML (для бесплатных)
+    # Остальные будут загружаться через API для подписчиков
+    posts_json = json.dumps(posts[:42], ensure_ascii=False)
+    total_posts = len(posts)
     
     html_output = '''<!DOCTYPE html>
 <html lang="ru">
@@ -145,6 +149,7 @@ def generate_html(posts):
             --accent: #667eea;
             --favorite: #ffc107;
             --unread: #ff4757;
+            --premium: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         }
         [data-theme="dark"] {
             --bg: #1a1a2e;
@@ -231,6 +236,14 @@ def generate_html(posts):
             background: rgba(255,255,255,0.4);
             border-color: white;
         }
+        .control-btn.premium {
+            background: var(--premium);
+            border-color: rgba(255,255,255,0.5);
+            font-weight: 600;
+        }
+        .control-btn.premium:hover {
+            box-shadow: 0 0 20px rgba(245, 87, 108, 0.6);
+        }
         .badge {
             position: absolute;
             top: -5px;
@@ -298,6 +311,47 @@ def generate_html(posts):
             background: var(--accent);
             color: white;
             border-color: var(--accent);
+        }
+        
+        /* Premium banner */
+        .premium-banner {
+            background: var(--premium);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 16px;
+            margin: 20px 0;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            box-shadow: 0 8px 30px rgba(245, 87, 108, 0.3);
+            animation: fadeIn 0.5s ease;
+        }
+        .premium-banner.show {
+            display: flex;
+        }
+        .premium-banner h3 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        .premium-banner p {
+            opacity: 0.95;
+            font-size: 14px;
+        }
+        .premium-banner button {
+            background: white;
+            color: #f5576c;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .premium-banner button:hover {
+            transform: scale(1.05);
         }
         
         .news-grid {
@@ -394,6 +448,59 @@ def generate_html(posts):
             color: white;
         }
         
+        /* Заблокированная карточка */
+        .news-card.locked {
+            position: relative;
+            overflow: hidden;
+        }
+        .news-card.locked::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.95) 0%, rgba(245, 87, 108, 0.95) 100%);
+            backdrop-filter: blur(10px);
+            z-index: 5;
+        }
+        .news-card.locked .lock-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 6;
+            text-align: center;
+            color: white;
+            padding: 20px;
+        }
+        .news-card.locked .lock-content .lock-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .news-card.locked .lock-content h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .news-card.locked .lock-content p {
+            font-size: 14px;
+            opacity: 0.95;
+            margin-bottom: 15px;
+        }
+        .news-card.locked .lock-content button {
+            background: white;
+            color: #f5576c;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 25px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .news-card.locked .lock-content button:hover {
+            transform: scale(1.05);
+        }
+        
         .footer {
             text-align: center;
             padding: 30px 0;
@@ -444,6 +551,12 @@ def generate_html(posts):
         }
         .toast.favorite {
             border-left-color: var(--favorite);
+        }
+        .toast.success {
+            border-left-color: #10b981;
+        }
+        .toast.error {
+            border-left-color: #ef4444;
         }
         .toast-icon {
             font-size: 24px;
@@ -523,6 +636,194 @@ def generate_html(posts):
             font-weight: 600;
         }
         
+        /* Модальные окна */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s;
+            padding: 20px;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 420px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #888;
+            transition: color 0.3s;
+            background: none;
+            border: none;
+            line-height: 1;
+        }
+        .modal-close:hover {
+            color: var(--text);
+        }
+        .modal-content h2 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--text);
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 14px 18px;
+            margin-bottom: 15px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 15px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+        .modal-content input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .modal-content button[type="submit"],
+        .modal-content .primary-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--header-bg);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+            font-family: inherit;
+        }
+        .modal-content button[type="submit"]:hover,
+        .modal-content .primary-btn:hover {
+            transform: scale(1.02);
+        }
+        .modal-content button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .switch-mode {
+            text-align: center;
+            margin-top: 15px;
+            color: #888;
+            font-size: 14px;
+        }
+        .switch-mode a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .plans {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .plan {
+            padding: 25px 15px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .plan:hover {
+            border-color: var(--accent);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        }
+        .plan.recommended {
+            border-color: #f5576c;
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.05) 0%, rgba(245, 87, 108, 0.05) 100%);
+        }
+        .plan.recommended::before {
+            content: 'ВЫГОДНО';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--premium);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 10px;
+            letter-spacing: 1px;
+        }
+        .plan h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+        .plan .price {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        .plan.recommended .price {
+            color: #f5576c;
+        }
+        .plan p {
+            font-size: 13px;
+            color: #888;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 25px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .user-info:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        .user-info .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--premium);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .user-info .user-status {
+            font-size: 11px;
+            opacity: 0.85;
+        }
+        
         @media (max-width: 768px) {
             .news-grid {
                 grid-template-columns: 1fr;
@@ -545,6 +846,16 @@ def generate_html(posts):
             .control-btn {
                 font-size: 13px;
                 padding: 7px 12px;
+            }
+            .modal-content {
+                padding: 30px 20px;
+            }
+            .plans {
+                grid-template-columns: 1fr;
+            }
+            .premium-banner {
+                flex-direction: column;
+                text-align: center;
             }
         }
     </style>
@@ -588,6 +899,10 @@ def generate_html(posts):
                         </div>
                     </div>
                     <button class="control-btn" onclick="toggleTheme()" id="themeBtn">🌙 <span data-i18n="theme">Тема</span></button>
+                    <button class="control-btn premium" onclick="openSubscriptionModal()" id="premiumBtn">
+                        ⭐ <span data-i18n="premium">Подписка</span>
+                    </button>
+                    <button class="control-btn" onclick="toggleAuthModal()" id="authBtn">👤 <span data-i18n="login">Войти</span></button>
                 </div>
             </div>
         </div>
@@ -600,6 +915,14 @@ def generate_html(posts):
     </div>
     
     <div class="container">
+        <div class="premium-banner" id="premiumBanner">
+            <div>
+                <h3>⭐ Откройте все 200 статей</h3>
+                <p>Подписка за 149 ₽/мес — доступ к полной ленте новостей</p>
+            </div>
+            <button onclick="openSubscriptionModal()">Оформить подписку</button>
+        </div>
+        
         <div class="filter-bar">
             <button class="filter-btn active" onclick="filterPosts('all', this)" data-i18n="all">Все</button>
             <button class="filter-btn" onclick="filterPosts('favorites', this)" data-i18n="filterFav">⭐ Избранные</button>
@@ -620,8 +943,7 @@ def generate_html(posts):
             clean_line = clean_text(line)
             if clean_line:
                 if preview_text:
-                    preview_text += ' ' + clean_line
-                else:
+                    preview_text += ' ' + clean_line                else:
                     preview_text = clean_line
                 if len(preview_text) > 200:
                     break
@@ -643,7 +965,6 @@ def generate_html(posts):
         else:
             img_html = '<div class="no-image">📄</div>'
         
-        # Экранируем для HTML-атрибутов (JSON.stringify безопасно)
         title_for_search = json.dumps(title.lower(), ensure_ascii=False)
         text_for_search = json.dumps(preview_text.lower(), ensure_ascii=False)
         
@@ -665,12 +986,18 @@ def generate_html(posts):
             </div>
 '''
 
-    html_output += '''
+    html_output += f'''
         </div>
         <div class="no-results" id="noResults" style="display:none;">
             <p data-i18n="noResults">😔 Ничего не найдено</p>
         </div>
     </div>
+    
+    <!-- Заблокированные статьи для подписчиков -->
+    <div class="container" id="lockedSection" style="display:none;">
+        <div class="news-grid" id="lockedGrid"></div>
+    </div>
+    
     <div class="footer">
         <div class="container">
             <p>© 2026 Новикон</p>
@@ -679,18 +1006,69 @@ def generate_html(posts):
     
     <div class="toast-container" id="toastContainer"></div>
     
+    <!-- Модальное окно авторизации -->
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="toggleAuthModal()">&times;</button>
+            <h2 id="authTitle">Вход</h2>
+            <form id="authForm" onsubmit="handleAuth(event)">
+                <input type="email" id="authEmail" placeholder="Email" required autocomplete="email">
+                <input type="password" id="authPassword" placeholder="Пароль" required autocomplete="current-password" minlength="6">
+                <button type="submit" id="authSubmitBtn">Войти</button>
+            </form>
+            <p class="switch-mode">
+                <a href="#" onclick="toggleAuthMode(event)">
+                    <span id="authSwitchText">Нет аккаунта? Зарегистрироваться</span>
+                </a>
+            </p>
+        </div>
+    </div>
+    
+    <!-- Модальное окно подписки -->
+    <div class="modal" id="subscriptionModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeSubscriptionModal()">&times;</button>
+            <h2>⭐ Подписка Новикон</h2>
+            <p style="text-align:center; color:#888; margin: 15px 0;">
+                Получите доступ к 200 статьям вместо 42
+            </p>
+            <div class="plans">
+                <div class="plan" onclick="subscribe('monthly')">
+                    <h3>Месяц</h3>
+                    <div class="price">149 ₽</div>
+                    <p>в месяц</p>
+                </div>
+                <div class="plan recommended" onclick="subscribe('yearly')">
+                    <h3>Год</h3>
+                    <div class="price">1 490 ₽</div>
+                    <p>скидка 17%</p>
+                </div>
+            </div>
+            <p style="text-align:center; color:#888; font-size:12px; margin-top:15px;">
+                Оплата через ЮKassa. Отмена в любой момент.
+            </p>
+        </div>
+    </div>
+    
     <script>
+        // ============ КОНФИГУРАЦИЯ ============
+        const API_URL = '{api_url}';
+        const TOTAL_ARTICLES = {total_posts};
+        const FREE_LIMIT = 42;
+        
         // ============ ДАННЫЕ ============
         const postsData = ''' + posts_json + ''';
         
-        // ============ ПЕРЕВОДЫ ИНТЕРФЕЙСА ============
-        const translations = {
-            ru: {
+        // ============ ПЕРЕВОДЫ ============
+        const translations = {{
+            ru: {{
                 subtitle: 'Актуальные новости и события',
                 search: 'Поиск',
                 favorites: 'Избранное',
                 unread: 'Новые',
                 theme: 'Тема',
+                premium: 'Подписка',
+                login: 'Войти',
                 all: 'Все',
                 filterFav: '⭐ Избранные',
                 filterUnread: '📬 Непрочитанные',
@@ -700,14 +1078,18 @@ def generate_html(posts):
                 noResults: '😔 Ничего не найдено',
                 addedToFav: 'Добавлено в избранное',
                 removedFromFav: 'Удалено из избранного',
-                newArticles: 'новых статей'
-            },
-            en: {
+                newArticles: 'новых статей',
+                premiumTitle: '⭐ Подписка Новикон',
+                premiumText: 'Откройте все 200 статей'
+            }},
+            en: {{
                 subtitle: 'Latest news and events',
                 search: 'Search',
                 favorites: 'Favorites',
                 unread: 'New',
                 theme: 'Theme',
+                premium: 'Premium',
+                login: 'Login',
                 all: 'All',
                 filterFav: '⭐ Favorites',
                 filterUnread: '📬 Unread',
@@ -717,14 +1099,18 @@ def generate_html(posts):
                 noResults: '😔 Nothing found',
                 addedToFav: 'Added to favorites',
                 removedFromFav: 'Removed from favorites',
-                newArticles: 'new articles'
-            },
-            de: {
+                newArticles: 'new articles',
+                premiumTitle: '⭐ Novikon Premium',
+                premiumText: 'Unlock all 200 articles'
+            }},
+            de: {{
                 subtitle: 'Aktuelle Nachrichten und Ereignisse',
                 search: 'Suche',
                 favorites: 'Favoriten',
                 unread: 'Neu',
                 theme: 'Thema',
+                premium: 'Premium',
+                login: 'Anmelden',
                 all: 'Alle',
                 filterFav: '⭐ Favoriten',
                 filterUnread: '📬 Ungelesen',
@@ -734,14 +1120,18 @@ def generate_html(posts):
                 noResults: '😔 Nichts gefunden',
                 addedToFav: 'Zu Favoriten hinzugefügt',
                 removedFromFav: 'Aus Favoriten entfernt',
-                newArticles: 'neue Artikel'
-            },
-            es: {
+                newArticles: 'neue Artikel',
+                premiumTitle: '⭐ Novikon Premium',
+                premiumText: 'Alle 200 Artikel freischalten'
+            }},
+            es: {{
                 subtitle: 'Últimas noticias y eventos',
                 search: 'Buscar',
                 favorites: 'Favoritos',
                 unread: 'Nuevo',
                 theme: 'Tema',
+                premium: 'Premium',
+                login: 'Entrar',
                 all: 'Todos',
                 filterFav: '⭐ Favoritos',
                 filterUnread: '📬 No leídos',
@@ -751,423 +1141,659 @@ def generate_html(posts):
                 noResults: '😔 Nada encontrado',
                 addedToFav: 'Añadido a favoritos',
                 removedFromFav: 'Eliminado de favoritos',
-                newArticles: 'nuevos artículos'
-            }
-        };
+                newArticles: 'nuevos artículos',
+                premiumTitle: '⭐ Novikon Premium',
+                premiumText: 'Desbloquea los 200 artículos'
+            }}
+        }};
         
         let currentLang = localStorage.getItem('lang') || 'ru';
         let currentFilter = 'all';
-        let originalTexts = new Map(); // Хранит оригинальные тексты статей
+        let currentUser = null;
+        let authMode = 'login';
+        let originalTexts = new Map();
+        let allPosts = [...postsData]; // локальные 42 + подгруженные
         
-        // ============ АВТОПЕРЕВОД СТАТЕЙ ============
-        // Используем бесплатный API Google Translate (неофициальный)
-        async function translateText(text, targetLang) {
-            if (targetLang === 'ru') return text; // Русский - оригинал
+        // ============ API ============
+        async function apiRequest(endpoint, options = {{}}) {{
+            const token = localStorage.getItem('token');
+            const headers = {{
+                'Content-Type': 'application/json',
+                ...(options.headers || {{}})
+            }};
+            if (token) {{
+                headers['Authorization'] = 'Bearer ' + token;
+            }}
+            
+            const response = await fetch(API_URL + endpoint, {{
+                ...options,
+                headers
+            }});
+            
+            if (!response.ok) {{
+                const error = await response.json().catch(() => ({{ detail: 'Ошибка сервера' }}));
+                throw new Error(error.detail || 'Ошибка');
+            }}
+            
+            return response.json();
+        }}
+        
+        // ============ АВТОРИЗАЦИЯ ============
+        function toggleAuthModal() {{
+            const modal = document.getElementById('authModal');
+            modal.classList.toggle('active');
+        }}
+        
+        function toggleAuthMode(e) {{
+            e.preventDefault();
+            authMode = authMode === 'login' ? 'register' : 'login';
+            document.getElementById('authTitle').textContent = authMode === 'login' ? 'Вход' : 'Регистрация';
+            document.getElementById('authSubmitBtn').textContent = authMode === 'login' ? 'Войти' : 'Зарегистрироваться';
+            document.getElementById('authSwitchText').textContent = authMode === 'login' 
+                ? 'Нет аккаунта? Зарегистрироваться' 
+                : 'Уже есть аккаунт? Войти';
+            document.getElementById('authPassword').autocomplete = authMode === 'login' ? 'current-password' : 'new-password';
+        }}
+        
+        async function handleAuth(e) {{
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const submitBtn = document.getElementById('authSubmitBtn');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Подождите...';
+            
+            try {{
+                const data = await apiRequest('/api/auth/' + authMode, {{
+                    method: 'POST',
+                    body: JSON.stringify({{ email, password }})
+                }});
+                
+                localStorage.setItem('token', data.access_token);
+                currentUser = data.user;
+                
+                toggleAuthModal();
+                updateAuthUI();
+                showToast('✅', 'Добро пожаловать, ' + data.user.email + '!', 'success');
+                
+                // Если подписчик - показываем все статьи
+                if (data.user.is_subscriber) {{
+                    await loadAllArticles();
+                }} else {{
+                    showLockedArticles();
+                }}
+                
+            }} catch (error) {{
+                showToast('❌', error.message, 'error');
+            }} finally {{
+                submitBtn.disabled = false;
+                submitBtn.textContent = authMode === 'login' ? 'Войти' : 'Зарегистрироваться';
+            }}
+        }}
+        
+        function updateAuthUI() {{
+            const authBtn = document.getElementById('authBtn');
+            const t = translations[currentLang];
+            
+            if (currentUser) {{
+                const initial = currentUser.email.charAt(0).toUpperCase();
+                const status = currentUser.is_subscriber ? '⭐ Premium' : 'Free';
+                authBtn.innerHTML = `<span class="user-avatar">${{initial}}</span> <span>${{currentUser.email.split('@')[0]}}</span> <span class="user-status">${{status}}</span>`;
+                authBtn.onclick = () => logout();
+                authBtn.title = 'Выйти';
+                
+                if (currentUser.is_subscriber) {{
+                    document.getElementById('premiumBanner').classList.remove('show');
+                    document.getElementById('premiumBtn').style.display = 'none';
+                }} else {{
+                    document.getElementById('premiumBanner').classList.add('show');
+                }}
+            }} else {{
+                authBtn.innerHTML = '👤 <span>' + t.login + '</span>';
+                authBtn.onclick = () => toggleAuthModal();
+                document.getElementById('premiumBanner').classList.add('show');
+                document.getElementById('premiumBtn').style.display = 'block';
+            }}
+        }}
+        
+        function logout() {{
+            if (confirm('Выйти из аккаунта?')) {{
+                localStorage.removeItem('token');
+                currentUser = null;
+                updateAuthUI();
+                showToast('👋', 'Вы вышли из аккаунта');
+                location.reload();
+            }}
+        }}
+        
+        async function loadUserData() {{
+            const token = localStorage.getItem('token');
+            if (!token) {{
+                showLockedArticles();
+                return;
+            }}
+            
+            try {{
+                currentUser = await apiRequest('/api/auth/me');
+                updateAuthUI();
+                
+                if (currentUser.is_subscriber) {{
+                    await loadAllArticles();
+                }} else {{
+                    showLockedArticles();
+                }}
+            }} catch (e) {{
+                localStorage.removeItem('token');
+                showLockedArticles();
+            }}
+        }}
+        
+        // ============ ПОДПИСКА ============
+        function openSubscriptionModal() {{
+            if (!currentUser) {{
+                showToast('⚠️', 'Сначала войдите в аккаунт');
+                toggleAuthModal();
+                return;
+            }}
+            
+            if (currentUser.is_subscriber) {{
+                showToast('⭐', 'У вас уже есть подписка!');
+                return;
+            }}
+            
+            document.getElementById('subscriptionModal').classList.add('active');
+        }}
+        
+        function closeSubscriptionModal() {{
+            document.getElementById('subscriptionModal').classList.remove('active');
+        }}
+        
+        async function subscribe(plan) {{
+            try {{
+                const data = await apiRequest('/api/payments/create', {{
+                    method: 'POST',
+                    body: JSON.stringify({{ plan }})
+                }});
+                
+                // Перенаправляем на оплату
+                window.location.href = data.confirmation_url;
+                
+            }} catch (error) {{
+                showToast('❌', error.message, 'error');
+            }}
+        }}
+        
+        async function checkPaymentReturn() {{
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('payment') === 'success') {{
+                // Тестовое подтверждение (в продакшене убираем)
+                try {{
+                    const plan = urlParams.get('plan') || 'monthly';
+                    await apiRequest('/api/payments/confirm-test?plan=' + plan, {{ method: 'POST' }});
+                    showToast('✅', 'Оплата успешна! Подписка активирована.', 'success');
+                    await loadUserData();
+                }} catch (e) {{
+                    showToast('⚠️', 'Не удалось активировать подписку');
+                }}
+                window.history.replaceState({{}}, '', window.location.pathname);
+            }}
+        }}
+        
+        // ============ ЗАГРУЗКА СТАТЕЙ ДЛЯ ПОДПИСЧИКОВ ============
+        async function loadAllArticles() {{
+            try {{
+                const data = await apiRequest('/api/articles?limit=200');
+                allPosts = data.articles;
+                
+                // Добавляем недостающие статьи
+                const existingIds = new Set(postsData.map(p => p.id));
+                const missingPosts = allPosts.filter(p => !existingIds.has(p.id));
+                
+                if (missingPosts.length > 0) {{
+                    addArticlesToGrid(missingPosts);
+                }}
+                
+                document.getElementById('lockedSection').style.display = 'none';
+                showToast('⭐', 'Открыт доступ ко всем 200 статьям!', 'success');
+                
+            }} catch (e) {{
+                console.error('Ошибка загрузки статей:', e);
+                showLockedArticles();
+            }}
+        }}
+        
+        function addArticlesToGrid(posts) {{
+            const grid = document.getElementById('newsGrid');
+            
+            posts.forEach((post, index) => {{
+                const textLines = post.text.split('\\n');
+                const title = textLines[0] ? textLines[0].replace(/\\*\\*/g, '').trim() : '';
+                
+                let preview = '';
+                for (let i = 1; i < textLines.length; i++) {{
+                    const line = textLines[i].replace(/\\*\\*/g, '').trim();
+                    if (line) {{
+                        preview += (preview ? ' ' : '') + line;
+                        if (preview.length > 200) break;
+                    }}
+                }}
+                if (preview.length > 200) preview = preview.substring(0, 200) + '...';
+                
+                const date = new Date(post.date);
+                const dateStr = date.toLocaleDateString('ru-RU', {{ day: '2-digit', month: '2-digit', year: 'numeric' }}) + ' ' + 
+                                date.toLocaleTimeString('ru-RU', {{ hour: '2-digit', minute: '2-digit' }});
+                
+                const imgHtml = post.image_url 
+                    ? `<img src="${{post.image_url}}" alt="News image" loading="lazy">`
+                    : '<div class="no-image">📄</div>';
+                
+                const card = document.createElement('div');
+                card.className = 'news-card';
+                card.setAttribute('data-post-id', post.id);
+                card.setAttribute('data-title', title.toLowerCase());
+                card.setAttribute('data-text', preview.toLowerCase());
+                card.style.animationDelay = (index * 0.05) + 's';
+                
+                card.innerHTML = `
+                    <div class="card-actions">
+                        <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(${{post.id}}, this)" title="В избранное">⭐</button>
+                        <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead(${{post.id}}, this)" title="Отметить прочитанным">👁️</button>
+                    </div>
+                    <a href="/Novikon-site/posts/post_${{post.id}}.html" style="text-decoration: none; color: inherit;" onclick="markAsRead(${{post.id}})">
+                        ${{imgHtml}}
+                        <div class="news-content">
+                            <div class="news-date">${{dateStr}}</div>
+                            <div class="news-title">${{escapeHtml(title)}}</div>
+                            <div class="news-text">${{escapeHtml(preview)}}</div>
+                            <span class="read-more">Читать далее →</span>
+                        </div>
+                    </a>
+                `;
+                
+                grid.appendChild(card);
+            }});
+            
+            // Обновляем избранное и прочитанные
+            updateAllCardsState();
+        }}
+        
+        // ============ ЗАБЛОКИРОВАННЫЕ СТАТЬИ ============
+        async function showLockedArticles() {{
+            // Показываем 3-5 заблокированных карточек как превью
+            const lockedGrid = document.getElementById('lockedGrid');
+            const lockedSection = document.getElementById('lockedSection');
+            
+            lockedGrid.innerHTML = '';
+            
+            // Создаём 3 заглушки для демонстрации
+            for (let i = 0; i < 3; i++) {{
+                const card = document.createElement('div');
+                card.className = 'news-card locked';
+                card.innerHTML = `
+                    <div class="no-image">🔒</div>
+                    <div class="lock-content">
+                        <div class="lock-icon">🔒</div>
+                        <h3>Статья доступна по подписке</h3>
+                        <p>Оформите подписку за 149 ₽/мес</p>
+                        <button onclick="openSubscriptionModal()">Открыть</button>
+                    </div>
+                `;
+                lockedGrid.appendChild(card);
+            }}
+            
+            lockedSection.style.display = 'block';
+        }}
+        
+        // ============ ВСПОМОГАТЕЛЬНЫЕ ============
+        function escapeHtml(text) {{
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }}
+        
+        function updateAllCardsState() {{
+            const favorites = getFavorites();
+            const readPosts = getReadPosts();
+            
+            document.querySelectorAll('.news-card').forEach(card => {{
+                const postId = parseInt(card.getAttribute('data-post-id'));
+                const favBtn = card.querySelector('.favorite');
+                if (favorites.includes(postId) && favBtn) favBtn.classList.add('active');
+            }});
+            
+            updateFavBadge();
+            updateUnreadBadge();
+        }}
+        
+        // ============ ПЕРЕВОД СТАТЕЙ ============
+        async function translateText(text, targetLang) {{
+            if (targetLang === 'ru') return text;
             if (!text || text.trim().length === 0) return text;
             
-            try {
+            try {{
                 const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=' + targetLang + '&dt=t&q=' + encodeURIComponent(text.substring(0, 1500));
                 const response = await fetch(url);
                 const data = await response.json();
                 
-                if (data && data[0]) {
+                if (data && data[0]) {{
                     return data[0].map(item => item[0]).join('');
-                }
+                }}
                 return text;
-            } catch (e) {
-                console.warn('Ошибка перевода:', e);
+            }} catch (e) {{
                 return text;
-            }
-        }
+            }}
+        }}
         
-        async function translateAllPosts(targetLang) {
-            const cards = document.querySelectorAll('.news-card');
-            
-            // Показываем индикатор загрузки
+        async function translateAllPosts(targetLang) {{
+            const cards = document.querySelectorAll('.news-card:not(.locked)');
             showToast('🌐', 'Перевод статей...');
             
-            for (const card of cards) {
+            for (const card of cards) {{
                 const titleEl = card.querySelector('.news-title');
                 const textEl = card.querySelector('.news-text');
                 
                 if (!titleEl || !textEl) continue;
                 
-                // Сохраняем оригинальные тексты (только один раз)
-                if (!originalTexts.has(card)) {
-                    originalTexts.set(card, {
+                if (!originalTexts.has(card)) {{
+                    originalTexts.set(card, {{
                         title: titleEl.textContent,
                         text: textEl.textContent
-                    });
-                }
+                    }});
+                }}
                 
                 const original = originalTexts.get(card);
                 
-                if (targetLang === 'ru') {
-                    // Возвращаем оригинал
+                if (targetLang === 'ru') {{
                     titleEl.textContent = original.title;
                     textEl.textContent = original.text;
-                } else {
-                    // Переводим
+                }} else {{
                     const [translatedTitle, translatedText] = await Promise.all([
                         translateText(original.title, targetLang),
                         translateText(original.text, targetLang)
                     ]);
-                    
                     titleEl.textContent = translatedTitle;
                     textEl.textContent = translatedText;
-                    
-                    // Обновляем атрибуты для поиска
                     card.setAttribute('data-title', translatedTitle.toLowerCase());
                     card.setAttribute('data-text', translatedText.toLowerCase());
-                }
+                }}
                 
-                // Небольшая задержка чтобы не превысить лимиты API
                 await new Promise(r => setTimeout(r, 100));
-            }
+            }}
             
-            showToast('✅', 'Перевод завершён!');
-        }
+            showToast('✅', 'Перевод завершён!', 'success');
+        }}
         
         // ============ ТЕМА ============
-        function toggleTheme() {
+        function toggleTheme() {{
             const html = document.documentElement;
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             updateThemeButton(newTheme);
-        }
+        }}
         
-        function updateThemeButton(theme) {
+        function updateThemeButton(theme) {{
             const btn = document.getElementById('themeBtn');
             const t = translations[currentLang];
             btn.innerHTML = theme === 'dark' ? '☀️ <span>' + t.theme + '</span>' : '🌙 <span>' + t.theme + '</span>';
-        }
+        }}
         
         // ============ ЯЗЫК ============
-        function toggleLangMenu() {
+        function toggleLangMenu() {{
             document.getElementById('langMenu').classList.toggle('active');
-        }
+        }}
         
-        async function setLanguage(lang) {
+        async function setLanguage(lang) {{
             currentLang = lang;
             localStorage.setItem('lang', lang);
             
-            // Обновляем активный пункт меню
             document.querySelectorAll('.lang-option').forEach(el => el.classList.remove('active'));
             event.target.classList.add('active');
-            
-            // Обновляем код языка
             document.getElementById('currentLang').textContent = lang.toUpperCase();
             
-            // Обновляем все элементы с data-i18n
-            document.querySelectorAll('[data-i18n]').forEach(el => {
+            document.querySelectorAll('[data-i18n]').forEach(el => {{
                 const key = el.getAttribute('data-i18n');
-                if (translations[lang][key]) {
-                    el.textContent = translations[lang][key];
-                }
-            });
+                if (translations[lang][key]) el.textContent = translations[lang][key];
+            }});
             
-            // Обновляем placeholder поиска
             document.getElementById('searchInput').placeholder = translations[lang].searchPlaceholder;
-            
-            // Обновляем кнопку темы
             updateThemeButton(document.documentElement.getAttribute('data-theme') || 'light');
-            
-            // Закрываем меню
+            updateAuthUI();
             document.getElementById('langMenu').classList.remove('active');
             
-            // Переводим статьи
             await translateAllPosts(lang);
-        }
+        }}
         
         // ============ ИЗБРАННОЕ ============
-        function getFavorites() {
+        function getFavorites() {{
             return JSON.parse(localStorage.getItem('favorites') || '[]');
-        }
+        }}
         
-        function toggleFavorite(postId, btn) {
+        function toggleFavorite(postId, btn) {{
             let favorites = getFavorites();
             const index = favorites.indexOf(postId);
             
-            if (index > -1) {
+            if (index > -1) {{
                 favorites.splice(index, 1);
                 if (btn) btn.classList.remove('active');
                 showToast('💔', translations[currentLang].removedFromFav);
-            } else {
+            }} else {{
                 favorites.push(postId);
                 if (btn) btn.classList.add('active');
                 showToast('⭐', translations[currentLang].addedToFav, 'favorite');
-            }
+            }}
             
             localStorage.setItem('favorites', JSON.stringify(favorites));
             updateFavBadge();
-            
-            if (currentFilter === 'favorites') {
-                filterPosts('favorites');
-            }
-        }
+            if (currentFilter === 'favorites') filterPosts('favorites');
+        }}
         
-        function updateFavBadge() {
+        function updateFavBadge() {{
             const favorites = getFavorites();
             const badge = document.getElementById('favBadge');
-            if (favorites.length > 0) {
+            if (favorites.length > 0) {{
                 badge.textContent = favorites.length;
                 badge.style.display = 'flex';
-            } else {
+            }} else {{
                 badge.style.display = 'none';
-            }
-        }
+            }}
+        }}
         
-        function toggleFavorites() {
+        function toggleFavorites() {{
             const btn = document.getElementById('favBtn');
             btn.classList.toggle('active');
-            
-            if (btn.classList.contains('active')) {
-                filterPosts('favorites');
-            } else {
-                filterPosts('all');
-            }
-        }
+            filterPosts(btn.classList.contains('active') ? 'favorites' : 'all');
+        }}
         
         // ============ ПРОЧИТАННЫЕ ============
-        function getReadPosts() {
+        function getReadPosts() {{
             return JSON.parse(localStorage.getItem('readPosts') || '[]');
-        }
+        }}
         
-        function markAsRead(postId) {
+        function markAsRead(postId) {{
             let readPosts = getReadPosts();
-            if (!readPosts.includes(postId)) {
+            if (!readPosts.includes(postId)) {{
                 readPosts.push(postId);
                 localStorage.setItem('readPosts', JSON.stringify(readPosts));
                 updateUnreadBadge();
-            }
-        }
+            }}
+        }}
         
-        function toggleRead(postId, btn) {
+        function toggleRead(postId, btn) {{
             let readPosts = getReadPosts();
             const index = readPosts.indexOf(postId);
             
-            if (index > -1) {
+            if (index > -1) {{
                 readPosts.splice(index, 1);
                 showToast('📬', 'Отмечено как непрочитанное');
-            } else {
+            }} else {{
                 readPosts.push(postId);
                 showToast('✅', 'Отмечено как прочитанное');
-            }
+            }}
             
             localStorage.setItem('readPosts', JSON.stringify(readPosts));
             updateUnreadBadge();
-            
-            if (currentFilter === 'unread' || currentFilter === 'read') {
-                filterPosts(currentFilter);
-            }
-        }
+            if (currentFilter === 'unread' || currentFilter === 'read') filterPosts(currentFilter);
+        }}
         
-        function updateUnreadBadge() {
+        function updateUnreadBadge() {{
             const readPosts = getReadPosts();
-            const totalPosts = postsData.length;
-            const unreadCount = totalPosts - readPosts.length;
-            
+            const unreadCount = allPosts.length - readPosts.length;
             const badge = document.getElementById('unreadBadge');
-            if (unreadCount > 0) {
+            
+            if (unreadCount > 0) {{
                 badge.textContent = unreadCount;
                 badge.style.display = 'flex';
                 badge.classList.add('pulse');
                 setTimeout(() => badge.classList.remove('pulse'), 2000);
-            } else {
+            }} else {{
                 badge.style.display = 'none';
-            }
-        }
+            }}
+        }}
         
         // ============ ПОИСК ============
-        function toggleSearch() {
+        function toggleSearch() {{
             const searchBar = document.getElementById('searchBar');
             searchBar.classList.toggle('active');
             
-            if (searchBar.classList.contains('active')) {
+            if (searchBar.classList.contains('active')) {{
                 setTimeout(() => document.getElementById('searchInput').focus(), 100);
-            } else {
+            }} else {{
                 document.getElementById('searchInput').value = '';
                 performSearch();
-            }
-        }
+            }}
+        }}
         
-        function performSearch() {
+        function performSearch() {{
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            const cards = document.querySelectorAll('.news-card');
+            const cards = document.querySelectorAll('.news-card:not(.locked)');
             let visibleCount = 0;
             
-            cards.forEach(card => {
+            cards.forEach(card => {{
                 const title = card.getAttribute('data-title') || '';
                 const text = card.getAttribute('data-text') || '';
                 
-                if (!query || title.includes(query) || text.includes(query)) {
+                if (!query || title.includes(query) || text.includes(query)) {{
                     card.style.display = '';
                     visibleCount++;
-                } else {
+                }} else {{
                     card.style.display = 'none';
-                }
-            });
+                }}
+            }});
             
             document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
-        }
+        }}
         
         // ============ ФИЛЬТРЫ ============
-        function filterPosts(filter, btn) {
+        function filterPosts(filter, btn) {{
             currentFilter = filter;
             
-            if (btn) {
+            if (btn) {{
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-            }
+            }}
             
             const favorites = getFavorites();
             const readPosts = getReadPosts();
-            const cards = document.querySelectorAll('.news-card');
+            const cards = document.querySelectorAll('.news-card:not(.locked)');
             let visibleCount = 0;
             
-            cards.forEach(card => {
+            cards.forEach(card => {{
                 const postId = parseInt(card.getAttribute('data-post-id'));
                 let show = true;
                 
-                if (filter === 'favorites') {
-                    show = favorites.includes(postId);
-                } else if (filter === 'unread') {
-                    show = !readPosts.includes(postId);
-                } else if (filter === 'read') {
-                    show = readPosts.includes(postId);
-                }
+                if (filter === 'favorites') show = favorites.includes(postId);
+                else if (filter === 'unread') show = !readPosts.includes(postId);
+                else if (filter === 'read') show = readPosts.includes(postId);
                 
                 card.style.display = show ? '' : 'none';
                 if (show) visibleCount++;
-            });
+            }});
             
             document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
             
             const favBtn = document.getElementById('favBtn');
-            if (filter === 'favorites') {
-                favBtn.classList.add('active');
-            } else {
-                favBtn.classList.remove('active');
-            }
-        }
+            favBtn.classList.toggle('active', filter === 'favorites');
+        }}
         
         // ============ УВЕДОМЛЕНИЯ ============
-        function showToast(icon, message, type = '') {
+        function showToast(icon, message, type = '') {{
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = 'toast ' + type;
-            toast.innerHTML = `
-                <div class="toast-icon">${icon}</div>
-                <div class="toast-content">${message}</div>
-            `;
+            toast.innerHTML = `<div class="toast-icon">${{icon}}</div><div class="toast-content">${{message}}</div>`;
             container.appendChild(toast);
             
-            setTimeout(() => {
+            setTimeout(() => {{
                 toast.style.animation = 'slideInRight 0.4s ease reverse';
                 setTimeout(() => toast.remove(), 400);
-            }, 3000);
-        }
+            }}, 3000);
+        }}
         
         // ============ ПРОГРЕСС-БАР ============
-        window.addEventListener('scroll', () => {
+        window.addEventListener('scroll', () => {{
             const scrollTop = window.pageYOffset;
             const docHeight = document.documentElement.scrollHeight - window.innerHeight;
             const scrollPercent = (scrollTop / docHeight) * 100;
             document.getElementById('progressBar').style.width = scrollPercent + '%';
-        });
+        }});
         
-        // ============ ЗАГРУЗКА СТРАНИЦЫ ============
-        document.addEventListener('DOMContentLoaded', function() {
-            // Тема
+        // ============ ЗАГРУЗКА ============
+        document.addEventListener('DOMContentLoaded', async function() {{
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
             updateThemeButton(savedTheme);
             
-            // Язык
             document.getElementById('currentLang').textContent = currentLang.toUpperCase();
-            document.querySelectorAll('.lang-option').forEach(el => {
+            document.querySelectorAll('.lang-option').forEach(el => {{
                 el.classList.remove('active');
-                if (el.textContent.includes(currentLang === 'ru' ? 'Русский' : currentLang === 'en' ? 'English' : currentLang === 'de' ? 'Deutsch' : 'Español')) {
+                if (el.textContent.includes(currentLang === 'ru' ? 'Русский' : currentLang === 'en' ? 'English' : currentLang === 'de' ? 'Deutsch' : 'Español')) {{
                     el.classList.add('active');
-                }
-            });
+                }}
+            }});
             
-            // Обновляем переводы интерфейса
-            document.querySelectorAll('[data-i18n]').forEach(el => {
+            document.querySelectorAll('[data-i18n]').forEach(el => {{
                 const key = el.getAttribute('data-i18n');
-                if (translations[currentLang][key]) {
-                    el.textContent = translations[currentLang][key];
-                }
-            });
+                if (translations[currentLang][key]) el.textContent = translations[currentLang][key];
+            }});
             document.getElementById('searchInput').placeholder = translations[currentLang].searchPlaceholder;
-            updateThemeButton(savedTheme);
             
-            // Обновляем избранное
+            // Инициализация избранного
             const favorites = getFavorites();
-            document.querySelectorAll('.news-card').forEach(card => {
+            document.querySelectorAll('.news-card').forEach(card => {{
                 const postId = parseInt(card.getAttribute('data-post-id'));
                 const favBtn = card.querySelector('.favorite');
-                if (favorites.includes(postId) && favBtn) {
-                    favBtn.classList.add('active');
-                }
-            });
+                if (favorites.includes(postId) && favBtn) favBtn.classList.add('active');
+            }});
             updateFavBadge();
-            
-            // Обновляем непрочитанные
             updateUnreadBadge();
             
-            // Анимация появления карточек
-            document.querySelectorAll('.news-card').forEach((card, index) => {
-                setTimeout(() => {
-                    card.style.animationDelay = (index * 0.05) + 's';
-                }, 0);
-            });
+            // Анимация
+            document.querySelectorAll('.news-card').forEach((card, index) => {{
+                card.style.animationDelay = (index * 0.05) + 's';
+            }});
             
-            // Закрываем меню языка при клике вне
-            document.addEventListener('click', function(e) {
+            // Проверка платежа
+            await checkPaymentReturn();
+            
+            // Загрузка данных пользователя
+            await loadUserData();
+            
+            // Закрытие меню языка
+            document.addEventListener('click', function(e) {{
                 const langDropdown = document.querySelector('.lang-dropdown');
-                if (langDropdown && !langDropdown.contains(e.target)) {
+                if (langDropdown && !langDropdown.contains(e.target)) {{
                     document.getElementById('langMenu').classList.remove('active');
-                }
-            });
+                }}
+            }});
             
-            // Если выбран не русский - переводим статьи при загрузке
-            if (currentLang !== 'ru') {
+            // Перевод при загрузке
+            if (currentLang !== 'ru') {{
                 setTimeout(() => translateAllPosts(currentLang), 500);
-            }
-            
-            // Показываем уведомление о новых статьях
-            const lastVisit = localStorage.getItem('lastVisit');
-            const now = Date.now();
-            if (lastVisit) {
-                const timeDiff = now - parseInt(lastVisit);
-                if (timeDiff > 3600000) {
-                    const unreadCount = postsData.length - getReadPosts().length;
-                    if (unreadCount > 0) {
-                        setTimeout(() => {
-                            showToast('🔔', unreadCount + ' ' + translations[currentLang].newArticles);
-                        }, 1000);
-                    }
-                }
-            }
-            localStorage.setItem('lastVisit', now.toString());
-        });
-        
-        // ============ ПЕРЕХОДЫ С АНИМАЦИЕЙ ============
-        document.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', function(e) {
-                if (this.hostname === window.location.hostname) {
-                    e.preventDefault();
-                    document.body.style.opacity = '0';
-                    document.body.style.transition = 'opacity 0.3s';
-                    setTimeout(() => {
-                        window.location.href = this.href;
-                    }, 300);
-                }
-            });
-        });
+            }}
+        }});
     </script>
 </body>
 </html>
@@ -1175,9 +1801,9 @@ def generate_html(posts):
     
     with open('index.html', 'w', encoding='utf-8') as f:
         f.write(html_output)
-    print("🌐 Сгенерирован index.html")
+    print("🌐 Сгенерирован index.html с подпиской")
 
-def generate_post_pages(posts):
+def generate_post_pages(posts, api_url):
     os.makedirs('posts', exist_ok=True)
     
     print(f"📝 Генерация {len(posts)} страниц постов...")
@@ -1198,7 +1824,6 @@ def generate_post_pages(posts):
                     full_text_lines.append(clean_line)
             
             full_text = '<br>'.join(full_text_lines) if full_text_lines else clean_text(post['text'])
-            
             if not full_text:
                 full_text = title
             
@@ -1207,7 +1832,6 @@ def generate_post_pages(posts):
             else:
                 img_html = ''
             
-            # Экранируем для JSON
             title_json = json.dumps(title, ensure_ascii=False)
             full_text_json = json.dumps(full_text, ensure_ascii=False)
             
@@ -1217,7 +1841,7 @@ def generate_post_pages(posts):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{html_module.escape(title)} - Новикон</title>
-    <link rel="icon" href="../''' + LOGO_FILE + '''" type="image/png">
+    <link rel="icon" href="../{LOGO_FILE}" type="image/png">
     <style>
         :root {{
             --bg: #f5f5f5;
@@ -1325,26 +1949,18 @@ def generate_post_pages(posts):
             min-width: 150px;
             z-index: 200;
         }}
-        .lang-menu.active {{
-            display: block;
-        }}
+        .lang-menu.active {{ display: block; }}
         .lang-option {{
             padding: 12px 20px;
             cursor: pointer;
-            transition: background 0.2s;
             display: flex;
             align-items: center;
             gap: 10px;
             font-size: 14px;
             color: var(--text);
         }}
-        .lang-option:hover {{
-            background: rgba(102, 126, 234, 0.1);
-        }}
-        .lang-option.active {{
-            background: rgba(102, 126, 234, 0.15);
-            font-weight: 600;
-        }}
+        .lang-option:hover {{ background: rgba(102, 126, 234, 0.1); }}
+        .lang-option.active {{ background: rgba(102, 126, 234, 0.15); font-weight: 600; }}
         .post-content {{
             background: var(--card-bg);
             border-radius: 12px;
@@ -1369,10 +1985,7 @@ def generate_post_pages(posts):
             font-size: 17px;
             line-height: 1.8;
         }}
-        .post-text a {{
-            color: var(--accent);
-            text-decoration: none;
-        }}
+        .post-text a {{ color: var(--accent); text-decoration: none; }}
         .post-text img {{
             display: block;
             max-width: 100%;
@@ -1390,9 +2003,7 @@ def generate_post_pages(posts):
             font-weight: 600;
             transition: transform 0.3s;
         }}
-        .back-button:hover {{
-            transform: scale(1.05);
-        }}
+        .back-button:hover {{ transform: scale(1.05); }}
         .footer {{
             text-align: center;
             padding: 30px 0;
@@ -1441,16 +2052,9 @@ def generate_post_pages(posts):
             align-items: center;
             gap: 12px;
         }}
-        .toast.favorite {{
-            border-left-color: var(--favorite);
-        }}
-        .toast-icon {{
-            font-size: 24px;
-        }}
-        .toast-content {{
-            flex: 1;
-            font-size: 14px;
-        }}
+        .toast.favorite {{ border-left-color: var(--favorite); }}
+        .toast-icon {{ font-size: 24px; }}
+        .toast-content {{ flex: 1; font-size: 14px; }}
         
         @keyframes slideInRight {{
             from {{ opacity: 0; transform: translateX(100px); }}
@@ -1465,12 +2069,8 @@ def generate_post_pages(posts):
                 gap: 10px;
                 text-align: center;
             }}
-            .logo-link img {{
-                height: 32px;
-            }}
-            .logo-link .site-title {{
-                font-size: 18px;
-            }}
+            .logo-link img {{ height: 32px; }}
+            .logo-link .site-title {{ font-size: 18px; }}
         }}
     </style>
 </head>
@@ -1481,7 +2081,7 @@ def generate_post_pages(posts):
         <div class="container">
             <div class="header-content">
                 <a href="/Novikon-site/" class="logo-link">
-                    <img src="../''' + LOGO_FILE + '''" alt="Новикон">
+                    <img src="../{LOGO_FILE}" alt="Новикон">
                     <span class="site-title">Новикон</span>
                 </a>
                 <div class="header-btns">
@@ -1533,7 +2133,6 @@ def generate_post_pages(posts):
         
         let currentLang = localStorage.getItem('lang') || 'ru';
         
-        // ============ ПЕРЕВОД СТАТЬИ ============
         async function translateText(text, targetLang) {{
             if (targetLang === 'ru') return text;
             if (!text || text.trim().length === 0) return text;
@@ -1542,13 +2141,9 @@ def generate_post_pages(posts):
                 const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=' + targetLang + '&dt=t&q=' + encodeURIComponent(text.substring(0, 4500));
                 const response = await fetch(url);
                 const data = await response.json();
-                
-                if (data && data[0]) {{
-                    return data[0].map(item => item[0]).join('');
-                }}
+                if (data && data[0]) return data[0].map(item => item[0]).join('');
                 return text;
             }} catch (e) {{
-                console.warn('Ошибка перевода:', e);
                 return text;
             }}
         }}
@@ -1565,11 +2160,9 @@ def generate_post_pages(posts):
             
             showToast('🌐', 'Перевод статьи...');
             
-            // Переводим заголовок
             const translatedTitle = await translateText(ORIGINAL_TITLE, targetLang);
             titleEl.textContent = translatedTitle;
             
-            // Переводим основной текст (сохраняя теги <br>)
             const textParts = ORIGINAL_TEXT.split('<br>');
             const translatedParts = [];
             
@@ -1584,11 +2177,9 @@ def generate_post_pages(posts):
             }}
             
             textEl.innerHTML = translatedParts.join('<br>');
-            
             showToast('✅', 'Перевод завершён!');
         }}
         
-        // ============ ЯЗЫК ============
         function toggleLangMenu() {{
             document.getElementById('langMenu').classList.toggle('active');
         }}
@@ -1596,27 +2187,20 @@ def generate_post_pages(posts):
         async function setLanguage(lang) {{
             currentLang = lang;
             localStorage.setItem('lang', lang);
-            
             document.querySelectorAll('.lang-option').forEach(el => el.classList.remove('active'));
             event.target.classList.add('active');
             document.getElementById('currentLang').textContent = lang.toUpperCase();
             
-            // Обновляем переводы интерфейса
             document.querySelectorAll('[data-i18n]').forEach(el => {{
                 const key = el.getAttribute('data-i18n');
-                if (translations[lang][key]) {{
-                    el.textContent = translations[lang][key];
-                }}
+                if (translations[lang][key]) el.textContent = translations[lang][key];
             }});
             
             updateThemeBtn();
             document.getElementById('langMenu').classList.remove('active');
-            
-            // Переводим статью
             await translatePost(lang);
         }}
         
-        // ============ ТЕМА ============
         function toggleTheme() {{
             const html = document.documentElement;
             const currentTheme = html.getAttribute('data-theme');
@@ -1631,7 +2215,6 @@ def generate_post_pages(posts):
                 document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
         }}
         
-        // ============ ИЗБРАННОЕ ============
         function getFavorites() {{
             return JSON.parse(localStorage.getItem('favorites') || '[]');
         }}
@@ -1660,7 +2243,6 @@ def generate_post_pages(posts):
             }}
         }}
         
-        // ============ ПРОЧИТАННЫЕ ============
         function markAsRead() {{
             let readPosts = JSON.parse(localStorage.getItem('readPosts') || '[]');
             if (!readPosts.includes(POST_ID)) {{
@@ -1669,21 +2251,18 @@ def generate_post_pages(posts):
             }}
         }}
         
-        // ============ УВЕДОМЛЕНИЯ ============
         function showToast(icon, message, type = '') {{
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = 'toast ' + type;
             toast.innerHTML = `<div class="toast-icon">${{icon}}</div><div class="toast-content">${{message}}</div>`;
             container.appendChild(toast);
-            
             setTimeout(() => {{
                 toast.style.animation = 'slideInRight 0.4s ease reverse';
                 setTimeout(() => toast.remove(), 400);
             }}, 3000);
         }}
         
-        // ============ ПРОГРЕСС-БАР ============
         window.addEventListener('scroll', () => {{
             const scrollTop = window.pageYOffset;
             const docHeight = document.documentElement.scrollHeight - window.innerHeight;
@@ -1691,7 +2270,6 @@ def generate_post_pages(posts):
             document.getElementById('progressBar').style.width = scrollPercent + '%';
         }});
         
-        // ============ ЗАГРУЗКА ============
         document.addEventListener('DOMContentLoaded', async function() {{
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
@@ -1705,30 +2283,22 @@ def generate_post_pages(posts):
                 }}
             }});
             
-            // Обновляем переводы интерфейса
             document.querySelectorAll('[data-i18n]').forEach(el => {{
                 const key = el.getAttribute('data-i18n');
-                if (translations[currentLang][key]) {{
-                    el.textContent = translations[currentLang][key];
-                }}
+                if (translations[currentLang][key]) el.textContent = translations[currentLang][key];
             }});
             
             updateFavBtn();
             markAsRead();
             
-            // Переводим статью если нужно
             if (currentLang !== 'ru') {{
                 setTimeout(() => translatePost(currentLang), 500);
             }}
             
-            // Анимация перехода
             document.body.style.opacity = '0';
             document.body.style.transition = 'opacity 0.4s';
-            setTimeout(() => {{
-                document.body.style.opacity = '1';
-            }}, 50);
+            setTimeout(() => {{ document.body.style.opacity = '1'; }}, 50);
             
-            // Закрываем меню языка при клике вне
             document.addEventListener('click', function(e) {{
                 const langDropdown = document.querySelector('.lang-dropdown');
                 if (langDropdown && !langDropdown.contains(e.target)) {{
@@ -1744,7 +2314,7 @@ def generate_post_pages(posts):
             with open(f'posts/post_{post["id"]}.html', 'w', encoding='utf-8') as f:
                 f.write(html_output)
             
-            if (i + 1) % 10 == 0:
+            if (i + 1) % 20 == 0:
                 print(f"📄 Сгенерировано {i + 1} из {len(posts)} страниц")
                 
         except Exception as e:
