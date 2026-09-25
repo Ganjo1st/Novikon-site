@@ -137,7 +137,6 @@ def generate_html(posts):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Новикон - Новости</title>
     <link rel="icon" href="''' + LOGO_FILE + '''" type="image/png">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg: #f5f5f5;
@@ -227,6 +226,7 @@ def generate_html(posts):
             transition: all 0.3s;
             white-space: nowrap;
             position: relative;
+            font-family: inherit;
         }
         .control-btn:hover {
             background: rgba(255,255,255,0.3);
@@ -264,12 +264,14 @@ def generate_html(posts):
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.7);
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             z-index: 2000;
-            animation: fadeIn 0.3s;
             padding: 20px;
+        }
+        .modal.active {
+            display: flex;
         }
         .modal-content {
             background: var(--card-bg);
@@ -281,7 +283,6 @@ def generate_html(posts):
             overflow-y: auto;
             position: relative;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            animation: slideDown 0.3s;
         }
         .modal-close {
             position: absolute;
@@ -293,6 +294,7 @@ def generate_html(posts):
             background: none;
             border: none;
             transition: color 0.3s;
+            line-height: 1;
         }
         .modal-close:hover {
             color: var(--text);
@@ -312,6 +314,7 @@ def generate_html(posts):
             color: var(--text);
             font-size: 15px;
             transition: border-color 0.3s;
+            font-family: inherit;
         }
         .modal-content input:focus {
             outline: none;
@@ -328,6 +331,7 @@ def generate_html(posts):
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.3s;
+            font-family: inherit;
         }
         .modal-content button[type="submit"]:hover {
             transform: scale(1.02);
@@ -406,7 +410,6 @@ def generate_html(posts):
         }
         .search-bar.active {
             display: block;
-            animation: slideDown 0.3s ease;
         }
         .search-bar input {
             width: 100%;
@@ -417,6 +420,7 @@ def generate_html(posts):
             color: var(--text);
             font-size: 16px;
             transition: all 0.3s;
+            font-family: inherit;
         }
         .search-bar input:focus {
             outline: none;
@@ -439,6 +443,7 @@ def generate_html(posts):
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s;
+            font-family: inherit;
         }
         .filter-btn:hover {
             border-color: var(--accent);
@@ -465,8 +470,6 @@ def generate_html(posts):
             color: inherit;
             display: block;
             position: relative;
-            animation: fadeIn 0.5s ease forwards;
-            opacity: 0;
         }
         .news-card:hover {
             transform: translateY(-5px);
@@ -581,7 +584,6 @@ def generate_html(posts):
             border-left: 4px solid var(--accent);
             min-width: 280px;
             max-width: 400px;
-            animation: slideInRight 0.4s ease;
             display: flex;
             align-items: center;
             gap: 12px;
@@ -590,23 +592,11 @@ def generate_html(posts):
         .toast.premium { border-left-color: #fda085; }
         .toast-icon { font-size: 24px; }
         .toast-content { flex: 1; font-size: 14px; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(100px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
+        .badge.pulse { animation: pulse 1s ease infinite; }
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.1); }
         }
-        .badge.pulse { animation: pulse 1s ease infinite; }
         .progress-bar {
             position: fixed;
             top: 0;
@@ -636,7 +626,6 @@ def generate_html(posts):
         }
         .lang-menu.active {
             display: block;
-            animation: slideDown 0.3s ease;
         }
         .lang-option {
             padding: 12px 20px;
@@ -662,7 +651,6 @@ def generate_html(posts):
             text-align: center;
             margin: 20px 0;
             box-shadow: 0 8px 25px rgba(253, 160, 133, 0.3);
-            animation: fadeIn 0.6s;
         }
         .upgrade-banner h3 { font-size: 22px; margin-bottom: 10px; }
         .upgrade-banner p { margin-bottom: 15px; opacity: 0.95; }
@@ -676,6 +664,7 @@ def generate_html(posts):
             font-weight: 700;
             cursor: pointer;
             transition: transform 0.3s;
+            font-family: inherit;
         }
         .upgrade-banner button:hover { transform: scale(1.05); }
         .payment-methods {
@@ -736,31 +725,31 @@ def generate_html(posts):
                     </a>
                 </div>
                 <div class="header-controls">
-                    <button class="control-btn" onclick="toggleSearch()" title="Поиск">
+                    <button type="button" class="control-btn" id="searchBtn">
                         🔍 <span data-i18n="search">Поиск</span>
                     </button>
-                    <button class="control-btn" onclick="toggleFavorites()" id="favBtn" title="Избранное">
+                    <button type="button" class="control-btn" id="favBtn">
                         ⭐ <span data-i18n="favorites">Избранное</span>
                         <span class="badge" id="favBadge" style="display:none">0</span>
                     </button>
-                    <button class="control-btn" id="unreadBtn" title="Непрочитанные">
+                    <button type="button" class="control-btn" id="unreadBtn">
                         📬 <span data-i18n="unread">Новые</span>
                         <span class="badge" id="unreadBadge" style="display:none">0</span>
                     </button>
                     <div class="lang-dropdown">
-                        <button class="control-btn" onclick="toggleLangMenu()" title="Язык">
+                        <button type="button" class="control-btn" id="langBtn">
                             🌐 <span id="currentLang">RU</span>
                         </button>
                         <div class="lang-menu" id="langMenu">
-                            <div class="lang-option active" onclick="setLanguage('ru')">🇷🇺 Русский</div>
-                            <div class="lang-option" onclick="setLanguage('en')">🇬🇧 English</div>
-                            <div class="lang-option" onclick="setLanguage('de')">🇩🇪 Deutsch</div>
-                            <div class="lang-option" onclick="setLanguage('es')">🇪🇸 Español</div>
+                            <div class="lang-option active" data-lang="ru">🇷🇺 Русский</div>
+                            <div class="lang-option" data-lang="en">🇬🇧 English</div>
+                            <div class="lang-option" data-lang="de">🇩🇪 Deutsch</div>
+                            <div class="lang-option" data-lang="es">🇪🇸 Español</div>
                         </div>
                     </div>
-                    <button class="control-btn" onclick="toggleTheme()" id="themeBtn">🌙 <span data-i18n="theme">Тема</span></button>
-                    <button class="control-btn" id="subBtn" onclick="handleSubscriptionClick()">⭐ <span id="subBtnText">Подписка</span></button>
-                    <button class="control-btn" id="authBtn" onclick="toggleAuthModal()">👤 <span id="authBtnText">Войти</span></button>
+                    <button type="button" class="control-btn" id="themeBtn">🌙 <span data-i18n="theme">Тема</span></button>
+                    <button type="button" class="control-btn" id="subBtn">⭐ <span id="subBtnText">Подписка</span></button>
+                    <button type="button" class="control-btn" id="authBtn">👤 <span id="authBtnText">Войти</span></button>
                 </div>
             </div>
         </div>
@@ -768,16 +757,16 @@ def generate_html(posts):
     
     <div class="search-bar" id="searchBar">
         <div class="container" style="padding: 0;">
-            <input type="text" id="searchInput" placeholder="Поиск по новостям..." oninput="performSearch()">
+            <input type="text" id="searchInput" placeholder="Поиск по новостям...">
         </div>
     </div>
     
     <div class="container">
         <div class="filter-bar">
-            <button class="filter-btn active" onclick="filterPosts('all', this)" data-i18n="all">Все</button>
-            <button class="filter-btn" onclick="filterPosts('favorites', this)" data-i18n="filterFav">⭐ Избранные</button>
-            <button class="filter-btn" onclick="filterPosts('unread', this)" data-i18n="filterUnread">📬 Непрочитанные</button>
-            <button class="filter-btn" onclick="filterPosts('read', this)" data-i18n="filterRead">✅ Прочитанные</button>
+            <button type="button" class="filter-btn active" data-filter="all" data-i18n="all">Все</button>
+            <button type="button" class="filter-btn" data-filter="favorites" data-i18n="filterFav">⭐ Избранные</button>
+            <button type="button" class="filter-btn" data-filter="unread" data-i18n="filterUnread">📬 Непрочитанные</button>
+            <button type="button" class="filter-btn" data-filter="read" data-i18n="filterRead">✅ Прочитанные</button>
         </div>
         
         <div class="news-grid" id="newsGrid">
@@ -818,16 +807,16 @@ def generate_html(posts):
         else:
             img_html = '<div class="no-image">📄</div>'
         
-        title_for_search = json.dumps(title.lower(), ensure_ascii=False)
-        text_for_search = json.dumps(preview_text.lower(), ensure_ascii=False)
+        title_for_search = html_module.escape(title.lower(), quote=True)
+        text_for_search = html_module.escape(preview_text.lower(), quote=True)
         
         html_output += f'''
-            <div class="news-card" data-post-id="{post["id"]}" data-title={title_for_search} data-text={text_for_search}>
+            <div class="news-card" data-post-id="{post["id"]}" data-title="{title_for_search}" data-text="{text_for_search}">
                 <div class="card-actions">
-                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite({post["id"]}, this)" title="В избранное">⭐</button>
-                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead({post["id"]}, this)" title="Отметить прочитанным">👁️</button>
+                    <button type="button" class="action-btn favorite" data-fav-id="{post["id"]}" title="В избранное">⭐</button>
+                    <button type="button" class="action-btn read-toggle" data-read-id="{post["id"]}" title="Отметить прочитанным">👁️</button>
                 </div>
-                <a href="/Novikon-site/posts/post_{post["id"]}.html" style="text-decoration: none; color: inherit;" onclick="markAsRead({post["id"]})">
+                <a href="/Novikon-site/posts/post_{post["id"]}.html" style="text-decoration: none; color: inherit;" data-read-link="{post["id"]}">
                     {img_html}
                     <div class="news-content">
                         <div class="news-date">{date_str}</div>
@@ -876,16 +865,16 @@ def generate_html(posts):
         else:
             img_html = '<div class="no-image">📄</div>'
         
-        title_for_search = json.dumps(title.lower(), ensure_ascii=False)
-        text_for_search = json.dumps(preview_text.lower(), ensure_ascii=False)
+        title_for_search = html_module.escape(title.lower(), quote=True)
+        text_for_search = html_module.escape(preview_text.lower(), quote=True)
         
         html_output += f'''
-            <div class="news-card premium-only" style="display: none;" data-post-id="{post["id"]}" data-title={title_for_search} data-text={text_for_search}>
+            <div class="news-card premium-only" style="display: none;" data-post-id="{post["id"]}" data-title="{title_for_search}" data-text="{text_for_search}">
                 <div class="card-actions">
-                    <button class="action-btn favorite" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite({post["id"]}, this)" title="В избранное">⭐</button>
-                    <button class="action-btn read-toggle" onclick="event.preventDefault(); event.stopPropagation(); toggleRead({post["id"]}, this)" title="Отметить прочитанным">👁️</button>
+                    <button type="button" class="action-btn favorite" data-fav-id="{post["id"]}" title="В избранное">⭐</button>
+                    <button type="button" class="action-btn read-toggle" data-read-id="{post["id"]}" title="Отметить прочитанным">👁️</button>
                 </div>
-                <a href="/Novikon-site/posts/post_{post["id"]}.html" style="text-decoration: none; color: inherit;" onclick="markAsRead({post["id"]})">
+                <a href="/Novikon-site/posts/post_{post["id"]}.html" style="text-decoration: none; color: inherit;" data-read-link="{post["id"]}">
                     <div class="premium-badge">⭐ PREMIUM</div>
                     {img_html}
                     <div class="news-content">
@@ -905,7 +894,7 @@ def generate_html(posts):
         <div class="upgrade-banner" id="upgradeBanner">
             <h3>⭐ Откройте все {len(posts)} статей!</h3>
             <p>Вы видите только первые 42 статьи. Оформите подписку за 149 ₽/мес и получите доступ ко всем материалам.</p>
-            <button onclick="handleSubscriptionClick()">Оформить подписку</button>
+            <button type="button" id="upgradeBtn">Оформить подписку</button>
         </div>
         '''
     
@@ -923,49 +912,49 @@ def generate_html(posts):
     
     <div class="toast-container" id="toastContainer"></div>
     
-    <div id="authModal" class="modal" style="display:none;">
+    <div id="authModal" class="modal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeAuthModal()">&times;</button>
+            <button type="button" class="modal-close" id="authClose">&times;</button>
             <h2 id="authTitle">Вход</h2>
-            <form id="authForm" onsubmit="handleAuth(event)">
+            <form id="authForm">
                 <input type="email" id="authEmail" placeholder="Email" required autocomplete="email">
                 <input type="password" id="authPassword" placeholder="Пароль" required autocomplete="current-password" minlength="6">
                 <button type="submit" id="authSubmitBtn">Войти</button>
             </form>
             <p style="text-align:center; margin-top:15px; font-size:14px;">
-                <a href="#" onclick="toggleAuthMode(event)" style="color: var(--accent); text-decoration: none;">
+                <a href="#" id="authSwitch" style="color: var(--accent); text-decoration: none;">
                     <span id="authSwitchText">Нет аккаунта? Зарегистрироваться</span>
                 </a>
             </p>
         </div>
     </div>
     
-    <div id="subscriptionModal" class="modal" style="display:none;">
+    <div id="subscriptionModal" class="modal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeSubscriptionModal()">&times;</button>
+            <button type="button" class="modal-close" id="subClose">&times;</button>
             <h2>⭐ Премиум подписка</h2>
             <p style="text-align:center; color:#888; margin: 10px 0 20px;">Доступ ко всем 200 статьям</p>
             
             <div style="margin-bottom: 20px;">
                 <label style="font-size: 14px; color: #888; display: block; margin-bottom: 8px;">Способ оплаты:</label>
                 <div class="payment-methods">
-                    <div class="payment-method active" data-currency="USDT" onclick="selectCurrency(this, 'USDT')">
+                    <div class="payment-method active" data-currency="USDT">
                         <span>💵 USDT</span>
                         <small>TRC20 / ERC20</small>
                     </div>
-                    <div class="payment-method" data-currency="TON" onclick="selectCurrency(this, 'TON')">
+                    <div class="payment-method" data-currency="TON">
                         <span>💎 TON</span>
                         <small>Telegram</small>
                     </div>
-                    <div class="payment-method" data-currency="BTC" onclick="selectCurrency(this, 'BTC')">
+                    <div class="payment-method" data-currency="BTC">
                         <span>₿ BTC</span>
                         <small>Bitcoin</small>
                     </div>
-                    <div class="payment-method" data-currency="ETH" onclick="selectCurrency(this, 'ETH')">
+                    <div class="payment-method" data-currency="ETH">
                         <span>Ξ ETH</span>
                         <small>Ethereum</small>
                     </div>
-                    <div class="payment-method" data-currency="RUB" onclick="selectCurrency(this, 'RUB')">
+                    <div class="payment-method" data-currency="RUB">
                         <span>💳 Карта/СБП</span>
                         <small>Рубли</small>
                     </div>
@@ -973,12 +962,12 @@ def generate_html(posts):
             </div>
             
             <div class="plans">
-                <div class="plan" onclick="subscribe('monthly')">
+                <div class="plan" data-plan="monthly">
                     <h3>Месяц</h3>
                     <div class="price">149 ₽</div>
                     <p>в месяц</p>
                 </div>
-                <div class="plan best" onclick="subscribe('yearly')">
+                <div class="plan best" data-plan="yearly">
                     <h3>Год</h3>
                     <div class="price">1 490 ₽</div>
                     <p>экономия 290 ₽</p>
@@ -991,400 +980,135 @@ def generate_html(posts):
     </div>
     
     <script>
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    (function() {
+        'use strict';
         
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        const postsData = ''' + posts_json + ''';
-        
-        let currentUser = null;
-        let userProfile = null;
-        let authMode = 'login';
-        let currentLang = localStorage.getItem('lang') || 'ru';
-        let currentFilter = 'all';
-        let originalTexts = new Map();
-        
-        const translations = {
-            ru: {
-                subtitle: 'Актуальные новости и события',
-                search: 'Поиск',
-                favorites: 'Избранное',
-                unread: 'Новые',
-                theme: 'Тема',
-                all: 'Все',
-                filterFav: '⭐ Избранные',
-                filterUnread: '📬 Непрочитанные',
-                filterRead: '✅ Прочитанные',
-                searchPlaceholder: 'Поиск по новостям...',
-                readMore: 'Читать далее →',
-                noResults: '😔 Ничего не найдено',
-                addedToFav: 'Добавлено в избранное',
-                removedFromFav: 'Удалено из избранного',
-                newArticles: 'новых статей',
-                login: 'Войти',
-                subscription: 'Подписка',
-                logout: 'Выйти',
-                premium: 'Премиум',
-                welcome: 'Добро пожаловать',
-                loggedOut: 'Вы вышли из аккаунта'
-            },
-            en: {
-                subtitle: 'Latest news and events',
-                search: 'Search',
-                favorites: 'Favorites',
-                unread: 'New',
-                theme: 'Theme',
-                all: 'All',
-                filterFav: '⭐ Favorites',
-                filterUnread: '📬 Unread',
-                filterRead: '✅ Read',
-                searchPlaceholder: 'Search news...',
-                readMore: 'Read more →',
-                noResults: '😔 Nothing found',
-                addedToFav: 'Added to favorites',
-                removedFromFav: 'Removed from favorites',
-                newArticles: 'new articles',
-                login: 'Login',
-                subscription: 'Subscribe',
-                logout: 'Logout',
-                premium: 'Premium',
-                welcome: 'Welcome',
-                loggedOut: 'Logged out'
-            },
-            de: {
-                subtitle: 'Aktuelle Nachrichten und Ereignisse',
-                search: 'Suche',
-                favorites: 'Favoriten',
-                unread: 'Neu',
-                theme: 'Thema',
-                all: 'Alle',
-                filterFav: '⭐ Favoriten',
-                filterUnread: '📬 Ungelesen',
-                filterRead: '✅ Gelesen',
-                searchPlaceholder: 'Nachrichten durchsuchen...',
-                readMore: 'Weiterlesen →',
-                noResults: '😔 Nichts gefunden',
-                addedToFav: 'Zu Favoriten hinzugefügt',
-                removedFromFav: 'Aus Favoriten entfernt',
-                newArticles: 'neue Artikel',
-                login: 'Anmelden',
-                subscription: 'Abonnieren',
-                logout: 'Abmelden',
-                premium: 'Premium',
-                welcome: 'Willkommen',
-                loggedOut: 'Abgemeldet'
-            },
-            es: {
-                subtitle: 'Últimas noticias y eventos',
-                search: 'Buscar',
-                favorites: 'Favoritos',
-                unread: 'Nuevo',
-                theme: 'Tema',
-                all: 'Todos',
-                filterFav: '⭐ Favoritos',
-                filterUnread: '📬 No leídos',
-                filterRead: '✅ Leídos',
-                searchPlaceholder: 'Buscar noticias...',
-                readMore: 'Leer más →',
-                noResults: '😔 Nada encontrado',
-                addedToFav: 'Añadido a favoritos',
-                removedFromFav: 'Eliminado de favoritos',
-                newArticles: 'nuevos artículos',
-                login: 'Iniciar sesión',
-                subscription: 'Suscribirse',
-                logout: 'Cerrar sesión',
-                premium: 'Premium',
-                welcome: 'Bienvenido',
-                loggedOut: 'Sesión cerrada'
-            }
+        // ============ ПЕРЕВОДЫ ============
+        var translations = {
+            ru: { subtitle: 'Актуальные новости и события', search: 'Поиск', favorites: 'Избранное', unread: 'Новые', theme: 'Тема', all: 'Все', filterFav: '⭐ Избранные', filterUnread: '📬 Непрочитанные', filterRead: '✅ Прочитанные', searchPlaceholder: 'Поиск по новостям...', readMore: 'Читать далее →', noResults: '😔 Ничего не найдено', addedToFav: 'Добавлено в избранное', removedFromFav: 'Удалено из избранного', newArticles: 'новых статей', login: 'Войти', subscription: 'Подписка', logout: 'Выйти', premium: 'Премиум', welcome: 'Добро пожаловать', loggedOut: 'Вы вышли из аккаунта' },
+            en: { subtitle: 'Latest news and events', search: 'Search', favorites: 'Favorites', unread: 'New', theme: 'Theme', all: 'All', filterFav: '⭐ Favorites', filterUnread: '📬 Unread', filterRead: '✅ Read', searchPlaceholder: 'Search news...', readMore: 'Read more →', noResults: '😔 Nothing found', addedToFav: 'Added to favorites', removedFromFav: 'Removed from favorites', newArticles: 'new articles', login: 'Login', subscription: 'Subscribe', logout: 'Logout', premium: 'Premium', welcome: 'Welcome', loggedOut: 'Logged out' },
+            de: { subtitle: 'Aktuelle Nachrichten und Ereignisse', search: 'Suche', favorites: 'Favoriten', unread: 'Neu', theme: 'Thema', all: 'Alle', filterFav: '⭐ Favoriten', filterUnread: '📬 Ungelesen', filterRead: '✅ Gelesen', searchPlaceholder: 'Nachrichten durchsuchen...', readMore: 'Weiterlesen →', noResults: '😔 Nichts gefunden', addedToFav: 'Zu Favoriten hinzugefügt', removedFromFav: 'Aus Favoriten entfernt', newArticles: 'neue Artikel', login: 'Anmelden', subscription: 'Abonnieren', logout: 'Abmelden', premium: 'Premium', welcome: 'Willkommen', loggedOut: 'Abgemeldet' },
+            es: { subtitle: 'Últimas noticias y eventos', search: 'Buscar', favorites: 'Favoritos', unread: 'Nuevo', theme: 'Tema', all: 'Todos', filterFav: '⭐ Favoritos', filterUnread: '📬 No leídos', filterRead: '✅ Leídos', searchPlaceholder: 'Buscar noticias...', readMore: 'Leer más →', noResults: '😔 Nada encontrado', addedToFav: 'Añadido a favoritos', removedFromFav: 'Eliminado de favoritos', newArticles: 'nuevos artículos', login: 'Iniciar sesión', subscription: 'Suscribirse', logout: 'Cerrar sesión', premium: 'Premium', welcome: 'Bienvenido', loggedOut: 'Sesión cerrada' }
         };
         
-        function toggleAuthModal() {
-            if (currentUser) {
-                if (confirm(translations[currentLang].logout + '?')) {
-                    logout();
-                }
-                return;
-            }
-            const modal = document.getElementById('authModal');
-            modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+        // ============ СОСТОЯНИЕ ============
+        var currentUser = null;
+        var userProfile = null;
+        var authMode = 'login';
+        var currentLang = localStorage.getItem('lang') || 'ru';
+        var currentFilter = 'all';
+        var originalTexts = new Map();
+        var supabaseClient = null;
+        
+        var postsData = ''' + posts_json + ''';
+        
+        // ============ ИНИЦИАЛИЗАЦИЯ SUPABASE ============
+        var SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        var SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        
+        if (window.supabase && SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
         
-        function closeAuthModal() {
-            document.getElementById('authModal').style.display = 'none';
+        // ============ УТИЛИТЫ ============
+        function $(id) { return document.getElementById(id); }
+        function $$(sel) { return document.querySelectorAll(sel); }
+        
+        function showToast(icon, message, type) {
+            type = type || '';
+            var container = $('toastContainer');
+            if (!container) return;
+            var toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = '<div class="toast-icon">' + icon + '</div><div class="toast-content">' + message + '</div>';
+            container.appendChild(toast);
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                setTimeout(function() { toast.remove(); }, 400);
+            }, 3000);
         }
         
-        function toggleAuthMode(e) {
-            e.preventDefault();
-            authMode = authMode === 'login' ? 'register' : 'login';
-            document.getElementById('authTitle').textContent = authMode === 'login' ? 'Вход' : 'Регистрация';
-            document.getElementById('authSubmitBtn').textContent = authMode === 'login' ? 'Войти' : 'Зарегистрироваться';
-            document.getElementById('authSwitchText').textContent = authMode === 'login' 
-                ? 'Нет аккаунта? Зарегистрироваться' 
-                : 'Уже есть аккаунт? Войти';
-        }
-        
-        async function handleAuth(e) {
-            e.preventDefault();
-            const email = document.getElementById('authEmail').value;
-            const password = document.getElementById('authPassword').value;
-            const submitBtn = document.getElementById('authSubmitBtn');
-            
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Загрузка...';
-            
-            try {
-                let result;
-                if (authMode === 'login') {
-                    result = await supabase.auth.signInWithPassword({ email, password });
-                } else {
-                    result = await supabase.auth.signUp({ email, password });
-                }
-                
-                if (result.error) throw result.error;
-                
-                currentUser = result.data.user;
-                await loadUserProfile();
-                
-                closeAuthModal();
-                updateAuthUI();
-                showToast('✅', translations[currentLang].welcome + ', ' + email + '!');
-                
-            } catch (error) {
-                showToast('❌', error.message);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = authMode === 'login' ? 'Войти' : 'Зарегистрироваться';
-            }
-        }
-        
-        async function logout() {
-            await supabase.auth.signOut();
-            currentUser = null;
-            userProfile = null;
-            updateAuthUI();
-            hidePremiumArticles();
-            showToast('👋', translations[currentLang].loggedOut);
-        }
-        
-        async function loadUserProfile() {
-            if (!currentUser) return;
-            
-            try {
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', currentUser.id)
-                    .single();
-                
-                if (error) throw error;
-                userProfile = data;
-                
-                if (userProfile.subscription_until) {
-                    const until = new Date(userProfile.subscription_until);
-                    if (until < new Date()) {
-                        userProfile.is_subscriber = false;
-                    }
-                }
-                
-            } catch (e) {
-                console.warn('Профиль не найден');
-            }
-        }
-        
-        function updateAuthUI() {
-            const authBtn = document.getElementById('authBtn');
-            const authBtnText = document.getElementById('authBtnText');
-            const subBtn = document.getElementById('subBtn');
-            const subBtnText = document.getElementById('subBtnText');
-            
-            const t = translations[currentLang];
-            
-            if (currentUser) {
-                authBtnText.textContent = currentUser.email.split('@')[0];
-                
-                if (userProfile?.is_subscriber) {
-                    subBtnText.textContent = t.premium + ' ⭐';
-                    subBtn.classList.add('premium');
-                    showPremiumArticles();
-                } else {
-                    subBtnText.textContent = t.subscription;
-                    subBtn.classList.remove('premium');
-                    hidePremiumArticles();
-                }
-            } else {
-                authBtnText.textContent = t.login;
-                subBtnText.textContent = t.subscription;
-                subBtn.classList.remove('premium');
-                hidePremiumArticles();
-            }
-        }
-        
-        function showPremiumArticles() {
-            document.querySelectorAll('.premium-only').forEach(card => {
-                card.style.display = '';
-            });
-            const banner = document.getElementById('upgradeBanner');
-            if (banner) banner.style.display = 'none';
-        }
-        
-        function hidePremiumArticles() {
-            document.querySelectorAll('.premium-only').forEach(card => {
-                card.style.display = 'none';
-            });
-            const banner = document.getElementById('upgradeBanner');
-            if (banner) banner.style.display = '';
-        }
-        
-        function handleSubscriptionClick() {
-            if (!currentUser) {
-                showToast('⚠️', 'Сначала войдите в аккаунт');
-                toggleAuthModal();
-                return;
-            }
-            
-            if (userProfile?.is_subscriber) {
-                showSubscriptionStatus();
-                return;
-            }
-            
-            document.getElementById('subscriptionModal').style.display = 'flex';
-        }
-        
-        function closeSubscriptionModal() {
-            document.getElementById('subscriptionModal').style.display = 'none';
-        }
-        
-        function showSubscriptionStatus() {
-            const until = new Date(userProfile.subscription_until);
-            const daysLeft = Math.ceil((until - new Date()) / (1000 * 60 * 60 * 24));
-            showToast('⭐', `Подписка активна до ${until.toLocaleDateString()}. Осталось ${daysLeft} дн.`, 'premium');
-        }
-        
-        function selectCurrency(el, currency) {
-            document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
-            el.classList.add('active');
-            localStorage.setItem('preferred_crypto', currency);
-        }
-        
-        async function subscribe(plan) {
-            if (!currentUser) return;
-            
-            const currency = localStorage.getItem('preferred_crypto') || 'USDT';
-            
-            try {
-                showToast('⏳', 'Создание платежа...');
-                
-                const { data, error } = await supabase.functions.invoke('create-cryptomus-payment', {
-                    body: {
-                        plan: plan,
-                        user_id: currentUser.id,
-                        email: currentUser.email,
-                        currency: currency
-                    }
-                });
-                
-                if (error) throw error;
-                
-                if (data.confirmation_url) {
-                    localStorage.setItem('pending_payment', data.payment_id);
-                    window.location.href = data.confirmation_url;
-                } else {
-                    throw new Error(data.error || 'Не удалось создать платеж');
-                }
-                
-            } catch (error) {
-                console.error('Payment error:', error);
-                showToast('❌', 'Ошибка: ' + error.message);
-            }
-        }
-        
-        async function checkPaymentReturn() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('payment') === 'success') {
-                showToast('✅', 'Платеж обрабатывается...', 'premium');
-                
-                setTimeout(async () => {
-                    await loadUserProfile();
-                    updateAuthUI();
-                    
-                    if (userProfile?.is_subscriber) {
-                        showToast('⭐', 'Подписка активирована! Доступно 200 статей.', 'premium');
-                    }
-                    window.history.replaceState({}, '', window.location.pathname);
-                }, 3000);
-            }
-        }
-        
+        // ============ ТЕМА ============
         function toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            var html = document.documentElement;
+            var currentTheme = html.getAttribute('data-theme');
+            var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             updateThemeButton(newTheme);
         }
         
         function updateThemeButton(theme) {
-            const btn = document.getElementById('themeBtn');
-            const t = translations[currentLang];
-            btn.innerHTML = theme === 'dark' ? '☀️ <span>' + t.theme + '</span>' : '🌙 <span>' + t.theme + '</span>';
+            var btn = $('themeBtn');
+            var t = translations[currentLang];
+            if (btn) {
+                btn.innerHTML = theme === 'dark' ? '☀️ <span>' + t.theme + '</span>' : '🌙 <span>' + t.theme + '</span>';
+            }
         }
         
+        // ============ ЯЗЫК ============
         function toggleLangMenu() {
-            document.getElementById('langMenu').classList.toggle('active');
+            var menu = $('langMenu');
+            if (menu) menu.classList.toggle('active');
         }
         
-        async function setLanguage(lang) {
+        function setLanguage(lang) {
             currentLang = lang;
             localStorage.setItem('lang', lang);
             
-            document.querySelectorAll('.lang-option').forEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('currentLang').textContent = lang.toUpperCase();
+            $$('.lang-option').forEach(function(el) {
+                el.classList.remove('active');
+                if (el.getAttribute('data-lang') === lang) {
+                    el.classList.add('active');
+                }
+            });
             
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
+            var cl = $('currentLang');
+            if (cl) cl.textContent = lang.toUpperCase();
+            
+            $$('[data-i18n]').forEach(function(el) {
+                var key = el.getAttribute('data-i18n');
                 if (translations[lang][key]) {
                     el.textContent = translations[lang][key];
                 }
             });
             
-            document.getElementById('searchInput').placeholder = translations[lang].searchPlaceholder;
+            var si = $('searchInput');
+            if (si) si.placeholder = translations[lang].searchPlaceholder;
             updateThemeButton(document.documentElement.getAttribute('data-theme') || 'light');
             updateAuthUI();
             
-            document.getElementById('langMenu').classList.remove('active');
-            await translateAllPosts(lang);
+            var menu = $('langMenu');
+            if (menu) menu.classList.remove('active');
+            
+            translateAllPosts(lang);
         }
         
-        async function translateText(text, targetLang) {
-            if (targetLang === 'ru') return text;
-            if (!text || text.trim().length === 0) return text;
+        // ============ ПЕРЕВОД ============
+        function translateText(text, targetLang) {
+            if (targetLang === 'ru') return Promise.resolve(text);
+            if (!text || text.trim().length === 0) return Promise.resolve(text);
             
-            try {
-                const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=' + targetLang + '&dt=t&q=' + encodeURIComponent(text.substring(0, 1500));
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                if (data && data[0]) {
-                    return data[0].map(item => item[0]).join('');
-                }
-                return text;
-            } catch (e) {
-                console.warn('Ошибка перевода:', e);
-                return text;
-            }
+            var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=' + targetLang + '&dt=t&q=' + encodeURIComponent(text.substring(0, 1500));
+            return fetch(url)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data && data[0]) {
+                        return data[0].map(function(item) { return item[0]; }).join('');
+                    }
+                    return text;
+                })
+                .catch(function() { return text; });
         }
         
         async function translateAllPosts(targetLang) {
-            const cards = document.querySelectorAll('.news-card');
+            var cards = $$('.news-card');
             showToast('🌐', 'Перевод статей...');
             
-            for (const card of cards) {
-                const titleEl = card.querySelector('.news-title');
-                const textEl = card.querySelector('.news-text');
+            for (var i = 0; i < cards.length; i++) {
+                var card = cards[i];
+                var titleEl = card.querySelector('.news-title');
+                var textEl = card.querySelector('.news-text');
                 
                 if (!titleEl || !textEl) continue;
                 
@@ -1395,37 +1119,39 @@ def generate_html(posts):
                     });
                 }
                 
-                const original = originalTexts.get(card);
+                var original = originalTexts.get(card);
                 
                 if (targetLang === 'ru') {
                     titleEl.textContent = original.title;
                     textEl.textContent = original.text;
                 } else {
-                    const [translatedTitle, translatedText] = await Promise.all([
+                    var results = await Promise.all([
                         translateText(original.title, targetLang),
                         translateText(original.text, targetLang)
                     ]);
                     
-                    titleEl.textContent = translatedTitle;
-                    textEl.textContent = translatedText;
+                    titleEl.textContent = results[0];
+                    textEl.textContent = results[1];
                     
-                    card.setAttribute('data-title', translatedTitle.toLowerCase());
-                    card.setAttribute('data-text', translatedText.toLowerCase());
+                    card.setAttribute('data-title', results[0].toLowerCase());
+                    card.setAttribute('data-text', results[1].toLowerCase());
                 }
                 
-                await new Promise(r => setTimeout(r, 100));
+                await new Promise(function(r) { setTimeout(r, 100); });
             }
             
             showToast('✅', 'Перевод завершён!');
         }
         
+        // ============ ИЗБРАННОЕ ============
         function getFavorites() {
-            return JSON.parse(localStorage.getItem('favorites') || '[]');
+            try { return JSON.parse(localStorage.getItem('favorites') || '[]'); }
+            catch (e) { return []; }
         }
         
         function toggleFavorite(postId, btn) {
-            let favorites = getFavorites();
-            const index = favorites.indexOf(postId);
+            var favorites = getFavorites();
+            var index = favorites.indexOf(postId);
             
             if (index > -1) {
                 favorites.splice(index, 1);
@@ -1446,8 +1172,9 @@ def generate_html(posts):
         }
         
         function updateFavBadge() {
-            const favorites = getFavorites();
-            const badge = document.getElementById('favBadge');
+            var favorites = getFavorites();
+            var badge = $('favBadge');
+            if (!badge) return;
             if (favorites.length > 0) {
                 badge.textContent = favorites.length;
                 badge.style.display = 'flex';
@@ -1457,23 +1184,31 @@ def generate_html(posts):
         }
         
         function toggleFavorites() {
-            const btn = document.getElementById('favBtn');
+            var btn = $('favBtn');
+            if (!btn) return;
             btn.classList.toggle('active');
             
             if (btn.classList.contains('active')) {
                 filterPosts('favorites');
             } else {
                 filterPosts('all');
+                var allBtn = document.querySelector('.filter-btn[data-filter="all"]');
+                if (allBtn) {
+                    $$('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+                    allBtn.classList.add('active');
+                }
             }
         }
         
+        // ============ ПРОЧИТАННЫЕ ============
         function getReadPosts() {
-            return JSON.parse(localStorage.getItem('readPosts') || '[]');
+            try { return JSON.parse(localStorage.getItem('readPosts') || '[]'); }
+            catch (e) { return []; }
         }
         
         function markAsRead(postId) {
-            let readPosts = getReadPosts();
-            if (!readPosts.includes(postId)) {
+            var readPosts = getReadPosts();
+            if (readPosts.indexOf(postId) === -1) {
                 readPosts.push(postId);
                 localStorage.setItem('readPosts', JSON.stringify(readPosts));
                 updateUnreadBadge();
@@ -1481,8 +1216,8 @@ def generate_html(posts):
         }
         
         function toggleRead(postId, btn) {
-            let readPosts = getReadPosts();
-            const index = readPosts.indexOf(postId);
+            var readPosts = getReadPosts();
+            var index = readPosts.indexOf(postId);
             
             if (index > -1) {
                 readPosts.splice(index, 1);
@@ -1501,48 +1236,61 @@ def generate_html(posts):
         }
         
         function updateUnreadBadge() {
-            const readPosts = getReadPosts();
-            const visiblePosts = document.querySelectorAll('.news-card:not([style*="display: none"])').length;
-            const unreadCount = Math.max(0, visiblePosts - readPosts.length);
+            var readPosts = getReadPosts();
+            var visibleCards = $$('.news-card:not([style*="display: none"])');
+            var unreadCount = 0;
             
-            const badge = document.getElementById('unreadBadge');
+            visibleCards.forEach(function(card) {
+                var id = parseInt(card.getAttribute('data-post-id'));
+                if (readPosts.indexOf(id) === -1) unreadCount++;
+            });
+            
+            var badge = $('unreadBadge');
+            if (!badge) return;
             if (unreadCount > 0) {
                 badge.textContent = unreadCount;
                 badge.style.display = 'flex';
                 badge.classList.add('pulse');
-                setTimeout(() => badge.classList.remove('pulse'), 2000);
+                setTimeout(function() { badge.classList.remove('pulse'); }, 2000);
             } else {
                 badge.style.display = 'none';
             }
         }
         
+        // ============ ПОИСК ============
         function toggleSearch() {
-            const searchBar = document.getElementById('searchBar');
+            var searchBar = $('searchBar');
+            if (!searchBar) return;
             searchBar.classList.toggle('active');
             
             if (searchBar.classList.contains('active')) {
-                setTimeout(() => document.getElementById('searchInput').focus(), 100);
+                setTimeout(function() {
+                    var si = $('searchInput');
+                    if (si) si.focus();
+                }, 100);
             } else {
-                document.getElementById('searchInput').value = '';
+                var si = $('searchInput');
+                if (si) si.value = '';
                 performSearch();
             }
         }
         
         function performSearch() {
-            const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            const cards = document.querySelectorAll('.news-card');
-            let visibleCount = 0;
+            var si = $('searchInput');
+            var query = si ? si.value.toLowerCase().trim() : '';
+            var cards = $$('.news-card');
+            var visibleCount = 0;
             
-            cards.forEach(card => {
-                const title = card.getAttribute('data-title') || '';
-                const text = card.getAttribute('data-text') || '';
+            cards.forEach(function(card) {
+                var title = card.getAttribute('data-title') || '';
+                var text = card.getAttribute('data-text') || '';
                 
-                if (card.classList.contains('premium-only') && !userProfile?.is_subscriber) {
+                if (card.classList.contains('premium-only') && (!userProfile || !userProfile.is_subscriber)) {
                     card.style.display = 'none';
                     return;
                 }
                 
-                if (!query || title.includes(query) || text.includes(query)) {
+                if (!query || title.indexOf(query) > -1 || text.indexOf(query) > -1) {
                     card.style.display = '';
                     visibleCount++;
                 } else {
@@ -1550,135 +1298,503 @@ def generate_html(posts):
                 }
             });
             
-            document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
+            var nr = $('noResults');
+            if (nr) nr.style.display = visibleCount === 0 ? 'block' : 'none';
         }
         
-        function filterPosts(filter, btn) {
+        // ============ ФИЛЬТРЫ ============
+        function filterPosts(filter) {
             currentFilter = filter;
             
-            if (btn) {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            }
+            $$('.filter-btn').forEach(function(b) {
+                b.classList.remove('active');
+                if (b.getAttribute('data-filter') === filter) {
+                    b.classList.add('active');
+                }
+            });
             
-            const favorites = getFavorites();
-            const readPosts = getReadPosts();
-            const cards = document.querySelectorAll('.news-card');
-            let visibleCount = 0;
+            var favorites = getFavorites();
+            var readPosts = getReadPosts();
+            var cards = $$('.news-card');
+            var visibleCount = 0;
             
-            cards.forEach(card => {
-                const postId = parseInt(card.getAttribute('data-post-id'));
-                let show = true;
+            cards.forEach(function(card) {
+                var postId = parseInt(card.getAttribute('data-post-id'));
+                var show = true;
                 
-                if (card.classList.contains('premium-only') && !userProfile?.is_subscriber) {
+                if (card.classList.contains('premium-only') && (!userProfile || !userProfile.is_subscriber)) {
                     card.style.display = 'none';
                     return;
                 }
                 
                 if (filter === 'favorites') {
-                    show = favorites.includes(postId);
+                    show = favorites.indexOf(postId) > -1;
                 } else if (filter === 'unread') {
-                    show = !readPosts.includes(postId);
+                    show = readPosts.indexOf(postId) === -1;
                 } else if (filter === 'read') {
-                    show = readPosts.includes(postId);
+                    show = readPosts.indexOf(postId) > -1;
                 }
                 
                 card.style.display = show ? '' : 'none';
                 if (show) visibleCount++;
             });
             
-            document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
-        }
-        
-        function showToast(icon, message, type = '') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = 'toast ' + type;
-            toast.innerHTML = '<div class="toast-icon">' + icon + '</div><div class="toast-content">' + message + '</div>';
-            container.appendChild(toast);
+            var nr = $('noResults');
+            if (nr) nr.style.display = visibleCount === 0 ? 'block' : 'none';
             
-            setTimeout(() => {
-                toast.style.animation = 'slideInRight 0.4s ease reverse';
-                setTimeout(() => toast.remove(), 400);
-            }, 3000);
+            var favBtn = $('favBtn');
+            if (favBtn) {
+                if (filter === 'favorites') {
+                    favBtn.classList.add('active');
+                } else {
+                    favBtn.classList.remove('active');
+                }
+            }
         }
         
-        window.addEventListener('scroll', () => {
-            const scrollTop = window.pageYOffset;
-            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            const scrollPercent = (scrollTop / docHeight) * 100;
-            document.getElementById('progressBar').style.width = scrollPercent + '%';
-        });
+        // ============ АВТОРИЗАЦИЯ ============
+        function openAuthModal() {
+            var modal = $('authModal');
+            if (modal) modal.classList.add('active');
+        }
         
+        function closeAuthModal() {
+            var modal = $('authModal');
+            if (modal) modal.classList.remove('active');
+        }
+        
+        function toggleAuthModal() {
+            if (currentUser) {
+                if (confirm(translations[currentLang].logout + '?')) {
+                    logout();
+                }
+                return;
+            }
+            openAuthModal();
+        }
+        
+        function toggleAuthMode(e) {
+            e.preventDefault();
+            authMode = authMode === 'login' ? 'register' : 'login';
+            $('authTitle').textContent = authMode === 'login' ? 'Вход' : 'Регистрация';
+            $('authSubmitBtn').textContent = authMode === 'login' ? 'Войти' : 'Зарегистрироваться';
+            $('authSwitchText').textContent = authMode === 'login' 
+                ? 'Нет аккаунта? Зарегистрироваться' 
+                : 'Уже есть аккаунт? Войти';
+        }
+        
+        async function handleAuth(e) {
+            e.preventDefault();
+            
+            if (!supabaseClient) {
+                showToast('❌', 'Supabase не настроен. Укажите SUPABASE_URL и SUPABASE_ANON_KEY.');
+                return;
+            }
+            
+            var email = $('authEmail').value;
+            var password = $('authPassword').value;
+            var submitBtn = $('authSubmitBtn');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Загрузка...';
+            
+            try {
+                var result;
+                if (authMode === 'login') {
+                    result = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+                } else {
+                    result = await supabaseClient.auth.signUp({ email: email, password: password });
+                }
+                
+                if (result.error) throw result.error;
+                
+                currentUser = result.data.user;
+                await loadUserProfile();
+                
+                closeAuthModal();
+                updateAuthUI();
+                showToast('✅', translations[currentLang].welcome + ', ' + email + '!');
+                
+            } catch (error) {
+                showToast('❌', error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = authMode === 'login' ? 'Войти' : 'Зарегистрироваться';
+            }
+        }
+        
+        async function logout() {
+            if (supabaseClient) {
+                await supabaseClient.auth.signOut();
+            }
+            currentUser = null;
+            userProfile = null;
+            updateAuthUI();
+            hidePremiumArticles();
+            showToast('👋', translations[currentLang].loggedOut);
+        }
+        
+        async function loadUserProfile() {
+            if (!currentUser || !supabaseClient) return;
+            
+            try {
+                var result = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', currentUser.id)
+                    .single();
+                
+                if (result.error) throw result.error;
+                userProfile = result.data;
+                
+                if (userProfile.subscription_until) {
+                    var until = new Date(userProfile.subscription_until);
+                    if (until < new Date()) {
+                        userProfile.is_subscriber = false;
+                    }
+                }
+            } catch (e) {
+                console.warn('Профиль не найден');
+            }
+        }
+        
+        function updateAuthUI() {
+            var authBtnText = $('authBtnText');
+            var subBtn = $('subBtn');
+            var subBtnText = $('subBtnText');
+            
+            var t = translations[currentLang];
+            
+            if (currentUser) {
+                if (authBtnText) authBtnText.textContent = currentUser.email.split('@')[0];
+                
+                if (userProfile && userProfile.is_subscriber) {
+                    if (subBtnText) subBtnText.textContent = t.premium + ' ⭐';
+                    if (subBtn) subBtn.classList.add('premium');
+                    showPremiumArticles();
+                } else {
+                    if (subBtnText) subBtnText.textContent = t.subscription;
+                    if (subBtn) subBtn.classList.remove('premium');
+                    hidePremiumArticles();
+                }
+            } else {
+                if (authBtnText) authBtnText.textContent = t.login;
+                if (subBtnText) subBtnText.textContent = t.subscription;
+                if (subBtn) subBtn.classList.remove('premium');
+                hidePremiumArticles();
+            }
+        }
+        
+        function showPremiumArticles() {
+            $$('.premium-only').forEach(function(card) {
+                card.style.display = '';
+            });
+            var banner = $('upgradeBanner');
+            if (banner) banner.style.display = 'none';
+        }
+        
+        function hidePremiumArticles() {
+            $$('.premium-only').forEach(function(card) {
+                card.style.display = 'none';
+            });
+            var banner = $('upgradeBanner');
+            if (banner) banner.style.display = '';
+        }
+        
+        // ============ ПОДПИСКА ============
+        function openSubscriptionModal() {
+            var modal = $('subscriptionModal');
+            if (modal) modal.classList.add('active');
+        }
+        
+        function closeSubscriptionModal() {
+            var modal = $('subscriptionModal');
+            if (modal) modal.classList.remove('active');
+        }
+        
+        function handleSubscriptionClick() {
+            if (!currentUser) {
+                showToast('⚠️', 'Сначала войдите в аккаунт');
+                openAuthModal();
+                return;
+            }
+            
+            if (userProfile && userProfile.is_subscriber) {
+                var until = new Date(userProfile.subscription_until);
+                var daysLeft = Math.ceil((until - new Date()) / (1000 * 60 * 60 * 24));
+                showToast('⭐', 'Подписка активна до ' + until.toLocaleDateString() + '. Осталось ' + daysLeft + ' дн.', 'premium');
+                return;
+            }
+            
+            openSubscriptionModal();
+        }
+        
+        async function subscribe(plan) {
+            if (!currentUser) return;
+            
+            if (!supabaseClient) {
+                showToast('❌', 'Supabase не настроен');
+                return;
+            }
+            
+            var currency = localStorage.getItem('preferred_crypto') || 'USDT';
+            
+            try {
+                showToast('⏳', 'Создание платежа...');
+                
+                var result = await supabaseClient.functions.invoke('create-cryptomus-payment', {
+                    body: {
+                        plan: plan,
+                        user_id: currentUser.id,
+                        email: currentUser.email,
+                        currency: currency
+                    }
+                });
+                
+                if (result.error) throw result.error;
+                
+                if (result.data && result.data.confirmation_url) {
+                    localStorage.setItem('pending_payment', result.data.payment_id);
+                    window.location.href = result.data.confirmation_url;
+                } else {
+                    throw new Error('Не удалось создать платеж');
+                }
+                
+            } catch (error) {
+                console.error('Payment error:', error);
+                showToast('❌', 'Ошибка: ' + error.message);
+            }
+        }
+        
+        function checkPaymentReturn() {
+            var urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('payment') === 'success') {
+                showToast('✅', 'Платеж обрабатывается...', 'premium');
+                
+                setTimeout(async function() {
+                    await loadUserProfile();
+                    updateAuthUI();
+                    
+                    if (userProfile && userProfile.is_subscriber) {
+                        showToast('⭐', 'Подписка активирована! Доступно 200 статей.', 'premium');
+                    }
+                    window.history.replaceState({}, '', window.location.pathname);
+                }, 3000);
+            }
+        }
+        
+        // ============ ПРИВЯЗКА СОБЫТИЙ ============
+        function bindEvents() {
+            // Кнопки в хедере
+            var searchBtn = $('searchBtn');
+            if (searchBtn) searchBtn.addEventListener('click', toggleSearch);
+            
+            var favBtn = $('favBtn');
+            if (favBtn) favBtn.addEventListener('click', toggleFavorites);
+            
+            var unreadBtn = $('unreadBtn');
+            if (unreadBtn) {
+                unreadBtn.addEventListener('click', function() {
+                    filterPosts('unread');
+                });
+            }
+            
+            var langBtn = $('langBtn');
+            if (langBtn) langBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleLangMenu();
+            });
+            
+            var themeBtn = $('themeBtn');
+            if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+            
+            var subBtn = $('subBtn');
+            if (subBtn) subBtn.addEventListener('click', handleSubscriptionClick);
+            
+            var authBtn = $('authBtn');
+            if (authBtn) authBtn.addEventListener('click', toggleAuthModal);
+            
+            // Языки
+            $$('.lang-option').forEach(function(el) {
+                el.addEventListener('click', function() {
+                    setLanguage(el.getAttribute('data-lang'));
+                });
+            });
+            
+            // Фильтры
+            $$('.filter-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    filterPosts(btn.getAttribute('data-filter'));
+                });
+            });
+            
+            // Поиск
+            var searchInput = $('searchInput');
+            if (searchInput) searchInput.addEventListener('input', performSearch);
+            
+            // Кнопки на карточках
+            $$('.favorite').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var id = parseInt(btn.getAttribute('data-fav-id'));
+                    toggleFavorite(id, btn);
+                });
+            });
+            
+            $$('.read-toggle').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var id = parseInt(btn.getAttribute('data-read-id'));
+                    toggleRead(id, btn);
+                });
+            });
+            
+            $$('[data-read-link]').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    var id = parseInt(link.getAttribute('data-read-link'));
+                    markAsRead(id);
+                });
+            });
+            
+            // Кнопка апгрейда
+            var upgradeBtn = $('upgradeBtn');
+            if (upgradeBtn) upgradeBtn.addEventListener('click', handleSubscriptionClick);
+            
+            // Модальные окна
+            var authClose = $('authClose');
+            if (authClose) authClose.addEventListener('click', closeAuthModal);
+            
+            var authSwitch = $('authSwitch');
+            if (authSwitch) authSwitch.addEventListener('click', toggleAuthMode);
+            
+            var authForm = $('authForm');
+            if (authForm) authForm.addEventListener('submit', handleAuth);
+            
+            var subClose = $('subClose');
+            if (subClose) subClose.addEventListener('click', closeSubscriptionModal);
+            
+            // Платежные методы
+            $$('.payment-method').forEach(function(el) {
+                el.addEventListener('click', function() {
+                    $$('.payment-method').forEach(function(m) { m.classList.remove('active'); });
+                    el.classList.add('active');
+                    localStorage.setItem('preferred_crypto', el.getAttribute('data-currency'));
+                });
+            });
+            
+            // Планы
+            $$('.plan').forEach(function(el) {
+                el.addEventListener('click', function() {
+                    subscribe(el.getAttribute('data-plan'));
+                });
+            });
+            
+            // Закрытие модалок по клику вне
+            $$('.modal').forEach(function(modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
+                });
+            });
+            
+            // Закрытие меню языков по клику вне
+            document.addEventListener('click', function(e) {
+                var langDropdown = document.querySelector('.lang-dropdown');
+                if (langDropdown && !langDropdown.contains(e.target)) {
+                    var menu = $('langMenu');
+                    if (menu) menu.classList.remove('active');
+                }
+            });
+            
+            // Прогресс-бар
+            window.addEventListener('scroll', function() {
+                var scrollTop = window.pageYOffset;
+                var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                var scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+                var pb = $('progressBar');
+                if (pb) pb.style.width = scrollPercent + '%';
+            });
+        }
+        
+        // ============ ИНИЦИАЛИЗАЦИЯ ============
         document.addEventListener('DOMContentLoaded', async function() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
+            // Применяем тему
+            var savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
             updateThemeButton(savedTheme);
             
-            document.getElementById('currentLang').textContent = currentLang.toUpperCase();
-            document.querySelectorAll('.lang-option').forEach(el => {
+            // Применяем язык
+            var cl = $('currentLang');
+            if (cl) cl.textContent = currentLang.toUpperCase();
+            
+            $$('.lang-option').forEach(function(el) {
                 el.classList.remove('active');
-                if (el.textContent.includes(currentLang === 'ru' ? 'Русский' : currentLang === 'en' ? 'English' : currentLang === 'de' ? 'Deutsch' : 'Español')) {
+                if (el.getAttribute('data-lang') === currentLang) {
                     el.classList.add('active');
                 }
             });
             
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
+            $$('[data-i18n]').forEach(function(el) {
+                var key = el.getAttribute('data-i18n');
                 if (translations[currentLang][key]) {
                     el.textContent = translations[currentLang][key];
                 }
             });
-            document.getElementById('searchInput').placeholder = translations[currentLang].searchPlaceholder;
             
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                currentUser = session.user;
-                await loadUserProfile();
-                updateAuthUI();
-            }
+            var si = $('searchInput');
+            if (si) si.placeholder = translations[currentLang].searchPlaceholder;
             
-            supabase.auth.onAuthStateChange(async (event, session) => {
-                if (session) {
-                    currentUser = session.user;
-                    await loadUserProfile();
-                } else {
-                    currentUser = null;
-                    userProfile = null;
-                }
-                updateAuthUI();
-            });
-            
-            await checkPaymentReturn();
-            
-            const favorites = getFavorites();
-            document.querySelectorAll('.news-card').forEach(card => {
-                const postId = parseInt(card.getAttribute('data-post-id'));
-                const favBtn = card.querySelector('.favorite');
-                if (favorites.includes(postId) && favBtn) {
+            // Обновляем активные избранные
+            var favorites = getFavorites();
+            $$('.news-card').forEach(function(card) {
+                var postId = parseInt(card.getAttribute('data-post-id'));
+                var favBtn = card.querySelector('.favorite');
+                if (favorites.indexOf(postId) > -1 && favBtn) {
                     favBtn.classList.add('active');
                 }
             });
+            
             updateFavBadge();
             updateUnreadBadge();
             
-            document.querySelectorAll('.news-card').forEach((card, index) => {
-                setTimeout(() => {
-                    card.style.animationDelay = (index * 0.03) + 's';
-                }, 0);
-            });
+            // Привязываем события
+            bindEvents();
             
-            document.addEventListener('click', function(e) {
-                const langDropdown = document.querySelector('.lang-dropdown');
-                if (langDropdown && !langDropdown.contains(e.target)) {
-                    document.getElementById('langMenu').classList.remove('active');
+            // Проверяем Supabase сессию
+            if (supabaseClient) {
+                try {
+                    var sessionResult = await supabaseClient.auth.getSession();
+                    if (sessionResult.data && sessionResult.data.session) {
+                        currentUser = sessionResult.data.session.user;
+                        await loadUserProfile();
+                        updateAuthUI();
+                    }
+                    
+                    supabaseClient.auth.onAuthStateChange(async function(event, session) {
+                        if (session) {
+                            currentUser = session.user;
+                            await loadUserProfile();
+                        } else {
+                            currentUser = null;
+                            userProfile = null;
+                        }
+                        updateAuthUI();
+                    });
+                } catch (e) {
+                    console.warn('Supabase session error:', e);
                 }
-            });
+            }
+            
+            checkPaymentReturn();
             
             if (currentLang !== 'ru') {
-                setTimeout(() => translateAllPosts(currentLang), 500);
+                setTimeout(function() { translateAllPosts(currentLang); }, 500);
             }
         });
+    })();
     </script>
 </body>
 </html>
@@ -1723,8 +1839,6 @@ def generate_post_pages(posts):
             full_text_json = json.dumps(full_text, ensure_ascii=False)
             is_premium = i >= 42
             
-            # Генерируем HTML через .format() вместо f-string, чтобы избежать конфликтов с { }
-            # Используем плейсхолдеры вида __TITLE__, __DATE__, etc.
             template = '''<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1732,7 +1846,6 @@ def generate_post_pages(posts):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>__PAGE_TITLE__ - Новикон</title>
     <link rel="icon" href="../__LOGO__" type="image/png">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg: #f5f5f5;
@@ -1813,6 +1926,7 @@ def generate_post_pages(posts):
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s;
+            font-family: inherit;
         }
         .control-btn:hover {
             background: rgba(255,255,255,0.3);
@@ -1830,7 +1944,6 @@ def generate_post_pages(posts):
             margin: 30px 0;
             box-shadow: var(--shadow);
             transition: background 0.4s;
-            animation: fadeIn 0.5s ease;
         }
         .post-date {
             color: #888;
@@ -1896,6 +2009,7 @@ def generate_post_pages(posts):
             font-weight: 700;
             cursor: pointer;
             transition: transform 0.3s;
+            font-family: inherit;
         }
         .premium-lock button:hover {
             transform: scale(1.05);
@@ -1908,10 +2022,6 @@ def generate_post_pages(posts):
             border-top: 1px solid var(--border);
             margin-top: 20px;
             transition: border-color 0.4s;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
         }
         .progress-bar {
             position: fixed;
@@ -1987,8 +2097,8 @@ def generate_post_pages(posts):
                     <span class="site-title">Новикон</span>
                 </a>
                 <div class="header-btns">
-                    <button class="control-btn favorite" id="favBtn" onclick="toggleFavorite()" title="В избранное">⭐</button>
-                    <button class="control-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+                    <button type="button" class="control-btn favorite" id="favBtn" title="В избранное">⭐</button>
+                    <button type="button" class="control-btn" id="themeBtn">🌙</button>
                 </div>
             </div>
         </div>
@@ -2004,9 +2114,9 @@ def generate_post_pages(posts):
             <div id="premiumLock" class="premium-lock" style="display:none;">
                 <h2>🔒 Премиум контент</h2>
                 <p>Эта статья доступна только подписчикам Новикон</p>
-                <button onclick="openSubscriptionPage()">Оформить подписку за 149 ₽/мес</button>
+                <button type="button" id="openSubBtn">Оформить подписку за 149 ₽/мес</button>
             </div>
-            <a href="/Novikon-site/" class="back-button" data-i18n="back">← На главную</a>
+            <a href="/Novikon-site/" class="back-button">← На главную</a>
         </div>
     </div>
     <div class="footer">
@@ -2018,78 +2128,100 @@ def generate_post_pages(posts):
     <div class="toast-container" id="toastContainer"></div>
     
     <script>
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    (function() {
+        'use strict';
         
-        const POST_ID = __POST_ID__;
-        const IS_PREMIUM = __IS_PREMIUM__;
-        const ORIGINAL_TITLE = __ORIGINAL_TITLE__;
-        const ORIGINAL_TEXT = __ORIGINAL_TEXT__;
+        var SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        var SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        var supabaseClient = null;
         
-        let currentUser = null;
-        let userProfile = null;
-        let currentLang = localStorage.getItem('lang') || 'ru';
+        if (window.supabase && SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
         
-        const translations = {
-            ru: { back: '← На главную', theme: 'Тема' },
-            en: { back: '← Back to home', theme: 'Theme' },
-            de: { back: '← Zurück zur Startseite', theme: 'Thema' },
-            es: { back: '← Volver al inicio', theme: 'Tema' }
-        };
+        var POST_ID = __POST_ID__;
+        var IS_PREMIUM = __IS_PREMIUM__;
+        var ORIGINAL_TITLE = __ORIGINAL_TITLE__;
+        var ORIGINAL_TEXT = __ORIGINAL_TEXT__;
+        
+        var currentUser = null;
+        var userProfile = null;
+        
+        function $(id) { return document.getElementById(id); }
+        
+        function showToast(icon, message, type) {
+            type = type || '';
+            var container = $('toastContainer');
+            if (!container) return;
+            var toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = '<div class="toast-icon">' + icon + '</div><div class="toast-content">' + message + '</div>';
+            container.appendChild(toast);
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                setTimeout(function() { toast.remove(); }, 400);
+            }, 3000);
+        }
         
         async function checkPremiumAccess() {
             if (!IS_PREMIUM) {
-                document.getElementById('postContent').style.display = 'block';
-                document.getElementById('premiumLock').style.display = 'none';
+                $('postContent').style.display = 'block';
+                $('premiumLock').style.display = 'none';
                 return;
             }
             
-            const { data: { session } } = await supabase.auth.getSession();
-            
-            if (session) {
-                currentUser = session.user;
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('is_subscriber, subscription_until')
-                    .eq('id', currentUser.id)
-                    .single();
-                
-                if (!error && data) {
-                    const isActive = data.subscription_until && new Date(data.subscription_until) > new Date();
-                    if (data.is_subscriber && isActive) {
-                        document.getElementById('postContent').style.display = 'block';
-                        document.getElementById('premiumLock').style.display = 'none';
-                        return;
-                    }
-                }
+            if (!supabaseClient) {
+                $('postContent').style.display = 'none';
+                $('premiumLock').style.display = 'block';
+                return;
             }
             
-            document.getElementById('postContent').style.display = 'none';
-            document.getElementById('premiumLock').style.display = 'block';
-        }
-        
-        function openSubscriptionPage() {
-            window.location.href = '/Novikon-site/#subscription';
+            try {
+                var sessionResult = await supabaseClient.auth.getSession();
+                if (sessionResult.data && sessionResult.data.session) {
+                    currentUser = sessionResult.data.session.user;
+                    var profileResult = await supabaseClient
+                        .from('profiles')
+                        .select('is_subscriber, subscription_until')
+                        .eq('id', currentUser.id)
+                        .single();
+                    
+                    if (!profileResult.error && profileResult.data) {
+                        var data = profileResult.data;
+                        var isActive = data.subscription_until && new Date(data.subscription_until) > new Date();
+                        if (data.is_subscriber && isActive) {
+                            $('postContent').style.display = 'block';
+                            $('premiumLock').style.display = 'none';
+                            return;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Premium check error:', e);
+            }
+            
+            $('postContent').style.display = 'none';
+            $('premiumLock').style.display = 'block';
         }
         
         function toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            var html = document.documentElement;
+            var currentTheme = html.getAttribute('data-theme');
+            var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            document.getElementById('themeBtn').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            $('themeBtn').textContent = newTheme === 'dark' ? '☀️' : '🌙';
         }
         
         function getFavorites() {
-            return JSON.parse(localStorage.getItem('favorites') || '[]');
+            try { return JSON.parse(localStorage.getItem('favorites') || '[]'); }
+            catch (e) { return []; }
         }
         
         function toggleFavorite() {
-            let favorites = getFavorites();
-            const index = favorites.indexOf(POST_ID);
-            const btn = document.getElementById('favBtn');
+            var favorites = getFavorites();
+            var index = favorites.indexOf(POST_ID);
+            var btn = $('favBtn');
             
             if (index > -1) {
                 favorites.splice(index, 1);
@@ -2104,47 +2236,46 @@ def generate_post_pages(posts):
             localStorage.setItem('favorites', JSON.stringify(favorites));
         }
         
-        function updateFavBtn() {
-            if (getFavorites().includes(POST_ID)) {
-                document.getElementById('favBtn').classList.add('active');
-            }
-        }
-        
         function markAsRead() {
-            let readPosts = JSON.parse(localStorage.getItem('readPosts') || '[]');
-            if (!readPosts.includes(POST_ID)) {
-                readPosts.push(POST_ID);
-                localStorage.setItem('readPosts', JSON.stringify(readPosts));
-            }
-        }
-        
-        function showToast(icon, message, type) {
-            type = type || '';
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = 'toast ' + type;
-            toast.innerHTML = '<div class="toast-icon">' + icon + '</div><div class="toast-content">' + message + '</div>';
-            container.appendChild(toast);
-            
-            setTimeout(function() {
-                toast.style.animation = 'slideInRight 0.4s ease reverse';
-                setTimeout(function() { toast.remove(); }, 400);
-            }, 3000);
+            try {
+                var readPosts = JSON.parse(localStorage.getItem('readPosts') || '[]');
+                if (readPosts.indexOf(POST_ID) === -1) {
+                    readPosts.push(POST_ID);
+                    localStorage.setItem('readPosts', JSON.stringify(readPosts));
+                }
+            } catch (e) {}
         }
         
         window.addEventListener('scroll', function() {
-            const scrollTop = window.pageYOffset;
-            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            const scrollPercent = (scrollTop / docHeight) * 100;
-            document.getElementById('progressBar').style.width = scrollPercent + '%';
+            var scrollTop = window.pageYOffset;
+            var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            var scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            var pb = $('progressBar');
+            if (pb) pb.style.width = scrollPercent + '%';
         });
         
         document.addEventListener('DOMContentLoaded', async function() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
+            var savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
-            document.getElementById('themeBtn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            $('themeBtn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
             
-            updateFavBtn();
+            var favBtn = $('favBtn');
+            if (favBtn) favBtn.addEventListener('click', toggleFavorite);
+            
+            var themeBtn = $('themeBtn');
+            if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+            
+            var openSubBtn = $('openSubBtn');
+            if (openSubBtn) {
+                openSubBtn.addEventListener('click', function() {
+                    window.location.href = '/Novikon-site/#subscription';
+                });
+            }
+            
+            if (getFavorites().indexOf(POST_ID) > -1) {
+                $('favBtn').classList.add('active');
+            }
+            
             await checkPremiumAccess();
             markAsRead();
             
@@ -2154,11 +2285,11 @@ def generate_post_pages(posts):
                 document.body.style.opacity = '1';
             }, 50);
         });
+    })();
     </script>
 </body>
 </html>'''
             
-            # Подставляем значения
             html_output = template.replace('__PAGE_TITLE__', html_module.escape(title))
             html_output = html_output.replace('__LOGO__', LOGO_FILE)
             html_output = html_output.replace('__DATE__', date_str)
