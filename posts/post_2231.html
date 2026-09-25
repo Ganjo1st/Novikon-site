@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Энергетическая ловушка Европы: от «Северного потока» до Ормузского пролива - Новикон</title>
     <link rel="icon" href="../logo_H.png" type="image/png">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg: #f5f5f5;
@@ -86,6 +85,7 @@
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s;
+            font-family: inherit;
         }
         .control-btn:hover {
             background: rgba(255,255,255,0.3);
@@ -103,7 +103,6 @@
             margin: 30px 0;
             box-shadow: var(--shadow);
             transition: background 0.4s;
-            animation: fadeIn 0.5s ease;
         }
         .post-date {
             color: #888;
@@ -169,6 +168,7 @@
             font-weight: 700;
             cursor: pointer;
             transition: transform 0.3s;
+            font-family: inherit;
         }
         .premium-lock button:hover {
             transform: scale(1.05);
@@ -181,10 +181,6 @@
             border-top: 1px solid var(--border);
             margin-top: 20px;
             transition: border-color 0.4s;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
         }
         .progress-bar {
             position: fixed;
@@ -260,8 +256,8 @@
                     <span class="site-title">Новикон</span>
                 </a>
                 <div class="header-btns">
-                    <button class="control-btn favorite" id="favBtn" onclick="toggleFavorite()" title="В избранное">⭐</button>
-                    <button class="control-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+                    <button type="button" class="control-btn favorite" id="favBtn" title="В избранное">⭐</button>
+                    <button type="button" class="control-btn" id="themeBtn">🌙</button>
                 </div>
             </div>
         </div>
@@ -277,9 +273,9 @@
             <div id="premiumLock" class="premium-lock" style="display:none;">
                 <h2>🔒 Премиум контент</h2>
                 <p>Эта статья доступна только подписчикам Новикон</p>
-                <button onclick="openSubscriptionPage()">Оформить подписку за 149 ₽/мес</button>
+                <button type="button" id="openSubBtn">Оформить подписку за 149 ₽/мес</button>
             </div>
-            <a href="/Novikon-site/" class="back-button" data-i18n="back">← На главную</a>
+            <a href="/Novikon-site/" class="back-button">← На главную</a>
         </div>
     </div>
     <div class="footer">
@@ -291,78 +287,100 @@
     <div class="toast-container" id="toastContainer"></div>
     
     <script>
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    (function() {
+        'use strict';
         
-        const POST_ID = 2231;
-        const IS_PREMIUM = true;
-        const ORIGINAL_TITLE = "Энергетическая ловушка Европы: от «Северного потока» до Ормузского пролива";
-        const ORIGINAL_TEXT = "Крупный кризис топливной и энергетической безопасности снова поражает Европу. Президент Франции Эммануэль Макрон предупредил о новом нефтяном шоке и призвал Европейский союз (ЕС) принять «чрезвычайные меры» по мере распространения дефицита топлива и ужесточения глобальных рынков. В письме президенту Еврокомиссии Урсуле фон дер Ляйен Макрон указывает на эффективное закрытие Ормузского пролива и нападения на ближневосточную энергетическую инфраструктуру. Он говорит, что мировые запасы нефти уже упали более чем на 500 миллионов баррелей. Ближний Восток поставляет 36% реактивного топлива ЕС и 18% импорта дизельного топлива,в то время как 14% французских автозаправочных станций в настоящее время сталкиваются с нехваткой или почти нехваткой.";
+        var SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        var SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        var supabaseClient = null;
         
-        let currentUser = null;
-        let userProfile = null;
-        let currentLang = localStorage.getItem('lang') || 'ru';
+        if (window.supabase && SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
         
-        const translations = {
-            ru: { back: '← На главную', theme: 'Тема' },
-            en: { back: '← Back to home', theme: 'Theme' },
-            de: { back: '← Zurück zur Startseite', theme: 'Thema' },
-            es: { back: '← Volver al inicio', theme: 'Tema' }
-        };
+        var POST_ID = 2231;
+        var IS_PREMIUM = true;
+        var ORIGINAL_TITLE = "Энергетическая ловушка Европы: от «Северного потока» до Ормузского пролива";
+        var ORIGINAL_TEXT = "Крупный кризис топливной и энергетической безопасности снова поражает Европу. Президент Франции Эммануэль Макрон предупредил о новом нефтяном шоке и призвал Европейский союз (ЕС) принять «чрезвычайные меры» по мере распространения дефицита топлива и ужесточения глобальных рынков. В письме президенту Еврокомиссии Урсуле фон дер Ляйен Макрон указывает на эффективное закрытие Ормузского пролива и нападения на ближневосточную энергетическую инфраструктуру. Он говорит, что мировые запасы нефти уже упали более чем на 500 миллионов баррелей. Ближний Восток поставляет 36% реактивного топлива ЕС и 18% импорта дизельного топлива,в то время как 14% французских автозаправочных станций в настоящее время сталкиваются с нехваткой или почти нехваткой.";
+        
+        var currentUser = null;
+        var userProfile = null;
+        
+        function $(id) { return document.getElementById(id); }
+        
+        function showToast(icon, message, type) {
+            type = type || '';
+            var container = $('toastContainer');
+            if (!container) return;
+            var toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = '<div class="toast-icon">' + icon + '</div><div class="toast-content">' + message + '</div>';
+            container.appendChild(toast);
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                setTimeout(function() { toast.remove(); }, 400);
+            }, 3000);
+        }
         
         async function checkPremiumAccess() {
             if (!IS_PREMIUM) {
-                document.getElementById('postContent').style.display = 'block';
-                document.getElementById('premiumLock').style.display = 'none';
+                $('postContent').style.display = 'block';
+                $('premiumLock').style.display = 'none';
                 return;
             }
             
-            const { data: { session } } = await supabase.auth.getSession();
-            
-            if (session) {
-                currentUser = session.user;
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('is_subscriber, subscription_until')
-                    .eq('id', currentUser.id)
-                    .single();
-                
-                if (!error && data) {
-                    const isActive = data.subscription_until && new Date(data.subscription_until) > new Date();
-                    if (data.is_subscriber && isActive) {
-                        document.getElementById('postContent').style.display = 'block';
-                        document.getElementById('premiumLock').style.display = 'none';
-                        return;
-                    }
-                }
+            if (!supabaseClient) {
+                $('postContent').style.display = 'none';
+                $('premiumLock').style.display = 'block';
+                return;
             }
             
-            document.getElementById('postContent').style.display = 'none';
-            document.getElementById('premiumLock').style.display = 'block';
-        }
-        
-        function openSubscriptionPage() {
-            window.location.href = '/Novikon-site/#subscription';
+            try {
+                var sessionResult = await supabaseClient.auth.getSession();
+                if (sessionResult.data && sessionResult.data.session) {
+                    currentUser = sessionResult.data.session.user;
+                    var profileResult = await supabaseClient
+                        .from('profiles')
+                        .select('is_subscriber, subscription_until')
+                        .eq('id', currentUser.id)
+                        .single();
+                    
+                    if (!profileResult.error && profileResult.data) {
+                        var data = profileResult.data;
+                        var isActive = data.subscription_until && new Date(data.subscription_until) > new Date();
+                        if (data.is_subscriber && isActive) {
+                            $('postContent').style.display = 'block';
+                            $('premiumLock').style.display = 'none';
+                            return;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Premium check error:', e);
+            }
+            
+            $('postContent').style.display = 'none';
+            $('premiumLock').style.display = 'block';
         }
         
         function toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            var html = document.documentElement;
+            var currentTheme = html.getAttribute('data-theme');
+            var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            document.getElementById('themeBtn').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            $('themeBtn').textContent = newTheme === 'dark' ? '☀️' : '🌙';
         }
         
         function getFavorites() {
-            return JSON.parse(localStorage.getItem('favorites') || '[]');
+            try { return JSON.parse(localStorage.getItem('favorites') || '[]'); }
+            catch (e) { return []; }
         }
         
         function toggleFavorite() {
-            let favorites = getFavorites();
-            const index = favorites.indexOf(POST_ID);
-            const btn = document.getElementById('favBtn');
+            var favorites = getFavorites();
+            var index = favorites.indexOf(POST_ID);
+            var btn = $('favBtn');
             
             if (index > -1) {
                 favorites.splice(index, 1);
@@ -377,47 +395,46 @@
             localStorage.setItem('favorites', JSON.stringify(favorites));
         }
         
-        function updateFavBtn() {
-            if (getFavorites().includes(POST_ID)) {
-                document.getElementById('favBtn').classList.add('active');
-            }
-        }
-        
         function markAsRead() {
-            let readPosts = JSON.parse(localStorage.getItem('readPosts') || '[]');
-            if (!readPosts.includes(POST_ID)) {
-                readPosts.push(POST_ID);
-                localStorage.setItem('readPosts', JSON.stringify(readPosts));
-            }
-        }
-        
-        function showToast(icon, message, type) {
-            type = type || '';
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = 'toast ' + type;
-            toast.innerHTML = '<div class="toast-icon">' + icon + '</div><div class="toast-content">' + message + '</div>';
-            container.appendChild(toast);
-            
-            setTimeout(function() {
-                toast.style.animation = 'slideInRight 0.4s ease reverse';
-                setTimeout(function() { toast.remove(); }, 400);
-            }, 3000);
+            try {
+                var readPosts = JSON.parse(localStorage.getItem('readPosts') || '[]');
+                if (readPosts.indexOf(POST_ID) === -1) {
+                    readPosts.push(POST_ID);
+                    localStorage.setItem('readPosts', JSON.stringify(readPosts));
+                }
+            } catch (e) {}
         }
         
         window.addEventListener('scroll', function() {
-            const scrollTop = window.pageYOffset;
-            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            const scrollPercent = (scrollTop / docHeight) * 100;
-            document.getElementById('progressBar').style.width = scrollPercent + '%';
+            var scrollTop = window.pageYOffset;
+            var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            var scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            var pb = $('progressBar');
+            if (pb) pb.style.width = scrollPercent + '%';
         });
         
         document.addEventListener('DOMContentLoaded', async function() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
+            var savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
-            document.getElementById('themeBtn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            $('themeBtn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
             
-            updateFavBtn();
+            var favBtn = $('favBtn');
+            if (favBtn) favBtn.addEventListener('click', toggleFavorite);
+            
+            var themeBtn = $('themeBtn');
+            if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+            
+            var openSubBtn = $('openSubBtn');
+            if (openSubBtn) {
+                openSubBtn.addEventListener('click', function() {
+                    window.location.href = '/Novikon-site/#subscription';
+                });
+            }
+            
+            if (getFavorites().indexOf(POST_ID) > -1) {
+                $('favBtn').classList.add('active');
+            }
+            
             await checkPremiumAccess();
             markAsRead();
             
@@ -427,6 +444,7 @@
                 document.body.style.opacity = '1';
             }, 50);
         });
+    })();
     </script>
 </body>
 </html>
