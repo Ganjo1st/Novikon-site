@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Стоимость морских контейнерных перевозок резко возросла, превысив кризисные максимумы эпохи COVID - Новикон</title>
     <link rel="icon" href="../logo_H.png" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {{
+        :root {
             --bg: #f5f5f5;
             --text: #333;
             --card-bg: white;
@@ -15,8 +16,8 @@
             --border: #e0e0e0;
             --accent: #667eea;
             --favorite: #ffc107;
-        }}
-        [data-theme="dark"] {{
+        }
+        [data-theme="dark"] {
             --bg: #1a1a2e;
             --text: #e0e0e0;
             --card-bg: #16213e;
@@ -24,16 +25,16 @@
             --shadow: 0 4px 15px rgba(0,0,0,0.3);
             --border: #2a2a4a;
             --accent: #7b8cde;
-        }}
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.8;
             transition: background 0.4s, color 0.4s;
-        }}
-        header {{
+        }
+        header {
             background: var(--header-bg);
             color: white;
             padding: 20px 0;
@@ -42,41 +43,41 @@
             position: sticky;
             top: 0;
             z-index: 100;
-        }}
-        .container {{
+        }
+        .container {
             max-width: 800px;
             margin: 0 auto;
             padding: 0 20px;
-        }}
-        .header-content {{
+        }
+        .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 10px;
-        }}
-        .logo-link {{
+        }
+        .logo-link {
             display: flex;
             align-items: center;
             gap: 12px;
             color: white;
             text-decoration: none;
-        }}
-        .logo-link img {{
+        }
+        .logo-link img {
             height: 40px;
             width: auto;
             border-radius: 6px;
-        }}
-        .logo-link .site-title {{
+        }
+        .logo-link .site-title {
             font-size: 22px;
             font-weight: 700;
-        }}
-        .header-btns {{
+        }
+        .header-btns {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
-        }}
-        .control-btn {{
+        }
+        .control-btn {
             background: rgba(255,255,255,0.2);
             border: 2px solid rgba(255,255,255,0.3);
             color: white;
@@ -85,54 +86,17 @@
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s;
-        }}
-        .control-btn:hover {{
+        }
+        .control-btn:hover {
             background: rgba(255,255,255,0.3);
             transform: scale(1.05);
-        }}
-        .control-btn.favorite.active {{
+        }
+        .control-btn.favorite.active {
             background: var(--favorite);
             border-color: var(--favorite);
             color: white;
-        }}
-        .lang-dropdown {{
-            position: relative;
-            display: inline-block;
-        }}
-        .lang-menu {{
-            display: none;
-            position: absolute;
-            top: 100%;
-            right: 0;
-            margin-top: 8px;
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            overflow: hidden;
-            min-width: 150px;
-            z-index: 200;
-        }}
-        .lang-menu.active {{
-            display: block;
-        }}
-        .lang-option {{
-            padding: 12px 20px;
-            cursor: pointer;
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 14px;
-            color: var(--text);
-        }}
-        .lang-option:hover {{
-            background: rgba(102, 126, 234, 0.1);
-        }}
-        .lang-option.active {{
-            background: rgba(102, 126, 234, 0.15);
-            font-weight: 600;
-        }}
-        .post-content {{
+        }
+        .post-content {
             background: var(--card-bg);
             border-radius: 12px;
             padding: 40px;
@@ -140,33 +104,33 @@
             box-shadow: var(--shadow);
             transition: background 0.4s;
             animation: fadeIn 0.5s ease;
-        }}
-        .post-date {{
+        }
+        .post-date {
             color: #888;
             font-size: 14px;
             margin-bottom: 15px;
-        }}
-        .post-title {{
+        }
+        .post-title {
             font-size: 28px;
             font-weight: 700;
             margin-bottom: 20px;
             line-height: 1.3;
-        }}
-        .post-text {{
+        }
+        .post-text {
             font-size: 17px;
             line-height: 1.8;
-        }}
-        .post-text a {{
+        }
+        .post-text a {
             color: var(--accent);
             text-decoration: none;
-        }}
-        .post-text img {{
+        }
+        .post-text img {
             display: block;
             max-width: 100%;
             border-radius: 12px;
             margin: 20px auto;
-        }}
-        .back-button {{
+        }
+        .back-button {
             display: inline-block;
             margin-top: 30px;
             padding: 12px 24px;
@@ -176,11 +140,40 @@
             border-radius: 8px;
             font-weight: 600;
             transition: transform 0.3s;
-        }}
-        .back-button:hover {{
+        }
+        .back-button:hover {
             transform: scale(1.05);
-        }}
-        .footer {{
+        }
+        .premium-lock {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, rgba(246,211,101,0.1) 0%, rgba(253,160,133,0.1) 100%);
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        .premium-lock h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        .premium-lock p {
+            color: #888;
+            margin-bottom: 20px;
+        }
+        .premium-lock button {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .premium-lock button:hover {
+            transform: scale(1.05);
+        }
+        .footer {
             text-align: center;
             padding: 30px 0;
             color: #888;
@@ -188,14 +181,12 @@
             border-top: 1px solid var(--border);
             margin-top: 20px;
             transition: border-color 0.4s;
-        }}
-        
-        @keyframes fadeIn {{
-            from {{ opacity: 0; transform: translateY(20px); }}
-            to {{ opacity: 1; transform: translateY(0); }}
-        }}
-        
-        .progress-bar {{
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .progress-bar {
             position: fixed;
             top: 0;
             left: 0;
@@ -204,9 +195,8 @@
             width: 0%;
             z-index: 9999;
             transition: width 0.3s;
-        }}
-        
-        .toast-container {{
+        }
+        .toast-container {
             position: fixed;
             bottom: 20px;
             right: 20px;
@@ -214,8 +204,8 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-        }}
-        .toast {{
+        }
+        .toast {
             background: var(--card-bg);
             color: var(--text);
             padding: 15px 20px;
@@ -227,38 +217,36 @@
             display: flex;
             align-items: center;
             gap: 12px;
-        }}
-        .toast.favorite {{
+        }
+        .toast.favorite {
             border-left-color: var(--favorite);
-        }}
-        .toast-icon {{
+        }
+        .toast-icon {
             font-size: 24px;
-        }}
-        .toast-content {{
+        }
+        .toast-content {
             flex: 1;
             font-size: 14px;
-        }}
-        
-        @keyframes slideInRight {{
-            from {{ opacity: 0; transform: translateX(100px); }}
-            to {{ opacity: 1; transform: translateX(0); }}
-        }}
-        
-        @media (max-width: 768px) {{
-            .post-content {{ padding: 20px; }}
-            .post-title {{ font-size: 22px; }}
-            .header-content {{
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @media (max-width: 768px) {
+            .post-content { padding: 20px; }
+            .post-title { font-size: 22px; }
+            .header-content {
                 flex-direction: column;
                 gap: 10px;
                 text-align: center;
-            }}
-            .logo-link img {{
+            }
+            .logo-link img {
                 height: 32px;
-            }}
-            .logo-link .site-title {{
+            }
+            .logo-link .site-title {
                 font-size: 18px;
-            }}
-        }}
+            }
+        }
     </style>
 </head>
 <body>
@@ -273,17 +261,6 @@
                 </a>
                 <div class="header-btns">
                     <button class="control-btn favorite" id="favBtn" onclick="toggleFavorite()" title="В избранное">⭐</button>
-                    <div class="lang-dropdown">
-                        <button class="control-btn" onclick="toggleLangMenu()" title="Язык">
-                            🌐 <span id="currentLang">RU</span>
-                        </button>
-                        <div class="lang-menu" id="langMenu">
-                            <div class="lang-option active" onclick="setLanguage('ru')">🇷🇺 Русский</div>
-                            <div class="lang-option" onclick="setLanguage('en')">🇬🇧 English</div>
-                            <div class="lang-option" onclick="setLanguage('de')">🇩🇪 Deutsch</div>
-                            <div class="lang-option" onclick="setLanguage('es')">🇪🇸 Español</div>
-                        </div>
-                    </div>
                     <button class="control-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
                 </div>
             </div>
@@ -291,10 +268,17 @@
     </header>
     <div class="container">
         <div class="post-content">
-            <div class="post-date">📅 {date_str}</div>
-            <h1 class="post-title" id="postTitle">{html_module.escape(title)}</h1>
-            {img_html}
-            <div class="post-text" id="postText">{full_text}</div>
+            <div class="post-date">📅 20.09.2026 19:48 ⭐ PREMIUM</div>
+            <h1 class="post-title" id="postTitle">Стоимость морских контейнерных перевозок резко возросла, превысив кризисные максимумы эпохи COVID</h1>
+            <div id="postContent">
+                <img src="../assets/post_2094.jpg" alt="News image" style="display: block; max-width: 100%; border-radius: 12px; margin: 20px auto;">
+                <div class="post-text" id="postText">Усиление шока цен на морские перевозки возрождает опасения по поводу сбоев в цепочках поставок, наблюдавшихся во время пандемии и кризиса на Красном море в 2024 году.<br>Если продолжится осенью и зимой, более высокие транспортные расходы могут усилить инфляционное давление, снизить прибыль корпораций и ослабить экономический рост. В совокупности эти факторы повышают риск экономического шока за рубежом, особенно если цены на дизельное топливо останутся высокими.<br>Аналитик розничной торговли Bank of America Лоррейн Хатчинсон предупредила в субботней заметке, что ставки океанских фрахтовых перевозок подскочили на 201%, приблизившись к пику в 250%, наблюдавшемуся во время нехватки контейнеровозов в 2021 году. Тем временем средние цены на дизельное топливо по стране AAA составляют около 6,50 долларов за галлон, что снижает прибыль дальнобойщиков и повышает тарифы на автомагистралях страны.</div>
+            </div>
+            <div id="premiumLock" class="premium-lock" style="display:none;">
+                <h2>🔒 Премиум контент</h2>
+                <p>Эта статья доступна только подписчикам Новикон</p>
+                <button onclick="openSubscriptionPage()">Оформить подписку за 149 ₽/мес</button>
+            </div>
             <a href="/Novikon-site/" class="back-button" data-i18n="back">← На главную</a>
         </div>
     </div>
@@ -307,222 +291,142 @@
     <div class="toast-container" id="toastContainer"></div>
     
     <script>
-        const POST_ID = {post["id"]};
-        const ORIGINAL_TITLE = {title_json};
-        const ORIGINAL_TEXT = {full_text_json};
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        const translations = {{
-            ru: {{ back: '← На главную', theme: 'Тема' }},
-            en: {{ back: '← Back to home', theme: 'Theme' }},
-            de: {{ back: '← Zurück zur Startseite', theme: 'Thema' }},
-            es: {{ back: '← Volver al inicio', theme: 'Tema' }}
-        }};
+        const POST_ID = 2094;
+        const IS_PREMIUM = true;
+        const ORIGINAL_TITLE = "Стоимость морских контейнерных перевозок резко возросла, превысив кризисные максимумы эпохи COVID";
+        const ORIGINAL_TEXT = "Усиление шока цен на морские перевозки возрождает опасения по поводу сбоев в цепочках поставок, наблюдавшихся во время пандемии и кризиса на Красном море в 2024 году.<br>Если продолжится осенью и зимой, более высокие транспортные расходы могут усилить инфляционное давление, снизить прибыль корпораций и ослабить экономический рост. В совокупности эти факторы повышают риск экономического шока за рубежом, особенно если цены на дизельное топливо останутся высокими.<br>Аналитик розничной торговли Bank of America Лоррейн Хатчинсон предупредила в субботней заметке, что ставки океанских фрахтовых перевозок подскочили на 201%, приблизившись к пику в 250%, наблюдавшемуся во время нехватки контейнеровозов в 2021 году. Тем временем средние цены на дизельное топливо по стране AAA составляют около 6,50 долларов за галлон, что снижает прибыль дальнобойщиков и повышает тарифы на автомагистралях страны.";
         
+        let currentUser = null;
+        let userProfile = null;
         let currentLang = localStorage.getItem('lang') || 'ru';
         
-        // ============ ПЕРЕВОД СТАТЬИ ============
-        async function translateText(text, targetLang) {{
-            if (targetLang === 'ru') return text;
-            if (!text || text.trim().length === 0) return text;
-            
-            try {{
-                const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ru&tl=' + targetLang + '&dt=t&q=' + encodeURIComponent(text.substring(0, 4500));
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                if (data && data[0]) {{
-                    return data[0].map(item => item[0]).join('');
-                }}
-                return text;
-            }} catch (e) {{
-                console.warn('Ошибка перевода:', e);
-                return text;
-            }}
-        }}
+        const translations = {
+            ru: { back: '← На главную', theme: 'Тема' },
+            en: { back: '← Back to home', theme: 'Theme' },
+            de: { back: '← Zurück zur Startseite', theme: 'Thema' },
+            es: { back: '← Volver al inicio', theme: 'Tema' }
+        };
         
-        async function translatePost(targetLang) {{
-            const titleEl = document.getElementById('postTitle');
-            const textEl = document.getElementById('postText');
-            
-            if (targetLang === 'ru') {{
-                titleEl.textContent = ORIGINAL_TITLE;
-                textEl.innerHTML = ORIGINAL_TEXT;
+        async function checkPremiumAccess() {
+            if (!IS_PREMIUM) {
+                document.getElementById('postContent').style.display = 'block';
+                document.getElementById('premiumLock').style.display = 'none';
                 return;
-            }}
+            }
             
-            showToast('🌐', 'Перевод статьи...');
+            const { data: { session } } = await supabase.auth.getSession();
             
-            // Переводим заголовок
-            const translatedTitle = await translateText(ORIGINAL_TITLE, targetLang);
-            titleEl.textContent = translatedTitle;
+            if (session) {
+                currentUser = session.user;
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('is_subscriber, subscription_until')
+                    .eq('id', currentUser.id)
+                    .single();
+                
+                if (!error && data) {
+                    const isActive = data.subscription_until && new Date(data.subscription_until) > new Date();
+                    if (data.is_subscriber && isActive) {
+                        document.getElementById('postContent').style.display = 'block';
+                        document.getElementById('premiumLock').style.display = 'none';
+                        return;
+                    }
+                }
+            }
             
-            // Переводим основной текст (сохраняя теги <br>)
-            const textParts = ORIGINAL_TEXT.split('<br>');
-            const translatedParts = [];
-            
-            for (const part of textParts) {{
-                if (part.trim()) {{
-                    const translated = await translateText(part, targetLang);
-                    translatedParts.push(translated);
-                    await new Promise(r => setTimeout(r, 50));
-                }} else {{
-                    translatedParts.push(part);
-                }}
-            }}
-            
-            textEl.innerHTML = translatedParts.join('<br>');
-            
-            showToast('✅', 'Перевод завершён!');
-        }}
+            document.getElementById('postContent').style.display = 'none';
+            document.getElementById('premiumLock').style.display = 'block';
+        }
         
-        // ============ ЯЗЫК ============
-        function toggleLangMenu() {{
-            document.getElementById('langMenu').classList.toggle('active');
-        }}
+        function openSubscriptionPage() {
+            window.location.href = '/Novikon-site/#subscription';
+        }
         
-        async function setLanguage(lang) {{
-            currentLang = lang;
-            localStorage.setItem('lang', lang);
-            
-            document.querySelectorAll('.lang-option').forEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('currentLang').textContent = lang.toUpperCase();
-            
-            // Обновляем переводы интерфейса
-            document.querySelectorAll('[data-i18n]').forEach(el => {{
-                const key = el.getAttribute('data-i18n');
-                if (translations[lang][key]) {{
-                    el.textContent = translations[lang][key];
-                }}
-            }});
-            
-            updateThemeBtn();
-            document.getElementById('langMenu').classList.remove('active');
-            
-            // Переводим статью
-            await translatePost(lang);
-        }}
-        
-        // ============ ТЕМА ============
-        function toggleTheme() {{
+        function toggleTheme() {
             const html = document.documentElement;
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            updateThemeBtn();
-        }}
+            document.getElementById('themeBtn').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        }
         
-        function updateThemeBtn() {{
-            document.getElementById('themeBtn').textContent = 
-                document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
-        }}
-        
-        // ============ ИЗБРАННОЕ ============
-        function getFavorites() {{
+        function getFavorites() {
             return JSON.parse(localStorage.getItem('favorites') || '[]');
-        }}
+        }
         
-        function toggleFavorite() {{
+        function toggleFavorite() {
             let favorites = getFavorites();
             const index = favorites.indexOf(POST_ID);
             const btn = document.getElementById('favBtn');
             
-            if (index > -1) {{
+            if (index > -1) {
                 favorites.splice(index, 1);
                 btn.classList.remove('active');
                 showToast('💔', 'Удалено из избранного');
-            }} else {{
+            } else {
                 favorites.push(POST_ID);
                 btn.classList.add('active');
                 showToast('⭐', 'Добавлено в избранное', 'favorite');
-            }}
+            }
             
             localStorage.setItem('favorites', JSON.stringify(favorites));
-        }}
+        }
         
-        function updateFavBtn() {{
-            if (getFavorites().includes(POST_ID)) {{
+        function updateFavBtn() {
+            if (getFavorites().includes(POST_ID)) {
                 document.getElementById('favBtn').classList.add('active');
-            }}
-        }}
+            }
+        }
         
-        // ============ ПРОЧИТАННЫЕ ============
-        function markAsRead() {{
+        function markAsRead() {
             let readPosts = JSON.parse(localStorage.getItem('readPosts') || '[]');
-            if (!readPosts.includes(POST_ID)) {{
+            if (!readPosts.includes(POST_ID)) {
                 readPosts.push(POST_ID);
                 localStorage.setItem('readPosts', JSON.stringify(readPosts));
-            }}
-        }}
+            }
+        }
         
-        // ============ УВЕДОМЛЕНИЯ ============
-        function showToast(icon, message, type = '') {{
+        function showToast(icon, message, type) {
+            type = type || '';
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = 'toast ' + type;
-            toast.innerHTML = `<div class="toast-icon">${{icon}}</div><div class="toast-content">${{message}}</div>`;
+            toast.innerHTML = '<div class="toast-icon">' + icon + '</div><div class="toast-content">' + message + '</div>';
             container.appendChild(toast);
             
-            setTimeout(() => {{
+            setTimeout(function() {
                 toast.style.animation = 'slideInRight 0.4s ease reverse';
-                setTimeout(() => toast.remove(), 400);
-            }}, 3000);
-        }}
+                setTimeout(function() { toast.remove(); }, 400);
+            }, 3000);
+        }
         
-        // ============ ПРОГРЕСС-БАР ============
-        window.addEventListener('scroll', () => {{
+        window.addEventListener('scroll', function() {
             const scrollTop = window.pageYOffset;
             const docHeight = document.documentElement.scrollHeight - window.innerHeight;
             const scrollPercent = (scrollTop / docHeight) * 100;
             document.getElementById('progressBar').style.width = scrollPercent + '%';
-        }});
+        });
         
-        // ============ ЗАГРУЗКА ============
-        document.addEventListener('DOMContentLoaded', async function() {{
+        document.addEventListener('DOMContentLoaded', async function() {
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
-            updateThemeBtn();
-            
-            document.getElementById('currentLang').textContent = currentLang.toUpperCase();
-            document.querySelectorAll('.lang-option').forEach(el => {{
-                el.classList.remove('active');
-                if (el.textContent.includes(currentLang === 'ru' ? 'Русский' : currentLang === 'en' ? 'English' : currentLang === 'de' ? 'Deutsch' : 'Español')) {{
-                    el.classList.add('active');
-                }}
-            }});
-            
-            // Обновляем переводы интерфейса
-            document.querySelectorAll('[data-i18n]').forEach(el => {{
-                const key = el.getAttribute('data-i18n');
-                if (translations[currentLang][key]) {{
-                    el.textContent = translations[currentLang][key];
-                }}
-            }});
+            document.getElementById('themeBtn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
             
             updateFavBtn();
+            await checkPremiumAccess();
             markAsRead();
             
-            // Переводим статью если нужно
-            if (currentLang !== 'ru') {{
-                setTimeout(() => translatePost(currentLang), 500);
-            }}
-            
-            // Анимация перехода
             document.body.style.opacity = '0';
             document.body.style.transition = 'opacity 0.4s';
-            setTimeout(() => {{
+            setTimeout(function() {
                 document.body.style.opacity = '1';
-            }}, 50);
-            
-            // Закрываем меню языка при клике вне
-            document.addEventListener('click', function(e) {{
-                const langDropdown = document.querySelector('.lang-dropdown');
-                if (langDropdown && !langDropdown.contains(e.target)) {{
-                    document.getElementById('langMenu').classList.remove('active');
-                }}
-            }});
-        }});
+            }, 50);
+        });
     </script>
 </body>
 </html>

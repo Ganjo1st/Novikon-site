@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Эскобар: Затишье перед решающим столкновением - Новикон</title>
+    <link rel="icon" href="../logo_H.png" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg: #f5f5f5;
+            --text: #333;
+            --card-bg: white;
+            --header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow: 0 4px 15px rgba(0,0,0,0.08);
+            --border: #e0e0e0;
+            --accent: #667eea;
+            --favorite: #ffc107;
+        }
+        [data-theme="dark"] {
+            --bg: #1a1a2e;
+            --text: #e0e0e0;
+            --card-bg: #16213e;
+            --header-bg: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+            --shadow: 0 4px 15px rgba(0,0,0,0.3);
+            --border: #2a2a4a;
+            --accent: #7b8cde;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            transition: background 0.4s, color 0.4s;
+        }
+        header {
+            background: var(--header-bg);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: background 0.4s;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .logo-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            text-decoration: none;
+        }
+        .logo-link img {
+            height: 40px;
+            width: auto;
+            border-radius: 6px;
+        }
+        .logo-link .site-title {
+            font-size: 22px;
+            font-weight: 700;
+        }
+        .header-btns {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .control-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .control-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+        .control-btn.favorite.active {
+            background: var(--favorite);
+            border-color: var(--favorite);
+            color: white;
+        }
+        .post-content {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 40px;
+            margin: 30px 0;
+            box-shadow: var(--shadow);
+            transition: background 0.4s;
+            animation: fadeIn 0.5s ease;
+        }
+        .post-date {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .post-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }
+        .post-text {
+            font-size: 17px;
+            line-height: 1.8;
+        }
+        .post-text a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .post-text img {
+            display: block;
+            max-width: 100%;
+            border-radius: 12px;
+            margin: 20px auto;
+        }
+        .back-button {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 24px;
+            background: var(--header-bg);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.3s;
+        }
+        .back-button:hover {
+            transform: scale(1.05);
+        }
+        .premium-lock {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, rgba(246,211,101,0.1) 0%, rgba(253,160,133,0.1) 100%);
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        .premium-lock h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        .premium-lock p {
+            color: #888;
+            margin-bottom: 20px;
+        }
+        .premium-lock button {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .premium-lock button:hover {
+            transform: scale(1.05);
+        }
+        .footer {
+            text-align: center;
+            padding: 30px 0;
+            color: #888;
+            font-size: 14px;
+            border-top: 1px solid var(--border);
+            margin-top: 20px;
+            transition: border-color 0.4s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 9999;
+            transition: width 0.3s;
+        }
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: var(--card-bg);
+            color: var(--text);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            border-left: 4px solid var(--accent);
+            min-width: 280px;
+            animation: slideInRight 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .toast.favorite {
+            border-left-color: var(--favorite);
+        }
+        .toast-icon {
+            font-size: 24px;
+        }
+        .toast-content {
+            flex: 1;
+            font-size: 14px;
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @media (max-width: 768px) {
+            .post-content { padding: 20px; }
+            .post-title { font-size: 22px; }
+            .header-content {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            .logo-link img {
+                height: 32px;
+            }
+            .logo-link .site-title {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="/Novikon-site/" class="logo-link">
+                    <img src="../logo_H.png" alt="Новикон">
+                    <span class="site-title">Новикон</span>
+                </a>
+                <div class="header-btns">
+                    <button class="control-btn favorite" id="favBtn" onclick="toggleFavorite()" title="В избранное">⭐</button>
+                    <button class="control-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="container">
+        <div class="post-content">
+            <div class="post-date">📅 24.09.2026 10:19 ⭐ PREMIUM</div>
+            <h1 class="post-title" id="postTitle">Эскобар: Затишье перед решающим столкновением</h1>
+            <div id="postContent">
+                <img src="../assets/post_2226.jpg" alt="News image" style="display: block; max-width: 100%; border-radius: 12px; margin: 20px auto;">
+                <div class="post-text" id="postText">The only art that the Prince must totally master it's the art of war The Supreme Warrior Wins Without Fighting This was supposed to be the calm before the storm.Where the Epstein Syndicate would schmooze the Global South gathered in Нью Йорке for the - comatose - UN General Assembly and seduce them with assorted "gifts", wooing them away from the impending Great Debacle anddeflecting attention from the breathtaking speed of the collapse of Pax Americana. Cut to Wednesday, when we have Day One of the UN General Assembly Debate, with Neo-Crassus/Neo-Caligula/Goldfinger/Psycho Toddler supposed to deliver a speech. On the same day, he meets with the Gulf petro-sheiks for what could become some sort of suicidal pact. And then on Friday, Xi Dada in person comes to the U.S. on an official state visit. (Invisible) sparks are guaranteed to fly.</div>
+            </div>
+            <div id="premiumLock" class="premium-lock" style="display:none;">
+                <h2>🔒 Премиум контент</h2>
+                <p>Эта статья доступна только подписчикам Новикон</p>
+                <button onclick="openSubscriptionPage()">Оформить подписку за 149 ₽/мес</button>
+            </div>
+            <a href="/Novikon-site/" class="back-button" data-i18n="back">← На главную</a>
+        </div>
+    </div>
+    <div class="footer">
+        <div class="container">
+            <p>© 2026 Новикон</p>
+        </div>
+    </div>
+    
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <script>
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        const POST_ID = 2226;
+        const IS_PREMIUM = true;
+        const ORIGINAL_TITLE = "Эскобар: Затишье перед решающим столкновением";
+        const ORIGINAL_TEXT = "The only art that the Prince must totally master it's the art of war The Supreme Warrior Wins Without Fighting This was supposed to be the calm before the storm.Where the Epstein Syndicate would schmooze the Global South gathered in Нью Йорке for the - comatose - UN General Assembly and seduce them with assorted \"gifts\", wooing them away from the impending Great Debacle anddeflecting attention from the breathtaking speed of the collapse of Pax Americana. Cut to Wednesday, when we have Day One of the UN General Assembly Debate, with Neo-Crassus/Neo-Caligula/Goldfinger/Psycho Toddler supposed to deliver a speech. On the same day, he meets with the Gulf petro-sheiks for what could become some sort of suicidal pact. And then on Friday, Xi Dada in person comes to the U.S. on an official state visit. (Invisible) sparks are guaranteed to fly.";
+        
+        let currentUser = null;
+        let userProfile = null;
+        let currentLang = localStorage.getItem('lang') || 'ru';
+        
+        const translations = {
+            ru: { back: '← На главную', theme: 'Тема' },
+            en: { back: '← Back to home', theme: 'Theme' },
+            de: { back: '← Zurück zur Startseite', theme: 'Thema' },
+            es: { back: '← Volver al inicio', theme: 'Tema' }
+        };
+        
+        async function checkPremiumAccess() {
+            if (!IS_PREMIUM) {
+                document.getElementById('postContent').style.display = 'block';
+                document.getElementById('premiumLock').style.display = 'none';
+                return;
+            }
+            
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session) {
+                currentUser = session.user;
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('is_subscriber, subscription_until')
+                    .eq('id', currentUser.id)
+                    .single();
+                
+                if (!error && data) {
+                    const isActive = data.subscription_until && new Date(data.subscription_until) > new Date();
+                    if (data.is_subscriber && isActive) {
+                        document.getElementById('postContent').style.display = 'block';
+                        document.getElementById('premiumLock').style.display = 'none';
+                        return;
+                    }
+                }
+            }
+            
+            document.getElementById('postContent').style.display = 'none';
+            document.getElementById('premiumLock').style.display = 'block';
+        }
+        
+        function openSubscriptionPage() {
+            window.location.href = '/Novikon-site/#subscription';
+        }
+        
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            document.getElementById('themeBtn').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        }
+        
+        function getFavorites() {
+            return JSON.parse(localStorage.getItem('favorites') || '[]');
+        }
+        
+        function toggleFavorite() {
+            let favorites = getFavorites();
+            const index = favorites.indexOf(POST_ID);
+            const btn = document.getElementById('favBtn');
+            
+            if (index > -1) {
+                favorites.splice(index, 1);
+                btn.classList.remove('active');
+                showToast('💔', 'Удалено из избранного');
+            } else {
+                favorites.push(POST_ID);
+                btn.classList.add('active');
+                showToast('⭐', 'Добавлено в избранное', 'favorite');
+            }
+            
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+        }
+        
+        function updateFavBtn() {
+            if (getFavorites().includes(POST_ID)) {
+                document.getElementById('favBtn').classList.add('active');
+            }
+        }
+        
+        function markAsRead() {
+            let readPosts = JSON.parse(localStorage.getItem('readPosts') || '[]');
+            if (!readPosts.includes(POST_ID)) {
+                readPosts.push(POST_ID);
+                localStorage.setItem('readPosts', JSON.stringify(readPosts));
+            }
+        }
+        
+        function showToast(icon, message, type) {
+            type = type || '';
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = '<div class="toast-icon">' + icon + '</div><div class="toast-content">' + message + '</div>';
+            container.appendChild(toast);
+            
+            setTimeout(function() {
+                toast.style.animation = 'slideInRight 0.4s ease reverse';
+                setTimeout(function() { toast.remove(); }, 400);
+            }, 3000);
+        }
+        
+        window.addEventListener('scroll', function() {
+            const scrollTop = window.pageYOffset;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            document.getElementById('progressBar').style.width = scrollPercent + '%';
+        });
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.getElementById('themeBtn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            
+            updateFavBtn();
+            await checkPremiumAccess();
+            markAsRead();
+            
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 0.4s';
+            setTimeout(function() {
+                document.body.style.opacity = '1';
+            }, 50);
+        });
+    </script>
+</body>
+</html>
