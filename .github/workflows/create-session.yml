@@ -4,7 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       phone_code:
-        description: 'Код подтверждения из Telegram'
+        description: 'Код подтверждения из Telegram (оставьте пустым при первом запуске)'
+        required: false
+        type: string
+      password:
+        description: 'Пароль 2FA (если включен)'
         required: false
         type: string
 
@@ -12,7 +16,7 @@ jobs:
   create-session:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     
     steps:
       - name: Checkout repository
@@ -24,28 +28,46 @@ jobs:
           python-version: '3.10'
           
       - name: Install dependencies
-        run: |
-          pip install telethon
-          
+        run: pip install telethon
+        
       - name: Create session
         env:
           API_ID: ${{ secrets.API_ID }}
           API_HASH: ${{ secrets.API_HASH }}
           PHONE: ${{ secrets.PHONE_NUMBER }}
           CODE: ${{ github.event.inputs.phone_code }}
+          PASSWORD: ${{ github.event.inputs.password }}
         run: |
           python create_session_github.py
           
-      - name: Upload session file
+      - name: Encode session to Base64
+        if: success()
+        run: |
+          if [ -f session.session ]; then
+            BASE64=$(base64 -w 0 session.session)
+            echo "BASE64_SESSION=$BASE64" >> $GITHUB_ENV
+            echo "✅ Сессия закодирована в Base64"
+          else
+            echo "❌ Файл session.session не найден"
+            exit 1
+          fi
+          
+      - name: Upload session as artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: session-file
           path: session.session
           
-      - name: Commit session file
+      - name: Show Base64 in summary
+        if: success()
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add session.session
-          git diff --staged --quiet || git commit -m "Add session file [skip ci]"
-          git push
+          echo "### 🔑 Ваша сессия готова!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. Скачайте артефакт \`session-file\` ниже" >> $GITHUB_STEP_SUMMARY
+          echo "2. Или скопируйте Base64-строку из логов" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Base64 (для секрета TELEGRAM_SESSION_BASE64):**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$BASE64_SESSION" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
