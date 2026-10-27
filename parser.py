@@ -129,6 +129,8 @@ async def parse_channel():
 
 def generate_html(posts):
     posts_json = json.dumps(posts, ensure_ascii=False)
+    total_posts = len(posts)
+    locked_posts = max(0, total_posts - 42)
     
     html_output = '''<!DOCTYPE html>
 <html lang="ru">
@@ -149,6 +151,8 @@ def generate_html(posts):
             --favorite: #ffc107;
             --unread: #ff4757;
             --premium: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            --premium-color: #fda085;
+            --success: #26a65b;
         }
         [data-theme="dark"] {
             --bg: #1a1a2e;
@@ -277,7 +281,7 @@ def generate_html(posts):
             background: var(--card-bg);
             border-radius: 16px;
             padding: 40px;
-            max-width: 480px;
+            max-width: 520px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
@@ -300,9 +304,16 @@ def generate_html(posts):
             color: var(--text);
         }
         .modal-content h2 {
-            margin-bottom: 20px;
+            margin-bottom: 8px;
             text-align: center;
             color: var(--text);
+            font-size: 26px;
+        }
+        .modal-subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 25px;
+            font-size: 15px;
         }
         .modal-content input {
             width: 100%;
@@ -336,6 +347,78 @@ def generate_html(posts):
         .modal-content button[type="submit"]:hover {
             transform: scale(1.02);
         }
+        
+        /* Преимущества подписки */
+        .benefits-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+        .benefits-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .benefits-list li:last-child {
+            border-bottom: none;
+        }
+        .benefits-list .benefit-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 50%;
+        }
+        .benefits-list strong {
+            display: block;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+        .benefits-list span {
+            color: #888;
+            font-size: 13px;
+        }
+        
+        /* Соцдоказательство */
+        .social-proof {
+            text-align: center;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.08);
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: var(--text);
+        }
+        .social-proof .avatars {
+            display: inline-flex;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .social-proof .avatars span {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--header-bg);
+            border: 2px solid var(--card-bg);
+            margin-left: -8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+        .social-proof .avatars span:first-child {
+            margin-left: 0;
+        }
+        
+        /* Цены */
         .plans {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -343,7 +426,7 @@ def generate_html(posts):
             margin-top: 20px;
         }
         .plan {
-            padding: 25px 15px;
+            padding: 20px 15px;
             border: 2px solid var(--border);
             border-radius: 12px;
             text-align: center;
@@ -357,7 +440,7 @@ def generate_html(posts):
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
         }
         .plan.best {
-            border-color: #fda085;
+            border-color: var(--premium-color);
             background: linear-gradient(135deg, rgba(246,211,101,0.1) 0%, rgba(253,160,133,0.1) 100%);
         }
         .plan.best::before {
@@ -375,20 +458,101 @@ def generate_html(posts):
             letter-spacing: 1px;
         }
         .plan h3 {
-            font-size: 16px;
-            margin-bottom: 10px;
+            font-size: 15px;
+            margin-bottom: 8px;
             color: var(--text);
+            font-weight: 600;
         }
         .plan .price {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 700;
             color: var(--accent);
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
-        .plan p {
+        .plan.best .price {
+            color: var(--premium-color);
+        }
+        .plan .per-day {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        .plan p.saving {
+            font-size: 12px;
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        /* Плавающий баннер */
+        .floating-banner {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(150%);
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 18px 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            max-width: 600px;
+            width: calc(100% - 40px);
+            z-index: 1500;
+            transition: transform 0.5s ease;
+            border: 2px solid var(--premium-color);
+        }
+        .floating-banner.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        .floating-banner-icon {
+            font-size: 36px;
+            flex-shrink: 0;
+        }
+        .floating-banner-content {
+            flex: 1;
+        }
+        .floating-banner-content h4 {
+            margin-bottom: 4px;
+            font-size: 16px;
+            color: var(--text);
+        }
+        .floating-banner-content p {
             font-size: 13px;
             color: #888;
         }
+        .floating-banner-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .floating-banner-btn {
+            padding: 10px 18px;
+            border-radius: 25px;
+            border: none;
+            background: var(--premium);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.3s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .floating-banner-btn:hover {
+            transform: scale(1.05);
+        }
+        .floating-banner-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 0 5px;
+            line-height: 1;
+        }
+        
+        /* Премиум карточки */
         .premium-badge {
             position: absolute;
             top: 10px;
@@ -402,6 +566,33 @@ def generate_html(posts):
             z-index: 10;
             letter-spacing: 0.5px;
         }
+        .news-card.premium-only .news-content {
+            filter: blur(3px);
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        .news-card.premium-only .news-card-lock {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--premium);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 700;
+            z-index: 20;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 4px 20px rgba(253, 160, 133, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .news-card.premium-only .news-card-lock:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+        
         .search-bar {
             max-width: 1200px;
             margin: 20px auto 0;
@@ -589,7 +780,7 @@ def generate_html(posts):
             gap: 12px;
         }
         .toast.favorite { border-left-color: var(--favorite); }
-        .toast.premium { border-left-color: #fda085; }
+        .toast.premium { border-left-color: var(--premium-color); }
         .toast-icon { font-size: 24px; }
         .toast-content { flex: 1; font-size: 14px; }
         .badge.pulse { animation: pulse 1s ease infinite; }
@@ -642,45 +833,110 @@ def generate_html(posts):
             background: rgba(102, 126, 234, 0.15);
             font-weight: 600;
         }
+        
+        /* Новый блок апгрейда */
         .upgrade-banner {
             grid-column: 1 / -1;
-            background: var(--premium);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 25px;
-            border-radius: 16px;
+            padding: 40px 30px;
+            border-radius: 20px;
             text-align: center;
             margin: 20px 0;
-            box-shadow: 0 8px 25px rgba(253, 160, 133, 0.3);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.35);
+            position: relative;
+            overflow: hidden;
         }
-        .upgrade-banner h3 { font-size: 22px; margin-bottom: 10px; }
-        .upgrade-banner p { margin-bottom: 15px; opacity: 0.95; }
+        .upgrade-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .upgrade-banner-content {
+            position: relative;
+            z-index: 1;
+        }
+        .upgrade-banner h3 {
+            font-size: 26px;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+        .upgrade-banner p {
+            margin-bottom: 20px;
+            opacity: 0.95;
+            font-size: 16px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .upgrade-banner .count-highlight {
+            display: inline-block;
+            background: rgba(255,255,255,0.25);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 700;
+            margin: 0 4px;
+        }
+        .upgrade-banner-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
         .upgrade-banner button {
             background: white;
-            color: #fda085;
+            color: #667eea;
             border: none;
-            padding: 12px 30px;
+            padding: 14px 32px;
             border-radius: 25px;
             font-size: 16px;
             font-weight: 700;
             cursor: pointer;
-            transition: transform 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s;
             font-family: inherit;
         }
-        .upgrade-banner button:hover { transform: scale(1.05); }
+        .upgrade-banner button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .upgrade-banner .btn-secondary {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.4);
+        }
+        .upgrade-benefits-mini {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 25px 0 20px;
+            font-size: 14px;
+        }
+        .upgrade-benefits-mini div {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
         .payment-methods {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         .payment-method {
-            padding: 12px;
+            padding: 10px 8px;
             border: 2px solid var(--border);
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
             text-align: center;
-            font-size: 13px;
+            font-size: 12px;
         }
         .payment-method:hover { border-color: var(--accent); }
         .payment-method.active {
@@ -690,10 +946,22 @@ def generate_html(posts):
         .payment-method span {
             display: block;
             font-weight: 600;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
             color: var(--text);
         }
-        .payment-method small { font-size: 11px; color: #888; }
+        .payment-method small { font-size: 10px; color: #888; }
+        
+        .secure-note {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #888;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
         @media (max-width: 768px) {
             .news-grid { grid-template-columns: 1fr; padding: 15px 0; }
             .logo-container img { height: 40px; }
@@ -706,6 +974,18 @@ def generate_html(posts):
             .header-controls { justify-content: center; }
             .control-btn { font-size: 13px; padding: 7px 12px; }
             .plans { grid-template-columns: 1fr; }
+            .floating-banner {
+                flex-direction: column;
+                text-align: center;
+                gap: 12px;
+                padding: 16px;
+            }
+            .floating-banner-actions { width: 100%; justify-content: center; }
+            .floating-banner-btn { flex: 1; }
+            .payment-methods { grid-template-columns: repeat(2, 1fr); }
+            .upgrade-banner h3 { font-size: 20px; }
+            .upgrade-banner p { font-size: 14px; }
+            .upgrade-benefits-mini { flex-direction: column; gap: 8px; align-items: center; }
         }
     </style>
 </head>
@@ -870,31 +1150,38 @@ def generate_html(posts):
         
         html_output += f'''
             <div class="news-card premium-only" style="display: none;" data-post-id="{post["id"]}" data-title="{title_for_search}" data-text="{text_for_search}">
-                <div class="card-actions">
-                    <button type="button" class="action-btn favorite" data-fav-id="{post["id"]}" title="В избранное">⭐</button>
-                    <button type="button" class="action-btn read-toggle" data-read-id="{post["id"]}" title="Отметить прочитанным">👁️</button>
-                </div>
+                <div class="premium-badge">⭐ PREMIUM</div>
                 <a href="/Novikon-site/posts/post_{post["id"]}.html" style="text-decoration: none; color: inherit;" data-read-link="{post["id"]}">
-                    <div class="premium-badge">⭐ PREMIUM</div>
                     {img_html}
                     <div class="news-content">
                         <div class="news-date">{date_str}</div>
                         <div class="news-title">{html_module.escape(title)}</div>
                         <div class="news-text">{html_module.escape(preview_text)}</div>
-                        <span class="read-more" data-i18n="readMore">Читать далее →</span>
+                        <span class="read-more">Читать далее →</span>
                     </div>
                 </a>
+                <div class="news-card-lock" onclick="window.handleSubscriptionClick && window.handleSubscriptionClick()">🔒 Разблокировать</div>
             </div>
 '''
     
     html_output += '</div>'
     
-    if len(posts) > 42:
+    if locked_posts > 0:
         html_output += f'''
         <div class="upgrade-banner" id="upgradeBanner">
-            <h3>⭐ Откройте все {len(posts)} статей!</h3>
-            <p>Вы видите только первые 42 статьи. Оформите подписку за 149 ₽/мес и получите доступ ко всем материалам.</p>
-            <button type="button" id="upgradeBtn">Оформить подписку</button>
+            <div class="upgrade-banner-content">
+                <h3>📚 Вы пропустили <span class="count-highlight">{locked_posts} статей</span></h3>
+                <p>Это эксклюзивные материалы, доступные только подписчикам Новикон. Присоединяйтесь к сообществу читателей, которые получают полный доступ к контенту каждый день.</p>
+                <div class="upgrade-benefits-mini">
+                    <div>✅ 200 статей вместо 42</div>
+                    <div>✅ Новые материалы каждый день</div>
+                    <div>✅ Один аккаунт — сайт и приложение</div>
+                </div>
+                <div class="upgrade-banner-buttons">
+                    <button type="button" id="upgradeBtn">✨ Открыть все статьи — 149 ₽/мес</button>
+                    <button type="button" class="btn-secondary" id="upgradeBtnYear">🎁 Год за 1 490 ₽ (экономия 290 ₽)</button>
+                </div>
+            </div>
         </div>
         '''
     
@@ -911,6 +1198,19 @@ def generate_html(posts):
     </div>
     
     <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- Плавающий баннер -->
+    <div class="floating-banner" id="floatingBanner">
+        <div class="floating-banner-icon">📚</div>
+        <div class="floating-banner-content">
+            <h4>Откройте полный доступ</h4>
+            <p>200 статей, свежие материалы каждый день, без рекламы</p>
+        </div>
+        <div class="floating-banner-actions">
+            <button type="button" class="floating-banner-btn" id="floatingSubBtn">Попробовать</button>
+            <button type="button" class="floating-banner-close" id="floatingClose">&times;</button>
+        </div>
+    </div>
     
     <div id="authModal" class="modal">
         <div class="modal-content">
@@ -932,11 +1232,63 @@ def generate_html(posts):
     <div id="subscriptionModal" class="modal">
         <div class="modal-content">
             <button type="button" class="modal-close" id="subClose">&times;</button>
-            <h2>⭐ Премиум подписка</h2>
-            <p style="text-align:center; color:#888; margin: 10px 0 20px;">Доступ ко всем 200 статьям</p>
+            <h2>⭐ Новикон Премиум</h2>
+            <p class="modal-subtitle">Полный доступ ко всем материалам и приложению</p>
             
-            <div style="margin-bottom: 20px;">
-                <label style="font-size: 14px; color: #888; display: block; margin-bottom: 8px;">Способ оплаты:</label>
+            <div class="social-proof">
+                <div class="avatars">
+                    <span>👤</span><span>👤</span><span>👤</span><span>+</span>
+                </div>
+                <strong>10 000+ читателей</strong> уже с нами
+            </div>
+            
+            <ul class="benefits-list">
+                <li>
+                    <div class="benefit-icon">📚</div>
+                    <div>
+                        <strong>200 статей вместо 42</strong>
+                        <span>Полный архив материалов — в 5 раз больше контента</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="benefit-icon">⚡</div>
+                    <div>
+                        <strong>Новые материалы каждый день</strong>
+                        <span>Свежие новости раньше остальных</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="benefit-icon">📱</div>
+                    <div>
+                        <strong>Синхронизация с приложением</strong>
+                        <span>Один аккаунт для сайта и мобильного приложения</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="benefit-icon">🚫</div>
+                    <div>
+                        <strong>Никакой рекламы</strong>
+                        <span>Чистое чтение без отвлечений</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="benefit-icon">🎯</div>
+                    <div>
+                        <strong>Эксклюзивные материалы</strong>
+                        <span>Статьи, которые не увидят бесплатные читатели</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="benefit-icon">💛</div>
+                    <div>
+                        <strong>Поддержка независимой журналистики</strong>
+                        <span>Вы помогаете нам делать качественный контент</span>
+                    </div>
+                </li>
+            </ul>
+            
+            <div style="margin-top: 20px;">
+                <label style="font-size: 13px; color: #888; display: block; margin-bottom: 8px;">Способ оплаты:</label>
                 <div class="payment-methods">
                     <div class="payment-method active" data-currency="USDT">
                         <span>💵 USDT</span>
@@ -958,6 +1310,10 @@ def generate_html(posts):
                         <span>💳 Карта/СБП</span>
                         <small>Рубли</small>
                     </div>
+                    <div class="payment-method" data-currency="USDC">
+                        <span>💵 USDC</span>
+                        <small>Stable</small>
+                    </div>
                 </div>
             </div>
             
@@ -965,17 +1321,19 @@ def generate_html(posts):
                 <div class="plan" data-plan="monthly">
                     <h3>Месяц</h3>
                     <div class="price">149 ₽</div>
-                    <p>в месяц</p>
+                    <div class="per-day">≈ 5 ₽ в день</div>
+                    <p style="font-size:12px; color:#888;">Отменить в любой момент</p>
                 </div>
                 <div class="plan best" data-plan="yearly">
                     <h3>Год</h3>
                     <div class="price">1 490 ₽</div>
-                    <p>экономия 290 ₽</p>
+                    <div class="per-day">≈ 4 ₽ в день</div>
+                    <p class="saving">Экономия 290 ₽ (2 месяца бесплатно)</p>
                 </div>
             </div>
-            <p style="text-align:center; margin-top:20px; font-size:12px; color:#888;">
-                🔒 Безопасная оплата через Cryptomus
-            </p>
+            <div class="secure-note">
+                🔒 Безопасная оплата через Cryptomus · Можно отменить в любой момент
+            </div>
         </div>
     </div>
     
@@ -983,7 +1341,6 @@ def generate_html(posts):
     (function() {
         'use strict';
         
-        // ============ ПЕРЕВОДЫ ============
         var translations = {
             ru: { subtitle: 'Актуальные новости и события', search: 'Поиск', favorites: 'Избранное', unread: 'Новые', theme: 'Тема', all: 'Все', filterFav: '⭐ Избранные', filterUnread: '📬 Непрочитанные', filterRead: '✅ Прочитанные', searchPlaceholder: 'Поиск по новостям...', readMore: 'Читать далее →', noResults: '😔 Ничего не найдено', addedToFav: 'Добавлено в избранное', removedFromFav: 'Удалено из избранного', newArticles: 'новых статей', login: 'Войти', subscription: 'Подписка', logout: 'Выйти', premium: 'Премиум', welcome: 'Добро пожаловать', loggedOut: 'Вы вышли из аккаунта' },
             en: { subtitle: 'Latest news and events', search: 'Search', favorites: 'Favorites', unread: 'New', theme: 'Theme', all: 'All', filterFav: '⭐ Favorites', filterUnread: '📬 Unread', filterRead: '✅ Read', searchPlaceholder: 'Search news...', readMore: 'Read more →', noResults: '😔 Nothing found', addedToFav: 'Added to favorites', removedFromFav: 'Removed from favorites', newArticles: 'new articles', login: 'Login', subscription: 'Subscribe', logout: 'Logout', premium: 'Premium', welcome: 'Welcome', loggedOut: 'Logged out' },
@@ -991,7 +1348,6 @@ def generate_html(posts):
             es: { subtitle: 'Últimas noticias y eventos', search: 'Buscar', favorites: 'Favoritos', unread: 'Nuevo', theme: 'Tema', all: 'Todos', filterFav: '⭐ Favoritos', filterUnread: '📬 No leídos', filterRead: '✅ Leídos', searchPlaceholder: 'Buscar noticias...', readMore: 'Leer más →', noResults: '😔 Nada encontrado', addedToFav: 'Añadido a favoritos', removedFromFav: 'Eliminado de favoritos', newArticles: 'nuevos artículos', login: 'Iniciar sesión', subscription: 'Suscribirse', logout: 'Cerrar sesión', premium: 'Premium', welcome: 'Bienvenido', loggedOut: 'Sesión cerrada' }
         };
         
-        // ============ СОСТОЯНИЕ ============
         var currentUser = null;
         var userProfile = null;
         var authMode = 'login';
@@ -1002,7 +1358,6 @@ def generate_html(posts):
         
         var postsData = ''' + posts_json + ''';
         
-        // ============ ИНИЦИАЛИЗАЦИЯ SUPABASE ============
         var SUPABASE_URL = 'YOUR_SUPABASE_URL';
         var SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
         
@@ -1010,7 +1365,6 @@ def generate_html(posts):
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
         
-        // ============ УТИЛИТЫ ============
         function $(id) { return document.getElementById(id); }
         function $$(sel) { return document.querySelectorAll(sel); }
         
@@ -1028,7 +1382,6 @@ def generate_html(posts):
             }, 3000);
         }
         
-        // ============ ТЕМА ============
         function toggleTheme() {
             var html = document.documentElement;
             var currentTheme = html.getAttribute('data-theme');
@@ -1046,7 +1399,6 @@ def generate_html(posts):
             }
         }
         
-        // ============ ЯЗЫК ============
         function toggleLangMenu() {
             var menu = $('langMenu');
             if (menu) menu.classList.toggle('active');
@@ -1084,7 +1436,6 @@ def generate_html(posts):
             translateAllPosts(lang);
         }
         
-        // ============ ПЕРЕВОД ============
         function translateText(text, targetLang) {
             if (targetLang === 'ru') return Promise.resolve(text);
             if (!text || text.trim().length === 0) return Promise.resolve(text);
@@ -1143,7 +1494,6 @@ def generate_html(posts):
             showToast('✅', 'Перевод завершён!');
         }
         
-        // ============ ИЗБРАННОЕ ============
         function getFavorites() {
             try { return JSON.parse(localStorage.getItem('favorites') || '[]'); }
             catch (e) { return []; }
@@ -1200,7 +1550,6 @@ def generate_html(posts):
             }
         }
         
-        // ============ ПРОЧИТАННЫЕ ============
         function getReadPosts() {
             try { return JSON.parse(localStorage.getItem('readPosts') || '[]'); }
             catch (e) { return []; }
@@ -1257,7 +1606,6 @@ def generate_html(posts):
             }
         }
         
-        // ============ ПОИСК ============
         function toggleSearch() {
             var searchBar = $('searchBar');
             if (!searchBar) return;
@@ -1302,7 +1650,6 @@ def generate_html(posts):
             if (nr) nr.style.display = visibleCount === 0 ? 'block' : 'none';
         }
         
-        // ============ ФИЛЬТРЫ ============
         function filterPosts(filter) {
             currentFilter = filter;
             
@@ -1352,7 +1699,6 @@ def generate_html(posts):
             }
         }
         
-        // ============ АВТОРИЗАЦИЯ ============
         function openAuthModal() {
             var modal = $('authModal');
             if (modal) modal.classList.add('active');
@@ -1488,6 +1834,7 @@ def generate_html(posts):
         function showPremiumArticles() {
             $$('.premium-only').forEach(function(card) {
                 card.style.display = '';
+                card.classList.add('unlocked');
             });
             var banner = $('upgradeBanner');
             if (banner) banner.style.display = 'none';
@@ -1496,12 +1843,12 @@ def generate_html(posts):
         function hidePremiumArticles() {
             $$('.premium-only').forEach(function(card) {
                 card.style.display = 'none';
+                card.classList.remove('unlocked');
             });
             var banner = $('upgradeBanner');
             if (banner) banner.style.display = '';
         }
         
-        // ============ ПОДПИСКА ============
         function openSubscriptionModal() {
             var modal = $('subscriptionModal');
             if (modal) modal.classList.add('active');
@@ -1528,6 +1875,9 @@ def generate_html(posts):
             
             openSubscriptionModal();
         }
+        
+        // Делаем функцию доступной глобально для замков на карточках
+        window.handleSubscriptionClick = handleSubscriptionClick;
         
         async function subscribe(plan) {
             if (!currentUser) return;
@@ -1583,9 +1933,42 @@ def generate_html(posts):
             }
         }
         
+        // ============ ПЛАВАЮЩИЙ БАННЕР ============
+        function initFloatingBanner() {
+            var banner = $('floatingBanner');
+            if (!banner) return;
+            
+            // Если подписка активна — не показываем
+            if (userProfile && userProfile.is_subscriber) return;
+            
+            // Проверяем, не закрывал ли пользователь за последние 24 часа
+            var lastClosed = localStorage.getItem('floating_banner_closed');
+            if (lastClosed) {
+                var hoursSince = (Date.now() - parseInt(lastClosed)) / (1000 * 60 * 60);
+                if (hoursSince < 24) return;
+            }
+            
+            // Показываем через 30 секунд
+            setTimeout(function() {
+                // Проверяем еще раз, не закрыл ли только что
+                var lastClosed2 = localStorage.getItem('floating_banner_closed');
+                if (lastClosed2 && (Date.now() - parseInt(lastClosed2)) < 1000) return;
+                
+                // Проверяем, что пользователь ещё не подписан
+                if (userProfile && userProfile.is_subscriber) return;
+                
+                banner.classList.add('show');
+            }, 30000);
+        }
+        
+        function closeFloatingBanner() {
+            var banner = $('floatingBanner');
+            if (banner) banner.classList.remove('show');
+            localStorage.setItem('floating_banner_closed', Date.now().toString());
+        }
+        
         // ============ ПРИВЯЗКА СОБЫТИЙ ============
         function bindEvents() {
-            // Кнопки в хедере
             var searchBtn = $('searchBtn');
             if (searchBtn) searchBtn.addEventListener('click', toggleSearch);
             
@@ -1614,25 +1997,21 @@ def generate_html(posts):
             var authBtn = $('authBtn');
             if (authBtn) authBtn.addEventListener('click', toggleAuthModal);
             
-            // Языки
             $$('.lang-option').forEach(function(el) {
                 el.addEventListener('click', function() {
                     setLanguage(el.getAttribute('data-lang'));
                 });
             });
             
-            // Фильтры
             $$('.filter-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     filterPosts(btn.getAttribute('data-filter'));
                 });
             });
             
-            // Поиск
             var searchInput = $('searchInput');
             if (searchInput) searchInput.addEventListener('input', performSearch);
             
-            // Кнопки на карточках
             $$('.favorite').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -1658,11 +2037,25 @@ def generate_html(posts):
                 });
             });
             
-            // Кнопка апгрейда
             var upgradeBtn = $('upgradeBtn');
             if (upgradeBtn) upgradeBtn.addEventListener('click', handleSubscriptionClick);
             
-            // Модальные окна
+            var upgradeBtnYear = $('upgradeBtnYear');
+            if (upgradeBtnYear) {
+                upgradeBtnYear.addEventListener('click', function() {
+                    if (!currentUser) {
+                        showToast('⚠️', 'Сначала войдите в аккаунт');
+                        openAuthModal();
+                        return;
+                    }
+                    if (userProfile && userProfile.is_subscriber) {
+                        showToast('⭐', 'У вас уже есть подписка!', 'premium');
+                        return;
+                    }
+                    subscribe('yearly');
+                });
+            }
+            
             var authClose = $('authClose');
             if (authClose) authClose.addEventListener('click', closeAuthModal);
             
@@ -1675,7 +2068,6 @@ def generate_html(posts):
             var subClose = $('subClose');
             if (subClose) subClose.addEventListener('click', closeSubscriptionModal);
             
-            // Платежные методы
             $$('.payment-method').forEach(function(el) {
                 el.addEventListener('click', function() {
                     $$('.payment-method').forEach(function(m) { m.classList.remove('active'); });
@@ -1684,14 +2076,12 @@ def generate_html(posts):
                 });
             });
             
-            // Планы
             $$('.plan').forEach(function(el) {
                 el.addEventListener('click', function() {
                     subscribe(el.getAttribute('data-plan'));
                 });
             });
             
-            // Закрытие модалок по клику вне
             $$('.modal').forEach(function(modal) {
                 modal.addEventListener('click', function(e) {
                     if (e.target === modal) {
@@ -1700,7 +2090,6 @@ def generate_html(posts):
                 });
             });
             
-            // Закрытие меню языков по клику вне
             document.addEventListener('click', function(e) {
                 var langDropdown = document.querySelector('.lang-dropdown');
                 if (langDropdown && !langDropdown.contains(e.target)) {
@@ -1709,7 +2098,18 @@ def generate_html(posts):
                 }
             });
             
-            // Прогресс-бар
+            // Плавающий баннер
+            var floatingSubBtn = $('floatingSubBtn');
+            if (floatingSubBtn) {
+                floatingSubBtn.addEventListener('click', function() {
+                    closeFloatingBanner();
+                    handleSubscriptionClick();
+                });
+            }
+            
+            var floatingClose = $('floatingClose');
+            if (floatingClose) floatingClose.addEventListener('click', closeFloatingBanner);
+            
             window.addEventListener('scroll', function() {
                 var scrollTop = window.pageYOffset;
                 var docHeight = document.documentElement.scrollHeight - window.innerHeight;
@@ -1719,14 +2119,11 @@ def generate_html(posts):
             });
         }
         
-        // ============ ИНИЦИАЛИЗАЦИЯ ============
         document.addEventListener('DOMContentLoaded', async function() {
-            // Применяем тему
             var savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
             updateThemeButton(savedTheme);
             
-            // Применяем язык
             var cl = $('currentLang');
             if (cl) cl.textContent = currentLang.toUpperCase();
             
@@ -1747,7 +2144,6 @@ def generate_html(posts):
             var si = $('searchInput');
             if (si) si.placeholder = translations[currentLang].searchPlaceholder;
             
-            // Обновляем активные избранные
             var favorites = getFavorites();
             $$('.news-card').forEach(function(card) {
                 var postId = parseInt(card.getAttribute('data-post-id'));
@@ -1760,10 +2156,8 @@ def generate_html(posts):
             updateFavBadge();
             updateUnreadBadge();
             
-            // Привязываем события
             bindEvents();
             
-            // Проверяем Supabase сессию
             if (supabaseClient) {
                 try {
                     var sessionResult = await supabaseClient.auth.getSession();
@@ -1789,6 +2183,9 @@ def generate_html(posts):
             }
             
             checkPaymentReturn();
+            
+            // Запускаем плавающий баннер
+            initFloatingBanner();
             
             if (currentLang !== 'ru') {
                 setTimeout(function() { translateAllPosts(currentLang); }, 500);
@@ -1856,6 +2253,8 @@ def generate_post_pages(posts):
             --border: #e0e0e0;
             --accent: #667eea;
             --favorite: #ffc107;
+            --premium: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            --premium-color: #fda085;
         }
         [data-theme="dark"] {
             --bg: #1a1a2e;
@@ -1990,6 +2389,7 @@ def generate_post_pages(posts):
             background: linear-gradient(135deg, rgba(246,211,101,0.1) 0%, rgba(253,160,133,0.1) 100%);
             border-radius: 12px;
             margin: 20px 0;
+            border: 2px dashed var(--premium-color);
         }
         .premium-lock h2 {
             font-size: 24px;
@@ -1999,8 +2399,22 @@ def generate_post_pages(posts):
             color: #888;
             margin-bottom: 20px;
         }
+        .premium-lock-benefits {
+            list-style: none;
+            text-align: left;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 0;
+        }
+        .premium-lock-benefits li {
+            padding: 8px 0;
+            font-size: 14px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
         .premium-lock button {
-            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            background: var(--premium);
             color: white;
             border: none;
             padding: 14px 30px;
@@ -2010,6 +2424,7 @@ def generate_post_pages(posts):
             cursor: pointer;
             transition: transform 0.3s;
             font-family: inherit;
+            margin-top: 10px;
         }
         .premium-lock button:hover {
             transform: scale(1.05);
@@ -2112,9 +2527,17 @@ def generate_post_pages(posts):
                 <div class="post-text" id="postText">__FULL_TEXT__</div>
             </div>
             <div id="premiumLock" class="premium-lock" style="display:none;">
-                <h2>🔒 Премиум контент</h2>
-                <p>Эта статья доступна только подписчикам Новикон</p>
-                <button type="button" id="openSubBtn">Оформить подписку за 149 ₽/мес</button>
+                <h2>🔒 Это премиум-статья</h2>
+                <p>Оформите подписку и получите полный доступ к материалам Новикон</p>
+                <ul class="premium-lock-benefits">
+                    <li>✅ <strong>200 статей</strong> вместо 42 — в 5 раз больше контента</li>
+                    <li>✅ <strong>Новые материалы</strong> каждый день</li>
+                    <li>✅ <strong>Синхронизация с приложением</strong> — один аккаунт везде</li>
+                    <li>✅ <strong>Без рекламы</strong> — чистое чтение</li>
+                    <li>✅ <strong>Эксклюзивные материалы</strong>, которых нет в открытом доступе</li>
+                    <li>✅ <strong>Поддержка независимой журналистики</strong></li>
+                </ul>
+                <button type="button" id="openSubBtn">✨ Оформить за 149 ₽/мес</button>
             </div>
             <a href="/Novikon-site/" class="back-button">← На главную</a>
         </div>
@@ -2141,11 +2564,8 @@ def generate_post_pages(posts):
         
         var POST_ID = __POST_ID__;
         var IS_PREMIUM = __IS_PREMIUM__;
-        var ORIGINAL_TITLE = __ORIGINAL_TITLE__;
-        var ORIGINAL_TEXT = __ORIGINAL_TEXT__;
         
         var currentUser = null;
-        var userProfile = null;
         
         function $(id) { return document.getElementById(id); }
         
@@ -2299,8 +2719,6 @@ def generate_post_pages(posts):
             html_output = html_output.replace('__FULL_TEXT__', full_text)
             html_output = html_output.replace('__POST_ID__', str(post["id"]))
             html_output = html_output.replace('__IS_PREMIUM__', str(is_premium).lower())
-            html_output = html_output.replace('__ORIGINAL_TITLE__', title_json)
-            html_output = html_output.replace('__ORIGINAL_TEXT__', full_text_json)
             
             with open(f'posts/post_{post["id"]}.html', 'w', encoding='utf-8') as f:
                 f.write(html_output)
