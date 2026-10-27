@@ -30,20 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install telethon requests beautifulsoup4 lxml
-
-      # --- Восстановление сессии из секрета ---
-      - name: Restore Telegram Session
-        env:
-          SESSION_BASE64: ${{ secrets.TELEGRAM_SESSION_BASE64 }}
-        run: |
-          if [ -z "$SESSION_BASE64" ]; then
-            echo "❌ Ошибка: Секрет TELEGRAM_SESSION_BASE64 не задан!"
-            exit 1
-          fi
-          echo "$SESSION_BASE64" | base64 --decode > session.session
-          echo "✅ Файл session.session успешно восстановлен."
-      # ----------------------------------------
-
+          
       - name: Run parser
         env:
           API_ID: ${{ secrets.API_ID }}
@@ -52,12 +39,20 @@ jobs:
         run: |
           python parser.py
           
+      - name: List generated files
+        run: |
+          echo "📁 Файлы в корне:"
+          ls -la
+          echo "📁 Файлы в posts:"
+          ls -la posts/ || echo "Папка posts пуста или не существует"
+          
       - name: Commit and push changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          # Добавляем все изменения, включая posts/ и assets/
-          git add -A
+          # Принудительно добавляем все файлы, включая папку posts
+          git add -f index.html posts.json assets/ posts/
+          git status
           git diff --staged --quiet || git commit -m "Auto-update news [skip ci]"
           git push
           
