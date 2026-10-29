@@ -3,64 +3,79 @@ name: Create Telegram Session
 on:
   workflow_dispatch:
     inputs:
-      phone_code:
-        description: 'Код подтверждения из Telegram (оставьте пустым при первом запуске)'
+      code:
+        description: 'Код подтверждения из Telegram (если уже пришел)'
         required: false
         type: string
       password:
-        description: 'Пароль 2FA (если включен)'
+        description: 'Пароль 2FA (если включена)'
         required: false
         type: string
 
 jobs:
   create-session:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    
+
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-        
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          
+
       - name: Install dependencies
-        run: pip install telethon
-        
+        run: |
+          pip install telethon==1.36.0
+
       - name: Create session
         env:
           API_ID: ${{ secrets.API_ID }}
           API_HASH: ${{ secrets.API_HASH }}
-          PHONE: ${{ secrets.PHONE_NUMBER }}
-          CODE: ${{ github.event.inputs.phone_code }}
+          PHONE_NUMBER: ${{ secrets.PHONE_NUMBER }}
+          CODE: ${{ github.event.inputs.code }}
           PASSWORD: ${{ github.event.inputs.password }}
+        run: python create_session_github.py
+
+      - name: Validate session file
         run: |
-          python create_session_github.py
+          python - <<'EOF'
+          import sqlite3, sys
+          try:
+              con = sqlite3.connect("session.session")
+              rows = con.execute("SELECT dc_id, server_address, port, length(auth_key) FROM sessions").fetchall()
+              con.close()
+          except Exception as e:
+              print(f"❌ Ошибка чтения session.session: {e}")
+              sys.exit(1)
           
+          if not rows:
+              print("❌ Таблица sessions пуста — сессия не авторизована.")
+              sys.exit(1)
+          
+          valid = [r for r in rows if r[3] and r[3] > 0]
+          if not valid:
+              print("❌ auth_key пустой — сессия не авторизована.")
+              sys.exit(1)
+          
+          print("✅ Сессия валидна:", valid)
+          EOF
+
       - name: Encode session to Base64
-        if: success()
         run: |
-          if [ -f session.session ]; then
-            BASE64=$(base64 -w 0 session.session)
-            echo "BASE64_SESSION=$BASE64" >> $GITHUB_ENV
-            echo "✅ Сессия закодирована в Base64"
-          else
-            echo "❌ Файл session.session не найден"
-            exit 1
-          fi
-          
-      - name: Upload session as artifact
-        if: success()
+          BASE64=$(base64 -w 0 session.session)
+          echo "BASE64_SESSION=$BASE64" >> $GITHUB_ENV
+          echo "✅ Сессия закодирована в Base64"
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: session-file
           path: session.session
-          
-      - name: Show Base64 in summary
-        if: success()
+          if-no-files-found: error
+
+      - name: Show summary
         run: |
           echo "### 🔑 Ваша сессия готова!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
