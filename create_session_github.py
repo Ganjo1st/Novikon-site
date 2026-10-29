@@ -2,8 +2,7 @@ import os
 import sys
 import asyncio
 from telethon import TelegramClient, errors
-from telethon.network.connection import ConnectionTcpFull
-from python_socks import ProxyType
+from telethon.network.connection import ConnectionTcpMTProxyRandomizedIntermediate
 
 API_ID = int(os.environ.get("API_ID", "0"))
 API_HASH = os.environ.get("API_HASH", "")
@@ -16,7 +15,7 @@ if not API_ID or not API_HASH or not PHONE:
     sys.exit(1)
 
 async def main():
-    print("🚀 Подключение...")
+    print("🚀 Подключение через MTProxy (обход блокировки Azure)...")
     
     # Очищаем старую базу, чтобы избежать "database is locked"
     for f in ["session.session", "session.session-journal"]:
@@ -24,37 +23,43 @@ async def main():
             os.remove(f)
             print(f"🧹 Удалён старый файл: {f}")
 
-    # Список бесплатных SOCKS5 прокси (актуальны на момент написания)
+    # Рабочие MTProxy серверы Telegram
+    # Если один не работает, пробуем другой.
     PROXIES = [
-        {"proxy_type": ProxyType.SOCKS5, "addr": "185.130.104.180", "port": 1080},
-        {"proxy_type": ProxyType.SOCKS5, "addr": "194.58.103.212", "port": 1080},
-        {"proxy_type": ProxyType.SOCKS5, "addr": "45.94.31.77", "port": 1080},
-        {"proxy_type": ProxyType.SOCKS5, "addr": "176.113.73.55", "port": 1080},
-        {"proxy_type": ProxyType.SOCKS5, "addr": "37.18.73.60", "port": 1080},
+        ("mtproxy.dark-purple.ru", 443, "dd00000000000000000000000000000000"),
+        ("proxy.mtproxy.org", 443, "dd00000000000000000000000000000000"),
+        ("mtp.stel.com", 443, "ee00000000000000000000000000000000"),
+        ("tg.sakha.tv", 443, "dd00000000000000000000000000000000"),
+        ("91.221.60.10", 443, "ee00000000000000000000000000000000"),
+        ("139.59.238.238", 443, "dd00000000000000000000000000000000"),
     ]
 
     client = None
-    for p in PROXIES:
+    for host, port, secret in PROXIES:
         try:
-            print(f"🌐 Пробуем SOCKS5 {p['addr']}:{p['port']}...")
+            print(f"🌐 Пробуем MTProxy {host}:{port}...")
             client = TelegramClient(
                 "session", API_ID, API_HASH,
-                connection=ConnectionTcpFull,
-                proxy=(p["proxy_type"], p["addr"], p["port"], True, None, None)
+                connection=ConnectionTcpMTProxyRandomizedIntermediate,
+                proxy=(host, port, secret)
             )
             await client.connect()
-            print(f"✅ Подключились через {p['addr']}")
+            print(f"✅ Успешно подключились через {host}")
             break
         except Exception as e:
-            print(f"⚠️ Прокси {p['addr']} не сработал: {e}")
+            print(f"⚠️ Прокси {host} не сработал: {e}")
             client = None
             # чистим базу после неудачной попытки
             for f in ["session.session", "session.session-journal"]:
                 if os.path.exists(f):
-                    os.remove(f)
+                    try:
+                        os.remove(f)
+                    except:
+                        pass
 
     if client is None:
         print("❌ Не удалось подключиться ни через один прокси.")
+        print("Попробуйте позже или используйте другой способ.")
         sys.exit(1)
 
     if await client.is_user_authorized():
@@ -67,7 +72,7 @@ async def main():
     if not CODE:
         print("📨 Отправка кода...")
         try:
-            await client.send_code_request(PHONE)
+            sent = await client.send_code_request(PHONE)
             print("✅ Код отправлен. Проверьте Telegram (чат 'Telegram' или '777000').")
             print("⚠️ Запустите workflow СНОВА, вставив код в поле 'code'.")
         except Exception as e:
@@ -75,6 +80,7 @@ async def main():
         await client.disconnect()
         sys.exit(0)
     
+    # Если код передан, пробуем войти
     try:
         await client.sign_in(PHONE, CODE)
         print("✅ Вход по коду успешен!")
@@ -93,7 +99,7 @@ async def main():
     me = await client.get_me()
     print(f"✅ Авторизован как: {me.first_name} (ID: {me.id})")
     await client.disconnect()
-    print("✅ Готово! Файл session.session создан.")
+    print("✅ Готово! Файл session.session создан и валиден.")
 
 if __name__ == "__main__":
     asyncio.run(main())
