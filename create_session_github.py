@@ -1,77 +1,67 @@
 import os
-import asyncio
 import sys
-import base64
-from telethon import TelegramClient
-from telethon.errors import PhoneCodeInvalidError, SessionPasswordNeededError
+from telethon import TelegramClient, errors
 
-API_ID = int(os.getenv('API_ID', 0))
-API_HASH = os.getenv('API_HASH', '')
-PHONE = os.getenv('PHONE', '')
-CODE = os.getenv('CODE', '')
-PASSWORD = os.getenv('PASSWORD', '')  # для 2FA
+API_ID = int(os.environ.get("API_ID", "0"))
+API_HASH = os.environ.get("API_HASH", "")
+PHONE = os.environ.get("PHONE_NUMBER", "")
+CODE = os.environ.get("CODE", "").strip()
+PASSWORD = os.environ.get("PASSWORD", "").strip()
 
-if not API_ID or not API_HASH:
-    print("❌ API_ID или API_HASH не установлены")
+if not API_ID or not API_HASH or not PHONE:
+    print("❌ Ошибка: не заданы API_ID, API_HASH или PHONE_NUMBER")
     sys.exit(1)
 
-if not PHONE:
-    print("❌ PHONE не установлен")
+if not CODE:
+    print("❌ Ошибка: CODE не передан. Код подтверждения обязателен для создания сессии в CI.")
     sys.exit(1)
 
-async def create_session():
-    print("🚀 Создание сессии через GitHub...")
-    print(f"📱 Номер: {PHONE}")
-    
-    client = TelegramClient('session', API_ID, API_HASH)
-    
+print("🚀 Создание сессии через GitHub...")
+print(f"📱 Номер: {PHONE[:4]}***{PHONE[-2:]}")
+
+client = TelegramClient("session", API_ID, API_HASH)
+client.connect()
+
+if client.is_user_authorized():
+    print("✅ Клиент уже авторизован (сессия уже существует).")
+else:
+    print("✅ Подключено к Telegram")
     try:
-        await client.connect()
-        print("✅ Подключено к Telegram")
-        
-        if await client.is_user_authorized():
-            print("✅ Сессия уже существует и активна")
-            me = await client.get_me()
-            print(f"👤 Авторизован: {me.first_name}")
-            await client.disconnect()
-            return
-        
-        # Отправляем запрос на код
-        await client.send_code_request(PHONE)
+        sent = client.send_code_request(PHONE)
         print("📨 Код подтверждения отправлен в Telegram")
-        
-        if not CODE:
-            print("")
-            print("⚠️ Код не передан.")
-            print("1. Проверьте Telegram — там код подтверждения")
-            print("2. Запустите workflow СНОВА и укажите этот код в поле 'phone_code'")
-            await client.disconnect()
-            return
-        
-        print(f"🔑 Используем код: {CODE}")
-        
-        try:
-            await client.sign_in(PHONE, CODE)
-        except SessionPasswordNeededError:
-            if not PASSWORD:
-                print("❌ Требуется пароль 2FA. Добавьте секрет PASSWORD.")
-                await client.disconnect()
-                return
-            await client.sign_in(password=PASSWORD)
-        
-        print("✅ Сессия создана успешно!")
-        me = await client.get_me()
-        print(f"👤 Авторизован: {me.first_name}")
-        
-    except PhoneCodeInvalidError:
-        print("❌ Неверный код! Запустите workflow снова с правильным кодом.")
     except Exception as e:
-        print(f"❌ Ошибка: {e}")
-        import traceback
-        traceback.print_exc()
-    finally:
-        await client.disconnect()
-        print("✅ Готово!")
+        print(f"❌ Ошибка при запросе кода: {e}")
+        client.disconnect()
+        sys.exit(1)
 
-if __name__ == '__main__':
-    asyncio.run(create_session())
+    try:
+        client.sign_in(PHONE, CODE, phone_code_hash=sent.phone_code_hash)
+        print("✅ Успешный вход по коду!")
+    except errors.SessionPasswordNeededError:
+        if not PASSWORD:
+            print("❌ Требуется пароль 2FA, но переменная PASSWORD не задана.")
+            client.disconnect()
+            sys.exit(1)
+        try:
+            client.sign_in(password=PASSWORD)
+            print("✅ Успешный вход по паролю 2FA!")
+        except Exception as e:
+            print(f"❌ Ошибка 2FA: {e}")
+            client.disconnect()
+            sys.exit(1)
+    except Exception as e:
+        print(f"❌ Ошибка входа: {e}")
+        client.disconnect()
+        sys.exit(1)
+
+# Финальная проверка авторизации
+if not client.is_user_authorized():
+    print("❌ Сессия НЕ авторизована после всех шагов.")
+    client.disconnect()
+    sys.exit(1)
+
+me = client.get_me()
+print(f"✅ Авторизован как: {me.first_name} (ID: {me.id})")
+
+client.disconnect()
+print("✅ Готово! Файл session.session создан и валиден.")
