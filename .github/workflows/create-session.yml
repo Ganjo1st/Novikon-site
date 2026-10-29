@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       code:
-        description: 'Код подтверждения из Telegram (если уже пришел)'
+        description: 'Код подтверждения из Telegram (оставьте пустым для первого запроса)'
         required: false
         type: string
       password:
@@ -39,6 +39,8 @@ jobs:
         run: python create_session_github.py
 
       - name: Validate session file
+        # Проверяем сессию только если в этот раз был передан код (иначе мы просто запросили его)
+        if: github.event.inputs.code != ''
         run: |
           python - <<'EOF'
           import sqlite3, sys
@@ -63,12 +65,14 @@ jobs:
           EOF
 
       - name: Encode session to Base64
+        if: github.event.inputs.code != ''
         run: |
           BASE64=$(base64 -w 0 session.session)
           echo "BASE64_SESSION=$BASE64" >> $GITHUB_ENV
           echo "✅ Сессия закодирована в Base64"
 
       - name: Upload artifact
+        if: github.event.inputs.code != ''
         uses: actions/upload-artifact@v4
         with:
           name: session-file
@@ -76,11 +80,9 @@ jobs:
           if-no-files-found: error
 
       - name: Show summary
+        if: github.event.inputs.code != ''
         run: |
           echo "### 🔑 Ваша сессия готова!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "1. Скачайте артефакт \`session-file\` ниже" >> $GITHUB_STEP_SUMMARY
-          echo "2. Или скопируйте Base64-строку из логов" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Base64 (для секрета TELEGRAM_SESSION_BASE64):**" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
