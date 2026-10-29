@@ -1,8 +1,9 @@
 import os
 import sys
 import asyncio
-from telethon import TelegramClient, errors, connection
-from telethon.network.connection import ConnectionTcpMTProxyRandomizedIntermediate
+from telethon import TelegramClient, errors
+from telethon.network.connection import ConnectionTcpFull
+from python_socks import ProxyType
 
 API_ID = int(os.environ.get("API_ID", "0"))
 API_HASH = os.environ.get("API_HASH", "")
@@ -15,36 +16,45 @@ if not API_ID or not API_HASH or not PHONE:
     sys.exit(1)
 
 async def main():
-    print("🚀 Подключение через MTProxy (обход блокировки Azure)...")
+    print("🚀 Подключение...")
     
-    # Публичные MTProxy серверы Telegram (если один не работает, пробуем другой)
+    # Очищаем старую базу, чтобы избежать "database is locked"
+    for f in ["session.session", "session.session-journal"]:
+        if os.path.exists(f):
+            os.remove(f)
+            print(f"🧹 Удалён старый файл: {f}")
+
+    # Список бесплатных SOCKS5 прокси (актуальны на момент написания)
     PROXIES = [
-        ("proxy.mtproxy.org", 443, "dd00000000000000000000000000000000"),
-        ("mtp.stel.com", 443, "ee00000000000000000000000000000000"),
+        {"proxy_type": ProxyType.SOCKS5, "addr": "185.130.104.180", "port": 1080},
+        {"proxy_type": ProxyType.SOCKS5, "addr": "194.58.103.212", "port": 1080},
+        {"proxy_type": ProxyType.SOCKS5, "addr": "45.94.31.77", "port": 1080},
+        {"proxy_type": ProxyType.SOCKS5, "addr": "176.113.73.55", "port": 1080},
+        {"proxy_type": ProxyType.SOCKS5, "addr": "37.18.73.60", "port": 1080},
     ]
-    
+
     client = None
-    for host, port, secret in PROXIES:
+    for p in PROXIES:
         try:
-            print(f"🌐 Пробуем прокси {host}:{port}...")
+            print(f"🌐 Пробуем SOCKS5 {p['addr']}:{p['port']}...")
             client = TelegramClient(
-                "session", 
-                API_ID, 
-                API_HASH,
-                connection=ConnectionTcpMTProxyRandomizedIntermediate,
-                proxy=(host, port, secret)
+                "session", API_ID, API_HASH,
+                connection=ConnectionTcpFull,
+                proxy=(p["proxy_type"], p["addr"], p["port"], True, None, None)
             )
             await client.connect()
-            if await client.is_user_authorized() or await client.connect():
-                print(f"✅ Успешно подключились через {host}")
-                break
+            print(f"✅ Подключились через {p['addr']}")
+            break
         except Exception as e:
-            print(f"⚠️ Прокси {host} не сработал: {e}")
+            print(f"⚠️ Прокси {p['addr']} не сработал: {e}")
             client = None
-    
+            # чистим базу после неудачной попытки
+            for f in ["session.session", "session.session-journal"]:
+                if os.path.exists(f):
+                    os.remove(f)
+
     if client is None:
         print("❌ Не удалось подключиться ни через один прокси.")
-        print("Попробуйте позже или используйте другой способ.")
         sys.exit(1)
 
     if await client.is_user_authorized():
@@ -57,7 +67,7 @@ async def main():
     if not CODE:
         print("📨 Отправка кода...")
         try:
-            sent = await client.send_code_request(PHONE)
+            await client.send_code_request(PHONE)
             print("✅ Код отправлен. Проверьте Telegram (чат 'Telegram' или '777000').")
             print("⚠️ Запустите workflow СНОВА, вставив код в поле 'code'.")
         except Exception as e:
@@ -65,7 +75,6 @@ async def main():
         await client.disconnect()
         sys.exit(0)
     
-    # Если код передан, пробуем войти
     try:
         await client.sign_in(PHONE, CODE)
         print("✅ Вход по коду успешен!")
