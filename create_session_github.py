@@ -12,10 +12,6 @@ if not API_ID or not API_HASH or not PHONE:
     print("❌ Ошибка: не заданы API_ID, API_HASH или PHONE_NUMBER")
     sys.exit(1)
 
-if not CODE:
-    print("❌ Ошибка: CODE не передан. Код подтверждения обязателен для создания сессии в CI.")
-    sys.exit(1)
-
 print("🚀 Создание сессии через GitHub...")
 print(f"📱 Номер: {PHONE[:4]}***{PHONE[-2:]}")
 
@@ -33,6 +29,14 @@ else:
         print(f"❌ Ошибка при запросе кода: {e}")
         client.disconnect()
         sys.exit(1)
+
+    # Проверяем, передан ли код, уже ПОСЛЕ запроса
+    if not CODE:
+        print("⚠️ Код не передан.")
+        print("1. Проверьте Telegram — там код подтверждения")
+        print("2. Запустите workflow СНОВА и укажите этот код в поле 'code'")
+        client.disconnect()
+        sys.exit(0)  # Завершаем с успехом, чтобы не было красного крестика в Actions
 
     try:
         client.sign_in(PHONE, CODE, phone_code_hash=sent.phone_code_hash)
@@ -54,7 +58,6 @@ else:
         client.disconnect()
         sys.exit(1)
 
-# Финальная проверка авторизации
 if not client.is_user_authorized():
     print("❌ Сессия НЕ авторизована после всех шагов.")
     client.disconnect()
