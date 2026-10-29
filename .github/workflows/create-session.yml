@@ -39,7 +39,6 @@ jobs:
         run: python create_session_github.py
 
       - name: Validate session file
-        # Проверяем сессию только если в этот раз был передан код (иначе мы просто запросили его)
         if: github.event.inputs.code != ''
         run: |
           python - <<'EOF'
