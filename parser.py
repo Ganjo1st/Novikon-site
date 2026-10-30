@@ -20,7 +20,14 @@ if not CHANNEL_ID:
     print("❌ Ошибка: TELEGRAM_CHANNEL_ID не установлен")
     exit(1)
 
-client = TelegramClient('session', API_ID, API_HASH)
+from telethon.sessions import StringSession
+
+TELEGRAM_SESSION = os.getenv('TELEGRAM_SESSION', '')
+
+if TELEGRAM_SESSION:
+    client = TelegramClient(StringSession(TELEGRAM_SESSION), API_ID, API_HASH)
+else:
+    client = TelegramClient('session', API_ID, API_HASH)
 
 LOGO_FILE = 'logo_H.png'
 
