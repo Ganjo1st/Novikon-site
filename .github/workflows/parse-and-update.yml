@@ -31,13 +31,13 @@ jobs:
         run: |
           pip install telethon requests beautifulsoup4 lxml
           
-      - name: Run parser
+        - name: Run parser
         env:
           API_ID: ${{ secrets.API_ID }}
           API_HASH: ${{ secrets.API_HASH }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
-        run: |
-          python parser.py
+          TELEGRAM_SESSION: ${{ secrets.TELEGRAM_SESSION }}  # <-- Эта строка
+        run: python parser.py
           
       - name: List generated files
         run: |
