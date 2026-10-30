@@ -31,12 +31,12 @@ jobs:
         run: |
           pip install telethon requests beautifulsoup4 lxml
           
-        - name: Run parser
+      - name: Run parser
         env:
           API_ID: ${{ secrets.API_ID }}
           API_HASH: ${{ secrets.API_HASH }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
-          TELEGRAM_SESSION: ${{ secrets.TELEGRAM_SESSION }}  # <-- Эта строка
+          TELEGRAM_SESSION: ${{ secrets.TELEGRAM_SESSION }}
         run: python parser.py
           
       - name: List generated files
@@ -50,7 +50,6 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          # Принудительно добавляем все файлы, включая папку posts
           git add -f index.html posts.json assets/ posts/
           git status
           git diff --staged --quiet || git commit -m "Auto-update news [skip ci]"
